@@ -36,17 +36,19 @@ export function ProfileCard({ user, index, total }: ProfileCardProps) {
         setIsSwiped(false);
         setSwipeDirection(null);
     }
+  
+    const rotation = (index % 2 === 0 ? 1 : -1) * (Math.floor(index / 2) + 1) * 1.5;
 
   return (
     <Card
       className={cn(
-        "absolute w-full h-full transition-all duration-500 ease-in-out transform shadow-2xl rounded-2xl overflow-hidden cursor-grab active:cursor-grabbing",
-        isSwiped && swipeDirection === 'left' && '-rotate-12 -translate-x-full opacity-0',
-        isSwiped && swipeDirection === 'right' && 'rotate-12 translate-x-full opacity-0',
-        `z-${total - index}`
+        "absolute w-full h-full transition-all duration-300 ease-in-out transform shadow-2xl rounded-2xl overflow-hidden cursor-grab active:cursor-grabbing",
+        isSwiped && swipeDirection === 'left' && '-rotate-[25deg] -translate-x-[120%] opacity-0 scale-90',
+        isSwiped && swipeDirection === 'right' && 'rotate-[25deg] translate-x-[120%] opacity-0 scale-90',
+        !isSwiped && `z-${total - index}`
       )}
       style={{
-        transform: `scale(${1 - (index * 0.05)}) translateY(-${index * 10}px)`
+        transform: isSwiped ? '' : `scale(${1 - (index * 0.04)}) translateY(${index * 10}px) rotate(${rotation}deg)`
       }}
     >
         {!isSwiped ? (
@@ -72,11 +74,11 @@ export function ProfileCard({ user, index, total }: ProfileCardProps) {
                     </div>
                 </div>
                 </div>
-                <div className="absolute bottom-[-40px] left-1/2 -translate-x-1/2 flex items-center justify-center space-x-4 w-full p-6">
-                    <Button onClick={() => handleSwipe('left')} variant="destructive" size="icon" className="w-16 h-16 rounded-full shadow-lg bg-white hover:bg-red-100 text-destructive">
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center justify-center space-x-4 w-full p-6">
+                    <Button onClick={() => handleSwipe('left')} variant="destructive" size="icon" className="w-16 h-16 rounded-full shadow-lg bg-white/90 hover:bg-white text-destructive backdrop-blur-sm transition-transform hover:scale-105">
                         <X className="w-8 h-8"/>
                     </Button>
-                    <Button onClick={() => handleSwipe('right')} variant="default" size="icon" className="w-16 h-16 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground">
+                    <Button onClick={() => handleSwipe('right')} variant="default" size="icon" className="w-16 h-16 rounded-full shadow-lg bg-primary/90 hover:bg-primary text-primary-foreground backdrop-blur-sm transition-transform hover:scale-105">
                         <Heart className="w-8 h-8" fill="currentColor"/>
                     </Button>
                 </div>
