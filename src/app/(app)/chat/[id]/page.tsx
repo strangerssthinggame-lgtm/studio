@@ -1,8 +1,13 @@
+
+'use client';
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Paperclip, Send, Smile, MoreVertical } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import VibeCheckCard from "@/components/vibe-check-card";
 
 const messages = [
   { sender: 'other', text: "Hey! Loved your profile. Up for a game?", time: "10:00 AM", avatar: "https://picsum.photos/seed/sophia/100" },
@@ -11,6 +16,8 @@ const messages = [
 ];
 
 export default function ChatPage({ params }: { params: { id: string } }) {
+  const [showGame, setShowGame] = useState(false);
+
   return (
     <div className="flex flex-col h-[calc(100vh_-_theme(spacing.24))] bg-card rounded-xl border">
         <div className="flex items-center p-4 border-b">
@@ -43,17 +50,23 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                     </div>
                 </div>
             ))}
-            <Card className="mx-auto w-full max-w-md text-center">
-                <CardHeader>
-                    <CardTitle className="font-headline text-xl">Vibe Check: Date</CardTitle>
-                    <CardDescription>Sophia has invited you to play a game. The first card is ready.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Button>
-                        View Card
-                    </Button>
-                </CardContent>
-            </Card>
+            
+            {showGame ? (
+                <VibeCheckCard />
+            ) : (
+                <Card className="mx-auto w-full max-w-md text-center">
+                    <CardHeader>
+                        <CardTitle className="font-headline text-xl">Vibe Check: Date</CardTitle>
+                        <CardDescription>Sophia has invited you to play a game. The first card is ready.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Button onClick={() => setShowGame(true)}>
+                            View Card
+                        </Button>
+                    </CardContent>
+                </Card>
+            )}
+
         </div>
 
         <div className="p-4 border-t bg-background">
