@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -47,14 +47,14 @@ export default function CoinToss({ onTossFinish }: CoinTossProps) {
       <CardContent className="p-6 flex flex-col items-center justify-center gap-6 min-h-[300px]">
         <div className="flex justify-around w-full items-center">
             <div className="flex flex-col items-center gap-2">
-                <Avatar className="w-16 h-16 border-4 border-transparent data-[winner=true]:border-primary transition-all">
+                <Avatar className={cn("w-16 h-16 border-4 border-transparent transition-all", result === 'You' && 'border-primary')}>
                     <AvatarImage src="https://picsum.photos/100" alt="You" data-ai-hint="profile avatar"/>
                     <AvatarFallback>Y</AvatarFallback>
                 </Avatar>
                 <span className="font-semibold">You</span>
             </div>
              <div className="flex flex-col items-center gap-2">
-                <Avatar className="w-16 h-16 border-4 border-transparent data-[winner=true]:border-primary transition-all">
+                <Avatar className={cn("w-16 h-16 border-4 border-transparent transition-all", result === 'Sophia' && 'border-primary')}>
                     <AvatarImage src="https://picsum.photos/seed/sophia/100" alt="Sophia" data-ai-hint="profile avatar"/>
                     <AvatarFallback>S</AvatarFallback>
                 </Avatar>
@@ -72,7 +72,7 @@ export default function CoinToss({ onTossFinish }: CoinTossProps) {
             )}
         </div>
         
-        <Button onClick={handleFlip} disabled={isFlipping || !!result}>
+        <Button onClick={handleFlip} disabled={isFlipping || !!result} size="lg" className="min-w-[150px]">
           {isFlipping ? 'Flipping...' : (result ? 'Starting Game...' : 'Flip Coin')}
         </Button>
 
