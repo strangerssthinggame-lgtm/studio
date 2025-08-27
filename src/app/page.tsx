@@ -1,8 +1,15 @@
+
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Heart, MessageSquare, Users } from 'lucide-react';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleAuthProvider } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
+
 
 const GoogleIcon = () => (
   <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -33,6 +40,27 @@ const AppleIcon = () => (
 
 
 export default function Home() {
+  const router = useRouter();
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleAuthProvider);
+      const idToken = await result.user.getIdToken();
+
+      // Send the token to your backend to create a session cookie
+      await fetch('/auth/callback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ idToken }),
+      });
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Error during Google sign-in:', error);
+    }
+  };
+
   return (
     <div className="w-full min-h-screen lg:grid lg:grid-cols-2">
       <div className="flex items-center justify-center p-6 sm:p-12">
@@ -52,7 +80,7 @@ export default function Home() {
             </CardHeader>
             <CardContent className="grid gap-4">
               <div className="grid gap-2">
-                <Button variant="outline">
+                <Button variant="outline" onClick={handleGoogleSignIn}>
                   <GoogleIcon />
                   Sign in with Google
                 </Button>

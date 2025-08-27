@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link";
@@ -11,7 +12,12 @@ import {
   Users,
   WandSparkles,
   User,
+  LogOut,
 } from "lucide-react";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { auth } from "@/lib/firebase";
+import { signOut } from "firebase/auth";
+import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,13 +40,17 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push('/');
+  }
 
   const navLinks = [
     { href: "/dashboard", icon: Home, label: "Feed" },
@@ -48,6 +58,27 @@ export default function AppLayout({
     { href: "/notifications", icon: Bell, label: "Notifications", badge: 5 },
     { href: "/dashboard/ai-prompts", icon: WandSparkles, label: "AI Prompts" },
   ];
+
+  if (loading) {
+    return (
+        <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+            <div className="hidden border-r bg-muted/40 md:block p-4">
+                <Skeleton className="h-[60px] w-full mb-4" />
+                <Skeleton className="h-10 w-full mb-2" />
+                <Skeleton className="h-10 w-full mb-2" />
+                <Skeleton className="h-10 w-full mb-2" />
+            </div>
+            <div className="flex flex-col">
+                <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+                   <Skeleton className="h-8 w-full" />
+                </header>
+                <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
+                    <Skeleton className="h-full w-full"/>
+                </main>
+            </div>
+        </div>
+    )
+  }
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -190,8 +221,8 @@ export default function AppLayout({
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
                 <Avatar>
-                  <AvatarImage src="https://picsum.photos/100" alt="@shadcn" data-ai-hint="profile avatar" />
-                  <AvatarFallback>U</AvatarFallback>
+                  <AvatarImage src={user?.photoURL ?? "https://picsum.photos/100"} alt="User avatar" data-ai-hint="profile avatar" />
+                  <AvatarFallback>{user?.displayName?.charAt(0) ?? 'U'}</AvatarFallback>
                 </Avatar>
                 <span className="sr-only">Toggle user menu</span>
               </Button>
@@ -208,7 +239,10 @@ export default function AppLayout({
               <DropdownMenuItem>Settings</DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Logout</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
@@ -218,4 +252,12 @@ export default function AppLayout({
       </div>
     </div>
   );
+}
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+    return (
+        <AuthProvider>
+            <AppLayoutContent>{children}</AppLayoutContent>
+        </AuthProvider>
+    )
 }
