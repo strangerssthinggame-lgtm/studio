@@ -12,6 +12,8 @@ import CoinToss from "@/components/coin-toss";
 import GameCard from "@/components/game-card";
 import VibeCheckCard from "@/components/vibe-check-card";
 import { VibeCheckResults } from "@/components/vibe-check-results";
+import { chats, Chat } from "@/lib/chat-data";
+import { notFound } from 'next/navigation';
 
 
 type Message = {
@@ -24,16 +26,22 @@ type Message = {
 export type DeckTheme = 'default' | 'friends' | 'date' | 'spicy';
 
 export default function ChatPage({ params }: { params: { id: string } }) {
+  const chat: Chat | undefined = chats.find(c => c.id === params.id);
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isGameSelectionOpen, setIsGameSelectionOpen] = useState(false);
-  const [activeTheme, setActiveTheme] = useState<DeckTheme>('default');
+  const [activeTheme, setActiveTheme] = useState<DeckTheme>(chat?.vibe as DeckTheme || 'default');
   const [gameStage, setGameStage] = useState<'none' | 'toss' | 'playing'>('none');
   const [deckName, setDeckName] = useState<'Friends' | 'Date' | 'Spicy' | ''>('');
   const [gameTurn, setGameTurn] = useState<'me' | 'them' | null>(null);
   const [isAwaitingAnswer, setIsAwaitingAnswer] = useState(false);
   const [vibeCheckState, setVibeCheckState] = useState<'needed' | 'in_progress' | 'complete'>('needed');
   const [vibeCheckMatches, setVibeCheckMatches] = useState(0);
+
+  if (!chat) {
+    notFound();
+  }
 
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -69,7 +77,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   
   const handleGameFinish = () => {
     setGameStage('none');
-    setActiveTheme('default');
+    setActiveTheme(chat.vibe as DeckTheme || 'default');
     setDeckName('');
     setGameTurn(null);
     setIsAwaitingAnswer(false);
@@ -137,7 +145,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     if (vibeCheckState !== 'complete') return "Complete the Vibe Check to start chatting...";
     if (canAnswer) return "It's your turn to answer...";
     if (isMyTurnInGame) return "It's your turn to ask a question...";
-    if (isTheirTurnInGame) return "Waiting for Sophia to ask...";
+    if (isTheirTurnInGame) return `Waiting for ${chat.name} to ask...`;
     if (gameStage === 'playing') return "The game is in progress...";
     return "Type a message...";
   }
@@ -158,11 +166,11 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     )}>
         <div className="flex items-center p-4 border-b bg-card rounded-t-xl">
             <Avatar>
-                <AvatarImage src="https://picsum.photos/seed/sophia/100" alt="Sophia" data-ai-hint="profile avatar" />
-                <AvatarFallback>S</AvatarFallback>
+                <AvatarImage src={chat.avatar} alt={chat.name} data-ai-hint="profile avatar" />
+                <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="ml-4 flex-1">
-                <p className="text-lg font-semibold font-headline">Sophia</p>
+                <p className="text-lg font-semibold font-headline">{chat.name}</p>
                 <p className="text-sm text-muted-foreground">Online</p>
             </div>
             <GameSelectionDialog 
@@ -184,19 +192,20 @@ export default function ChatPage({ params }: { params: { id: string } }) {
             
             {vibeCheckState === 'complete' && <VibeCheckResults totalMatches={vibeCheckMatches} />}
 
-            {gameStage === 'toss' && deckName && <CoinToss onTossFinish={handleTossFinish} deckName={deckName} />}
+            {gameStage === 'toss' && deckName && <CoinToss onTossFinish={handleTossFinish} deckName={deckName} opponentName={chat.name} opponentAvatar={chat.avatar} />}
             
             {isMyTurnInGame && !isAwaitingAnswer && deckName && (
                  <GameCard 
                     onGameFinish={handleGameFinish} 
                     deckName={deckName}
                     onSendQuestion={handleSendQuestion}
+                    opponentName={chat.name}
                 />
             )}
             
             {isTheirTurnInGame && !isAwaitingAnswer && (
                 <div className="text-center text-muted-foreground p-4 bg-muted/50 rounded-lg">
-                    <p>Waiting for Sophia to ask a question...</p>
+                    <p>Waiting for {chat.name} to ask a question...</p>
                 </div>
             )}
 
@@ -211,8 +220,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                     >
                         {message.sender === 'them' && (
                             <Avatar className="h-8 w-8">
-                                <AvatarImage src="https://picsum.photos/seed/sophia/100" alt="Sophia" data-ai-hint="profile avatar"/>
-                                <AvatarFallback>S</AvatarFallback>
+                                <AvatarImage src={chat.avatar} alt={chat.name} data-ai-hint="profile avatar"/>
+                                <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                         )}
                           <div className={cn(

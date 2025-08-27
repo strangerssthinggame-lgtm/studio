@@ -37,9 +37,10 @@ type GameCardProps = {
     onGameFinish: () => void;
     deckName: 'Friends' | 'Date' | 'Spicy';
     onSendQuestion: (question: string) => void;
+    opponentName: string;
 };
 
-export default function GameCard({ onGameFinish, deckName, onSendQuestion }: GameCardProps) {
+export default function GameCard({ onGameFinish, deckName, onSendQuestion, opponentName }: GameCardProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const questions = gameDecks[deckName];
   const { icon: Icon, title } = deckInfo[deckName];
@@ -65,7 +66,7 @@ export default function GameCard({ onGameFinish, deckName, onSendQuestion }: Gam
            
             <p className="text-xl font-semibold text-center text-card-foreground">{currentQuestion}</p>
             
-            <p className="text-sm text-muted-foreground">It's your turn to ask Sophia a question.</p>
+            <p className="text-sm text-muted-foreground">It's your turn to ask {opponentName} a question.</p>
             
             <div className="flex gap-4 w-full">
                 <Button 

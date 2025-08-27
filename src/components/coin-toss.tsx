@@ -32,8 +32,10 @@ const CoinIcon = ({ isFlipping, theme }: { isFlipping: boolean; theme: DeckTheme
 );
 
 type CoinTossProps = {
-  onTossFinish: (winner: 'You' | 'Sophia') => void;
+  onTossFinish: (winner: 'You' | string) => void;
   deckName: 'Friends' | 'Date' | 'Spicy';
+  opponentName: string;
+  opponentAvatar: string;
 };
 
 const deckInfo = {
@@ -42,9 +44,9 @@ const deckInfo = {
     'Spicy': { theme: 'spicy' as DeckTheme, icon: Flame, title: "Spicy Deck" },
 }
 
-export default function CoinToss({ onTossFinish, deckName }: CoinTossProps) {
+export default function CoinToss({ onTossFinish, deckName, opponentName, opponentAvatar }: CoinTossProps) {
   const [isFlipping, setIsFlipping] = useState(false);
-  const [result, setResult] = useState<'You' | 'Sophia' | null>(null);
+  const [result, setResult] = useState<'You' | string | null>(null);
 
   const { theme, icon: Icon, title } = deckInfo[deckName];
 
@@ -52,7 +54,7 @@ export default function CoinToss({ onTossFinish, deckName }: CoinTossProps) {
     if (isFlipping) return;
     setIsFlipping(true);
     setTimeout(() => {
-      const winner = Math.random() < (2 / 3) ? 'You' : 'Sophia';
+      const winner = Math.random() < (2 / 3) ? 'You' : opponentName;
       setResult(winner);
       setIsFlipping(false);
       
@@ -80,11 +82,11 @@ export default function CoinToss({ onTossFinish, deckName }: CoinTossProps) {
                 <span className="font-semibold text-lg">You</span>
             </div>
              <div className="flex flex-col items-center gap-2">
-                <Avatar className={cn("w-20 h-20 border-4 border-transparent transition-all duration-500", result === 'Sophia' && 'border-primary ring-4 ring-primary/20')}>
-                    <AvatarImage src="https://picsum.photos/seed/sophia/100" alt="Sophia" data-ai-hint="profile avatar"/>
-                    <AvatarFallback>S</AvatarFallback>
+                <Avatar className={cn("w-20 h-20 border-4 border-transparent transition-all duration-500", result === opponentName && 'border-primary ring-4 ring-primary/20')}>
+                    <AvatarImage src={opponentAvatar} alt={opponentName} data-ai-hint="profile avatar"/>
+                    <AvatarFallback>{opponentName.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <span className="font-semibold text-lg">Sophia</span>
+                <span className="font-semibold text-lg">{opponentName}</span>
             </div>
         </div>
         
