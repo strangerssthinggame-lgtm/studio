@@ -1,8 +1,9 @@
 
+
 'use client';
 
 import { ProfileCard } from '@/components/profile-card';
-import { Filter, Users, Calendar, MapPin, Sparkles } from 'lucide-react';
+import { Filter, Users, Calendar, MapPin, Sparkles, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -18,98 +19,54 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Slider } from '@/components/ui/slider';
-import { useState, useCallback } from 'react';
-
-const allUsers = [
-  {
-    name: 'Sophia',
-    age: 24,
-    gender: 'female',
-    location: 'New York, USA',
-    vibe: 'date',
-    bio: 'Lover of art, long walks on the beach, and deep conversations. Looking for someone to explore new cafes with.',
-    tags: ['Art', 'Coffee', 'Philosophy', 'Travel'],
-    image: 'https://picsum.photos/seed/sophia/600/800',
-    aiHint: 'woman portrait',
-  },
-  {
-    name: 'Liam',
-    age: 27,
-    gender: 'male',
-    location: 'London, UK',
-    vibe: 'friends',
-    bio: "Tech enthusiast and weekend hiker. My dog is my best friend. Let's talk about the future of AI or the best trails.",
-    tags: ['Tech', 'Hiking', 'Dogs', 'Sci-Fi'],
-    image: 'https://picsum.photos/seed/liam/600/800',
-    aiHint: 'man portrait',
-  },
-  {
-    name: 'Chloe',
-    age: 22,
-    gender: 'female',
-    location: 'Paris, France',
-    vibe: 'spicy',
-    bio: "Musician and dreamer. I find beauty in small things. Let's create a playlist for our first date.",
-    tags: ['Music', 'Concerts', 'Creative', 'Vegan'],
-    image: 'https://picsum.photos/seed/chloe/600/800',
-    aiHint: 'woman smiling',
-  },
-  {
-    name: 'Mason',
-    age: 29,
-    gender: 'male',
-    location: 'New York, USA',
-    vibe: 'date',
-    bio: 'Fitness junkie with a love for cooking. I can make you a great protein shake and an even better lasagna.',
-    tags: ['Fitness', 'Cooking', 'Health', 'Movies'],
-    image: 'https://picsum.photos/seed/mason/600/800',
-    aiHint: 'man gym',
-  },
-  {
-    name: 'Olivia',
-    age: 31,
-    gender: 'female',
-    location: 'New York, USA',
-    vibe: 'friends',
-    bio: 'Bookworm and aspiring novelist. Let\'s get lost in a story.',
-    tags: ['Books', 'Writing', 'Tea'],
-    image: 'https://picsum.photos/seed/olivia/600/800',
-    aiHint: 'woman reading',
-    },
-];
+import { useState, useCallback, useMemo } from 'react';
+import { userProfiles } from '@/lib/user-profile-data';
 
 export default function DashboardPage() {
   const [filters, setFilters] = useState({
     vibe: 'date',
     region: '',
-    ageRange: [18, 35],
+    ageRange: [18, 40],
     gender: 'all',
   });
   
-  const [userQueue, setUserQueue] = useState(allUsers);
-  
-  const handleSwipe = useCallback(() => {
-    setUserQueue(currentQueue => currentQueue.slice(1));
-  }, []);
-  
-  const applyFilters = () => {
-    const newFilteredUsers = allUsers.filter(user => {
+  const [userQueue, setUserQueue] = useState(() => userProfiles);
+  const [history, setHistory] = useState<typeof userProfiles>([]);
+
+  const filteredUsers = useMemo(() => {
+    return userProfiles.filter(user => {
       const [minAge, maxAge] = filters.ageRange;
       const regionMatch = filters.region === '' || user.location.toLowerCase().includes(filters.region.toLowerCase());
       const ageMatch = user.age >= minAge && user.age <= maxAge;
-      const genderMatch = filters.gender === 'all' || user.gender === filters.gender;
-      const vibeMatch = user.vibe === filters.vibe;
+      const genderMatch = filters.gender === 'all' || user.gender.toLowerCase() === filters.gender;
+      
+      const userVibes = user.vibes.map(v => v.toLowerCase());
+      const vibeMatch = userVibes.includes(filters.vibe);
       
       return regionMatch && ageMatch && genderMatch && vibeMatch;
     });
-    setUserQueue(newFilteredUsers);
+  }, [filters]);
+
+  const handleSwipe = useCallback((swipedUser: any, direction: 'left' | 'right') => {
+    setUserQueue(currentQueue => currentQueue.filter(u => u.id !== swipedUser.id));
+    setHistory(prev => [...prev, swipedUser]);
+  }, []);
+
+  const applyFilters = () => {
+    setUserQueue(filteredUsers);
+    setHistory([]);
   };
-  
+
   const handleFilterChange = (key: string, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
+  
+  const resetDeck = useCallback(() => {
+      setUserQueue(filteredUsers);
+      setHistory([]);
+  }, [filteredUsers])
 
-  // This will apply initial filters
+  // Apply filters on initial load
   useState(() => {
     applyFilters();
   });
@@ -123,7 +80,7 @@ export default function DashboardPage() {
             Discover
           </h1>
           <p className="text-sm text-muted-foreground">
-            Swipe right to connect, left to pass. Find your next vibe.
+            Find your next vibe. Filters are applied below.
           </p>
         </div>
         <Sheet>
@@ -148,7 +105,7 @@ export default function DashboardPage() {
                     onValueChange={(value) => handleFilterChange('vibe', value)}
                     className="grid grid-cols-3 gap-2">
                     <Label htmlFor="friends" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
-                        <RadioGroupItem value="friends" id="friends" className="sr-only"/>
+                        <RadioGroupItem value="friend" id="friends" className="sr-only"/>
                         Friends
                     </Label>
                     <Label htmlFor="date" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
@@ -220,27 +177,42 @@ export default function DashboardPage() {
           </SheetContent>
         </Sheet>
       </div>
-      <div className="flex flex-1 items-center justify-center">
+      <div className="flex flex-1 items-center justify-center -mx-4">
         <div className="relative w-full max-w-sm h-[60vh] md:h-[70vh]">
           {userQueue.length > 0 ? (
-            userQueue.map((user, index) => {
-              // We only render the top card to avoid performance issues
-              if (index === 0) {
-                return (
+             <>
+              <div className="absolute inset-0 flex items-center justify-center text-center text-muted-foreground p-4 bg-muted rounded-lg -z-10">
+                    <div>
+                        <p className="text-lg font-semibold">That's everyone for now!</p>
+                        <p>You've seen all profiles matching your filters. Why not try adjusting them?</p>
+                        <Button onClick={resetDeck} variant="link" className="mt-4">
+                            <RotateCw className="mr-2"/>
+                            Reset Deck
+                        </Button>
+                    </div>
+                </div>
+              {userQueue.map((user, index) => (
                   <ProfileCard
-                    key={user.name}
+                    key={user.id}
                     user={user}
                     onSwipe={handleSwipe}
+                    style={{ 
+                        zIndex: userQueue.length - index,
+                        transform: `scale(${1 - (userQueue.length - index - (userQueue.length - 1)) * 0.05}) translateY(${(userQueue.length - index - (userQueue.length - 1)) * -10}px)`,
+                        opacity: index > 2 ? 0 : 1,
+                    }}
                   />
-                );
-              }
-              return null;
-            }).reverse() // a little trick to stack the cards correctly
+                )).reverse()
+            }
+             </>
           ) : (
             <div className="text-center text-muted-foreground p-4 bg-muted rounded-lg">
                 <p className="text-lg font-semibold">No More Profiles</p>
                 <p>You've seen everyone who matches your criteria. Try expanding your filters!</p>
-                <Button onClick={() => setUserQueue(allUsers)} variant="link" className="mt-4">Reset Deck</Button>
+                <Button onClick={resetDeck} variant="link" className="mt-4">
+                    <RotateCw className="mr-2"/>
+                    Reset Deck
+                </Button>
             </div>
           )}
         </div>

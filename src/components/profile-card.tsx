@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Heart, X, RotateCw, Sparkles } from 'lucide-react';
+import { Heart, X, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   AlertDialog,
@@ -18,23 +18,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-
-
-type User = {
-  name: string;
-  age: number;
-  bio: string;
-  tags: string[];
-  image: string;
-  aiHint: string;
-};
+import type { UserProfile } from '@/lib/user-profile-data';
 
 type ProfileCardProps = {
-  user: User;
-  onSwipe: () => void;
+  user: UserProfile;
+  onSwipe: (user: UserProfile, direction: 'left' | 'right') => void;
+  style?: React.CSSProperties;
 };
 
-export function ProfileCard({ user, onSwipe }: ProfileCardProps) {
+export function ProfileCard({ user, onSwipe, style }: ProfileCardProps) {
     const [isSwiped, setIsSwiped] = useState(false);
     const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
     const [showMatchDialog, setShowMatchDialog] = useState(false);
@@ -45,28 +37,22 @@ export function ProfileCard({ user, onSwipe }: ProfileCardProps) {
         setSwipeDirection(direction);
         setIsSwiped(true);
 
-        if (direction === 'right') {
-            // Delay showing dialog to allow swipe animation to start
-            setTimeout(() => setShowMatchDialog(true), 300);
-        } else {
-            // For a 'pass', we just trigger the onSwipe to show the next card
-             setTimeout(onSwipe, 300);
-        }
+        setTimeout(() => {
+            onSwipe(user, direction);
+            if (direction === 'right') {
+                setShowMatchDialog(true);
+            }
+        }, 300);
     };
     
-    // This is called when the dialog is closed, or after a left swipe
-    const handleAnimationEnd = () => {
-        onDialogClose();
-    }
-
     const onDialogClose = () => {
         setShowMatchDialog(false);
-        onSwipe(); // Move to the next card
     }
   
   return (
     <>
         <Card
+        style={style}
         className={cn(
             "absolute w-full h-full transition-all duration-300 ease-in-out transform shadow-2xl rounded-2xl overflow-hidden cursor-grab active:cursor-grabbing",
             isSwiped && swipeDirection === 'left' && '-rotate-[25deg] -translate-x-[120%] opacity-0',
@@ -75,23 +61,25 @@ export function ProfileCard({ user, onSwipe }: ProfileCardProps) {
         >
             <div className="relative h-full w-full">
             <Image
-                src={user.image}
+                src={user.banner}
                 alt={`Profile of ${user.name}`}
-                data-ai-hint={user.aiHint}
+                data-ai-hint="profile banner"
                 fill
                 className="object-cover"
                 priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                <h2 className="text-4xl font-headline font-bold">{user.name}, <span className="font-light">{user.age}</span></h2>
-                <p className="mt-2 text-base font-body">{user.bio}</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                {user.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="bg-white/20 text-white backdrop-blur-sm border-0">
-                    {tag}
-                    </Badge>
-                ))}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-6 text-white flex flex-col justify-end h-1/2">
+                <div>
+                    <h2 className="text-4xl font-headline font-bold">{user.name}, <span className="font-light">{user.age}</span></h2>
+                    <p className="mt-2 text-base font-body line-clamp-3">{user.bio}</p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                    {user.interests.slice(0,4).map((tag) => (
+                        <Badge key={tag} variant="secondary" className="bg-white/20 text-white backdrop-blur-sm border-0">
+                        {tag}
+                        </Badge>
+                    ))}
+                    </div>
                 </div>
             </div>
             </div>
@@ -113,7 +101,7 @@ export function ProfileCard({ user, onSwipe }: ProfileCardProps) {
                             <AvatarFallback>Y</AvatarFallback>
                         </Avatar>
                         <Avatar className="w-24 h-24 border-4 border-background absolute right-0 top-0">
-                            <AvatarImage src={user.image} alt={user.name} data-ai-hint="profile avatar" />
+                            <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="profile avatar" />
                             <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-primary/90 rounded-full flex items-center justify-center backdrop-blur-sm">
@@ -126,7 +114,7 @@ export function ProfileCard({ user, onSwipe }: ProfileCardProps) {
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="flex-col gap-2 mt-2">
-                    <Link href="/chat/1" className="w-full">
+                    <Link href={`/chat/${user.id}`} className="w-full">
                         <AlertDialogAction className="w-full h-12 text-lg">
                             <Sparkles className="mr-2 h-5 w-5" />
                             Start Vibe Check
