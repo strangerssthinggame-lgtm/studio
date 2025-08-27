@@ -218,7 +218,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                           <div className={cn(
                             "max-w-xs md:max-w-md lg:max-w-lg rounded-xl px-4 py-3 text-sm",
                              message.type === 'question' 
-                                ? 'bg-muted border-2 border-primary/50 text-primary-foreground' 
+                                ? 'bg-muted border-2 border-primary/50 text-primary' 
                                 : (message.sender === 'me' 
                                     ? 'bg-primary text-primary-foreground rounded-br-none' 
                                     : 'bg-muted rounded-bl-none')
