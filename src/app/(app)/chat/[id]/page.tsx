@@ -49,8 +49,11 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className={cn("flex flex-col h-[calc(100vh_-_theme(spacing.24))] bg-card rounded-xl border transition-colors duration-500", `theme-${activeTheme}`)}>
-        <div className="flex items-center p-4 border-b">
+    <div className={cn(
+        "flex flex-col h-[calc(100vh_-_theme(spacing.24))] rounded-xl border transition-colors duration-500",
+        `theme-${activeTheme}`
+    )}>
+        <div className="flex items-center p-4 border-b bg-card">
             <Avatar>
                 <AvatarImage src="https://picsum.photos/seed/sophia/100" alt="Sophia" data-ai-hint="profile avatar" />
                 <AvatarFallback>S</AvatarFallback>
@@ -74,7 +77,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
             </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-background">
             
             <VibeCheckCard onGameFinish={handleGameFinish} />
 
@@ -107,7 +110,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
            
         </div>
 
-        <div className="p-4 border-t bg-background">
+        <div className="p-4 border-t bg-card">
             <form className="relative" onSubmit={handleSendMessage}>
                 <Input 
                     placeholder={isGameFinished ? "Type a message..." : "Finish the Vibe Check to chat"} 
