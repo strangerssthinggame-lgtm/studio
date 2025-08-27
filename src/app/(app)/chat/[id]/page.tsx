@@ -60,6 +60,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   
   const handleGameFinish = () => {
     setGameStage('none');
+    setActiveTheme('default');
     // Optional: Add a system message that the game has ended.
   }
 
@@ -68,7 +69,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         "flex flex-col h-[calc(100vh_-_theme(spacing.24))] rounded-xl border transition-colors duration-500",
         `theme-${activeTheme}`
     )}>
-        <div className="flex items-center p-4 border-b bg-card">
+        <div className="flex items-center p-4 border-b bg-card rounded-t-xl">
             <Avatar>
                 <AvatarImage src="https://picsum.photos/seed/sophia/100" alt="Sophia" data-ai-hint="profile avatar" />
                 <AvatarFallback>S</AvatarFallback>
@@ -98,7 +99,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                 <VibeCheckCard onGameFinish={handleVibeCheckFinish} />
             )}
 
-            {isVibeCheckComplete && (
+            {isVibeCheckComplete && gameStage !== 'playing' && (
                 <VibeCheckResults totalMatches={vibeCheckMatches} />
             )}
 
@@ -137,7 +138,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
            
         </div>
 
-        <div className="p-4 border-t bg-card">
+        <div className="p-4 border-t bg-card rounded-b-xl">
             <form className="relative" onSubmit={handleSendMessage}>
                 <Input 
                     placeholder={isVibeCheckComplete ? "Type a message..." : "Finish the Vibe Check to chat"} 
