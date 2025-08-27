@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, Zap, Sparkles, ChevronsRight } from 'lucide-react';
@@ -29,14 +29,25 @@ const questions = [
 
 type VibeCheckCardProps = {
     onGameFinish: () => void;
+    forcePlay?: boolean;
 };
 
 
-export default function VibeCheckCard({ onGameFinish }: VibeCheckCardProps) {
-  const [gameState, setGameState] = useState<'intro' | 'playing' | 'results'>('intro');
+export default function VibeCheckCard({ onGameFinish, forcePlay = false }: VibeCheckCardProps) {
+  const [gameState, setGameState] = useState<'intro' | 'playing' | 'results'>(forcePlay ? 'playing' : 'intro');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [myAnswers, setMyAnswers] = useState<(string | null)[]>(Array(questions.length).fill(null));
   const [showResult, setShowResult] = useState(false);
+
+  useEffect(() => {
+    if (forcePlay) {
+      setGameState('playing');
+      setCurrentQuestionIndex(0);
+      setMyAnswers(Array(questions.length).fill(null));
+      setShowResult(false);
+    }
+  }, [forcePlay]);
+
 
   const handleStart = () => {
     setGameState('playing');

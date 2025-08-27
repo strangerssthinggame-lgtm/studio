@@ -9,6 +9,7 @@ import { useState } from "react";
 import VibeCheckCard from "@/components/vibe-check-card";
 import { cn } from "@/lib/utils";
 import GameSelectionDialog from "@/components/game-selection-dialog";
+import CoinToss from "@/components/coin-toss";
 
 type Message = {
     id: string;
@@ -24,6 +25,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   const [inputValue, setInputValue] = useState("");
   const [isGameSelectionOpen, setIsGameSelectionOpen] = useState(false);
   const [activeTheme, setActiveTheme] = useState<DeckTheme>('default');
+  const [gameStage, setGameStage] = useState<'pre-game' | 'toss' | 'playing'>('pre-game');
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,11 +43,19 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
   const handleGameFinish = () => {
     setIsGameFinished(true);
+    setGameStage('pre-game');
   }
 
   const handleGameSelect = (deck: 'Friends' | 'Date' | 'Spicy') => {
     setActiveTheme(deck.toLowerCase() as DeckTheme);
     setIsGameSelectionOpen(false);
+    setGameStage('toss');
+  }
+
+  const handleTossFinish = (winner: 'You' | 'Sophia') => {
+    // For now, we'll just proceed to the game.
+    // We can use the 'winner' info later to decide who asks the first question.
+    setGameStage('playing');
   }
 
   return (
@@ -79,7 +89,15 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-background">
             
-            <VibeCheckCard onGameFinish={handleGameFinish} />
+            {gameStage === 'pre-game' && !isGameFinished && (
+                <VibeCheckCard onGameFinish={handleGameFinish} />
+            )}
+
+            {gameStage === 'toss' && <CoinToss onTossFinish={handleTossFinish} />}
+            
+            {gameStage === 'playing' && (
+                 <VibeCheckCard onGameFinish={handleGameFinish} forcePlay={true} />
+            )}
 
             {isGameFinished && (
                 <div className="space-y-4">
