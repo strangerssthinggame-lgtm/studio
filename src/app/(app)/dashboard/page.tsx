@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Slider } from '@/components/ui/slider';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 const allUsers = [
   {
@@ -85,13 +85,13 @@ export default function DashboardPage() {
     ageRange: [18, 35],
     gender: 'all',
   });
-
-  const [filteredUsers, setFilteredUsers] = useState(allUsers.filter(user => user.vibe === 'date' && user.age >= 18 && user.age <= 35));
-
-  const handleFilterChange = (key: string, value: any) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
-
+  
+  const [userQueue, setUserQueue] = useState(allUsers);
+  
+  const handleSwipe = useCallback(() => {
+    setUserQueue(currentQueue => currentQueue.slice(1));
+  }, []);
+  
   const applyFilters = () => {
     const newFilteredUsers = allUsers.filter(user => {
       const [minAge, maxAge] = filters.ageRange;
@@ -102,8 +102,18 @@ export default function DashboardPage() {
       
       return regionMatch && ageMatch && genderMatch && vibeMatch;
     });
-    setFilteredUsers(newFilteredUsers);
+    setUserQueue(newFilteredUsers);
   };
+  
+  const handleFilterChange = (key: string, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  // This will apply initial filters
+  useState(() => {
+    applyFilters();
+  });
+
 
   return (
     <>
@@ -211,23 +221,29 @@ export default function DashboardPage() {
         </Sheet>
       </div>
       <div className="flex flex-1 items-center justify-center">
-        {filteredUsers.length > 0 ? (
-            <div className="relative w-full max-w-sm h-[60vh] md:h-[70vh]">
-            {filteredUsers.map((user, index) => (
-                <ProfileCard
-                key={user.name}
-                user={user}
-                index={index}
-                total={filteredUsers.length}
-                />
-            ))}
+        <div className="relative w-full max-w-sm h-[60vh] md:h-[70vh]">
+          {userQueue.length > 0 ? (
+            userQueue.map((user, index) => {
+              // We only render the top card to avoid performance issues
+              if (index === 0) {
+                return (
+                  <ProfileCard
+                    key={user.name}
+                    user={user}
+                    onSwipe={handleSwipe}
+                  />
+                );
+              }
+              return null;
+            }).reverse() // a little trick to stack the cards correctly
+          ) : (
+            <div className="text-center text-muted-foreground p-4 bg-muted rounded-lg">
+                <p className="text-lg font-semibold">No More Profiles</p>
+                <p>You've seen everyone who matches your criteria. Try expanding your filters!</p>
+                <Button onClick={() => setUserQueue(allUsers)} variant="link" className="mt-4">Reset Deck</Button>
             </div>
-        ) : (
-            <div className="text-center text-muted-foreground">
-                <p>No users match your criteria.</p>
-                <p>Try adjusting your filters.</p>
-            </div>
-        )}
+          )}
+        </div>
       </div>
     </>
   );
