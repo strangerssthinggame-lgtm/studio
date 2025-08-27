@@ -13,7 +13,8 @@ import GameCard from "@/components/game-card";
 import VibeCheckCard from "@/components/vibe-check-card";
 import { VibeCheckResults } from "@/components/vibe-check-results";
 import { chats, Chat } from "@/lib/chat-data";
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
+import Link from "next/link";
 
 
 type Message = {
@@ -27,6 +28,7 @@ export type DeckTheme = 'default' | 'friends' | 'date' | 'spicy';
 
 export default function ChatPage({ params }: { params: { id: string } }) {
   const chat: Chat | undefined = chats.find(c => c.id === params.id);
+  const router = useRouter();
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -165,12 +167,16 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         `theme-${activeTheme}`
     )}>
         <div className="flex items-center p-4 border-b bg-card rounded-t-xl">
-            <Avatar>
-                <AvatarImage src={chat.avatar} alt={chat.name} data-ai-hint="profile avatar" />
-                <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
-            </Avatar>
+            <Link href={`/users/${chat.id}`} className="cursor-pointer">
+              <Avatar>
+                  <AvatarImage src={chat.avatar} alt={chat.name} data-ai-hint="profile avatar" />
+                  <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+            </Link>
             <div className="ml-4 flex-1">
+              <Link href={`/users/${chat.id}`} className="cursor-pointer">
                 <p className="text-lg font-semibold font-headline">{chat.name}</p>
+              </Link>
                  <div className="flex items-center gap-2">
                   {chat.online && (
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
