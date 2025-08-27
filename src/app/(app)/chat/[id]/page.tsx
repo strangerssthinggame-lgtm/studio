@@ -10,6 +10,7 @@ import VibeCheckCard from "@/components/vibe-check-card";
 import { cn } from "@/lib/utils";
 import GameSelectionDialog from "@/components/game-selection-dialog";
 import CoinToss from "@/components/coin-toss";
+import { VibeCheckResults } from "@/components/vibe-check-results";
 
 type Message = {
     id: string;
@@ -21,6 +22,7 @@ type DeckTheme = 'default' | 'friends' | 'date' | 'spicy';
 
 export default function ChatPage({ params }: { params: { id: string } }) {
   const [isVibeCheckComplete, setIsVibeCheckComplete] = useState(false);
+  const [vibeCheckMatches, setVibeCheckMatches] = useState(0);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isGameSelectionOpen, setIsGameSelectionOpen] = useState(false);
@@ -41,7 +43,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     setInputValue('');
   };
 
-  const handleVibeCheckFinish = () => {
+  const handleVibeCheckFinish = (matches: number) => {
+    setVibeCheckMatches(matches);
     setIsVibeCheckComplete(true);
   }
 
@@ -93,6 +96,10 @@ export default function ChatPage({ params }: { params: { id: string } }) {
             
             {!isVibeCheckComplete && (
                 <VibeCheckCard onGameFinish={handleVibeCheckFinish} />
+            )}
+
+            {isVibeCheckComplete && (
+                <VibeCheckResults totalMatches={vibeCheckMatches} />
             )}
 
             {isVibeCheckComplete && gameStage === 'toss' && <CoinToss onTossFinish={handleTossFinish} />}
