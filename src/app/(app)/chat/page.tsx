@@ -67,7 +67,16 @@ export default function ChatListPage() {
                 )}>
                   <Link href={`/users/${chat.id}`}>
                     <div className="relative">
-                      <Avatar className="h-14 w-14 border cursor-pointer">
+                      <Avatar className={cn(
+                        "h-14 w-14 border-2 cursor-pointer transition-colors",
+                        chat.unread > 0 && chat.vibe === 'friends' && 'border-sky-500',
+                        chat.unread > 0 && chat.vibe === 'date' && 'border-rose-500',
+                        chat.unread > 0 && chat.vibe === 'spicy' && 'border-orange-500',
+                        chat.unread > 0 && 'ring-2 ring-offset-2 ring-offset-background',
+                        chat.unread > 0 && chat.vibe === 'friends' && 'ring-sky-500/50',
+                        chat.unread > 0 && chat.vibe === 'date' && 'ring-rose-500/50',
+                        chat.unread > 0 && chat.vibe === 'spicy' && 'ring-orange-500/50'
+                      )}>
                         <AvatarImage src={chat.avatar} alt={chat.name} data-ai-hint="profile avatar" />
                         <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
                       </Avatar>
@@ -88,12 +97,6 @@ export default function ChatListPage() {
                   {chat.unread > 0 && (
                       <div className="flex flex-col items-center justify-center gap-1">
                         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">{chat.unread}</span>
-                        <div className={cn(
-                            "w-2.5 h-2.5 rounded-full",
-                             chat.vibe === 'friends' && 'bg-sky-500',
-                             chat.vibe === 'date' && 'bg-rose-500',
-                             chat.vibe === 'spicy' && 'bg-orange-500'
-                        )}/>
                       </div>
                   )}
                 </div>
