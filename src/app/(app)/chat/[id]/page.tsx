@@ -4,7 +4,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Paperclip, Send, Smile, MoreVertical, Zap } from "lucide-react";
+import { Paperclip, Send, Smile, MoreVertical, Zap, Wand2 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import GameSelectionDialog from "@/components/game-selection-dialog";
@@ -15,6 +15,7 @@ import { VibeCheckResults } from "@/components/vibe-check-results";
 import { chats, Chat } from "@/lib/chat-data";
 import { notFound, useRouter } from 'next/navigation';
 import Link from "next/link";
+import { AIPromptPopover } from "@/components/ai-prompt-popover";
 
 
 type Message = {
@@ -137,6 +138,10 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     setVibeCheckState('complete');
   }
 
+  const handleSuggestion = (prompt: string) => {
+    setInputValue(prompt);
+  }
+
   const isMyTurnInGame = gameStage === 'playing' && gameTurn === 'me';
   const isTheirTurnInGame = gameStage === 'playing' && gameTurn === 'them';
   const canAnswer = gameStage === 'playing' && isAwaitingAnswer;
@@ -151,6 +156,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     if (gameStage === 'playing') return "The game is in progress...";
     return "Type a message...";
   }
+
+  const conversationHistory = messages.map(m => `${m.sender === 'me' ? 'User A' : 'User B'}: ${m.text}`).join('\n');
 
   // Hide main chat UI if Vibe Check is needed
   if (vibeCheckState === 'needed') {
@@ -257,13 +264,15 @@ export default function ChatPage({ params }: { params: { id: string } }) {
             <form className="relative" onSubmit={handleSendMessage}>
                 <Input 
                     placeholder={placeholderText()}
-                    className="pr-24" 
+                    className="pr-32" 
                     disabled={isChatInputDisabled}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center">
-                    <Button variant="ghost" size="icon" type="button" disabled={isChatInputDisabled}><Smile className="h-5 w-5"/></Button>
+                    <AIPromptPopover previousInteractions={conversationHistory} onSuggestion={handleSuggestion} isDisabled={isChatInputDisabled}>
+                      <Button variant="ghost" size="icon" type="button" disabled={isChatInputDisabled}><Wand2 className="h-5 w-5"/></Button>
+                    </AIPromptPopover>
                     <Button variant="ghost" size="icon" type="button" disabled={isChatInputDisabled}><Paperclip className="h-5 w-5"/></Button>
                     <Button variant="default" size="icon" className="mr-2" type="submit" disabled={isChatInputDisabled}><Send className="h-5 w-5"/></Button>
                 </div>
@@ -272,3 +281,5 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     </div>
   )
 }
+
+    
