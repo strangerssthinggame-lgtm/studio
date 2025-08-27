@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import GameSelectionDialog from "@/components/game-selection-dialog";
 import CoinToss from "@/components/coin-toss";
 import { VibeCheckResults } from "@/components/vibe-check-results";
+import GameCard from "@/components/game-card";
 
 type Message = {
     id: string;
@@ -18,7 +19,7 @@ type Message = {
     sender: 'me' | 'them';
 };
 
-type DeckTheme = 'default' | 'friends' | 'date' | 'spicy';
+export type DeckTheme = 'default' | 'friends' | 'date' | 'spicy';
 
 export default function ChatPage({ params }: { params: { id: string } }) {
   const [isVibeCheckComplete, setIsVibeCheckComplete] = useState(false);
@@ -28,6 +29,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   const [isGameSelectionOpen, setIsGameSelectionOpen] = useState(false);
   const [activeTheme, setActiveTheme] = useState<DeckTheme>('default');
   const [gameStage, setGameStage] = useState<'none' | 'toss' | 'playing'>('none');
+  const [deckName, setDeckName] = useState<'Friends' | 'Date' | 'Spicy' | ''>('');
+
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +53,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
   const handleGameSelect = (deck: 'Friends' | 'Date' | 'Spicy') => {
     setActiveTheme(deck.toLowerCase() as DeckTheme);
+    setDeckName(deck);
     setIsGameSelectionOpen(false);
     setGameStage('toss');
   }
@@ -61,6 +65,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   const handleGameFinish = () => {
     setGameStage('none');
     setActiveTheme('default');
+    setDeckName('');
     // Optional: Add a system message that the game has ended.
   }
 
@@ -103,10 +108,10 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                 <VibeCheckResults totalMatches={vibeCheckMatches} />
             )}
 
-            {isVibeCheckComplete && gameStage === 'toss' && <CoinToss onTossFinish={handleTossFinish} />}
+            {isVibeCheckComplete && gameStage === 'toss' && deckName && <CoinToss onTossFinish={handleTossFinish} deckName={deckName} />}
             
-            {isVibeCheckComplete && gameStage === 'playing' && (
-                 <VibeCheckCard onGameFinish={handleGameFinish} forcePlay={true} />
+            {isVibeCheckComplete && gameStage === 'playing' && deckName && (
+                 <GameCard onGameFinish={handleGameFinish} deckName={deckName} />
             )}
 
             {isVibeCheckComplete && gameStage === 'none' && (

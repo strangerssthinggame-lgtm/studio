@@ -1,14 +1,13 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, Zap, Sparkles, ChevronsRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Progress } from './ui/progress';
-import { VibeCheckResults } from './vibe-check-results';
 
 const questions = [
   {
@@ -29,26 +28,15 @@ const questions = [
 ];
 
 type VibeCheckCardProps = {
-    onGameFinish: (matches?: number) => void;
-    forcePlay?: boolean;
+    onGameFinish: (matches: number) => void;
 };
 
 
-export default function VibeCheckCard({ onGameFinish, forcePlay = false }: VibeCheckCardProps) {
-  const [gameState, setGameState] = useState<'intro' | 'playing' | 'results'>(forcePlay ? 'playing' : 'intro');
+export default function VibeCheckCard({ onGameFinish }: VibeCheckCardProps) {
+  const [gameState, setGameState] = useState<'intro' | 'playing'>('intro');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [myAnswers, setMyAnswers] = useState<(string | null)[]>(Array(questions.length).fill(null));
   const [showResult, setShowResult] = useState(false);
-
-  useEffect(() => {
-    if (forcePlay) {
-      setGameState('playing');
-      setCurrentQuestionIndex(0);
-      setMyAnswers(Array(questions.length).fill(null));
-      setShowResult(false);
-    }
-  }, [forcePlay]);
-
 
   const handleStart = () => {
     setGameState('playing');
@@ -67,7 +55,6 @@ export default function VibeCheckCard({ onGameFinish, forcePlay = false }: VibeC
         setShowResult(false);
       } else {
         const totalMatches = myAnswers.filter((answer, index) => answer === questions[index].theirAnswer).length;
-        setGameState('results');
         onGameFinish(totalMatches);
       }
   }
@@ -76,12 +63,6 @@ export default function VibeCheckCard({ onGameFinish, forcePlay = false }: VibeC
   const myCurrentChoice = myAnswers[currentQuestionIndex];
   const isMatch = myCurrentChoice === currentQuestion.theirAnswer;
   
-  const totalMatches = myAnswers.filter((answer, index) => answer === questions[index].theirAnswer).length;
-
-  if (gameState === 'results') {
-    return <VibeCheckResults totalMatches={totalMatches} />;
-  }
-
   const renderIntro = () => (
     <div className="animate-in fade-in-50 zoom-in-95">
         <CardHeader className="bg-muted/50">
