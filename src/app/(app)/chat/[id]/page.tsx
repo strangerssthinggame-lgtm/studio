@@ -10,6 +10,9 @@ import { cn } from "@/lib/utils";
 import GameSelectionDialog from "@/components/game-selection-dialog";
 import CoinToss from "@/components/coin-toss";
 import GameCard from "@/components/game-card";
+import VibeCheckCard from "@/components/vibe-check-card";
+import { VibeCheckResults } from "@/components/vibe-check-results";
+
 
 type Message = {
     id: string;
@@ -29,6 +32,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   const [deckName, setDeckName] = useState<'Friends' | 'Date' | 'Spicy' | ''>('');
   const [gameTurn, setGameTurn] = useState<'me' | 'them' | null>(null);
   const [isAwaitingAnswer, setIsAwaitingAnswer] = useState(false);
+  const [vibeCheckState, setVibeCheckState] = useState<'needed' | 'in_progress' | 'complete'>('needed');
+  const [vibeCheckMatches, setVibeCheckMatches] = useState(0);
 
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -110,12 +115,18 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
   };
 
+  const handleVibeCheckFinish = (matches: number) => {
+    setVibeCheckMatches(matches);
+    setVibeCheckState('complete');
+  }
+
   const isMyTurnInGame = gameStage === 'playing' && gameTurn === 'me' && !isAwaitingAnswer;
   const canAnswer = gameStage === 'playing' && isAwaitingAnswer;
   const isTheirTurnToAsk = gameStage === 'playing' && gameTurn === 'them' && !isAwaitingAnswer;
   
-  const isChatInputDisabled = gameStage === 'playing' && !canAnswer;
+  const isChatInputDisabled = vibeCheckState !== 'complete' || (gameStage === 'playing' && !canAnswer);
   const placeholderText = () => {
+    if (vibeCheckState !== 'complete') return "Complete the Vibe Check to start chatting...";
     if (canAnswer) return "It's your turn to answer...";
     if (isMyTurnInGame) return "It's your turn to ask a question...";
     if (isTheirTurnToAsk) return "Waiting for Sophia to ask...";
@@ -123,6 +134,14 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     return "Type a message...";
   }
 
+  // Hide main chat UI if Vibe Check is needed
+  if (vibeCheckState === 'needed') {
+      return (
+        <div className="flex flex-col h-[calc(100vh_-_theme(spacing.24))] rounded-xl border items-center justify-center bg-muted/20">
+            <VibeCheckCard onGameFinish={handleVibeCheckFinish} />
+        </div>
+      )
+  }
 
   return (
     <div className={cn(
@@ -154,6 +173,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-background">
+            
+            {vibeCheckState === 'complete' && <VibeCheckResults totalMatches={vibeCheckMatches} />}
 
             {gameStage === 'toss' && deckName && <CoinToss onTossFinish={handleTossFinish} deckName={deckName} />}
             
