@@ -4,10 +4,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Paperclip, Send, Smile, MoreVertical } from "lucide-react";
+import { Paperclip, Send, Smile, MoreVertical, Zap } from "lucide-react";
 import { useState } from "react";
 import VibeCheckCard from "@/components/vibe-check-card";
 import { cn } from "@/lib/utils";
+import GameSelectionDialog from "@/components/game-selection-dialog";
 
 type Message = {
     id: string;
@@ -19,6 +20,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   const [isGameFinished, setIsGameFinished] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
+  const [isGameSelectionOpen, setIsGameSelectionOpen] = useState(false);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +40,13 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     setIsGameFinished(true);
   }
 
+  const handleGameSelect = (deck: 'Friends' | 'Date' | 'Spicy') => {
+    // For now, just log the selected deck.
+    // In the future, this will trigger the game invitation.
+    console.log("Selected deck:", deck);
+    setIsGameSelectionOpen(false);
+  }
+
   return (
     <div className="flex flex-col h-[calc(100vh_-_theme(spacing.24))] bg-card rounded-xl border">
         <div className="flex items-center p-4 border-b">
@@ -49,13 +58,22 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                 <p className="text-lg font-semibold font-headline">Sophia</p>
                 <p className="text-sm text-muted-foreground">Online</p>
             </div>
+            <GameSelectionDialog 
+              open={isGameSelectionOpen} 
+              onOpenChange={setIsGameSelectionOpen}
+              onSelectDeck={handleGameSelect}
+            >
+              <Button variant="outline">
+                <Zap className="mr-2 h-4 w-4" />
+                Start Game
+              </Button>
+            </GameSelectionDialog>
             <Button variant="ghost" size="icon">
                 <MoreVertical className="h-5 w-5"/>
             </Button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
-            <div className="text-center text-xs text-muted-foreground">Today</div>
             
             <VibeCheckCard onGameFinish={handleGameFinish} />
 
