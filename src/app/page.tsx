@@ -66,7 +66,7 @@ export default function Home() {
       <div className="flex items-center justify-center p-6 sm:p-12">
         <div className="mx-auto grid w-[350px] gap-6">
           <div className="grid gap-2 text-center">
-            <h1 className="text-4xl font-headline font-bold text-primary">VibeVerse</h1>
+            <h1 className="text-4xl font-headline font-bold text-primary">Bondly</h1>
             <p className="text-balance text-muted-foreground">
               Connect, play, and find your vibe.
             </p>
@@ -120,7 +120,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent"></div>
         <div className="absolute bottom-10 left-10 right-10 p-6 bg-black/30 backdrop-blur-md rounded-xl text-white">
             <h2 className="text-3xl font-headline font-bold">Meaningful Connections, Made Fun.</h2>
-            <p className="mt-2 text-lg">VibeVerse is more than just a chat app. It's a space for genuine interaction through playful, structured games.</p>
+            <p className="mt-2 text-lg">Bondly is more than just a chat app. It's a space for genuine interaction through playful, structured games.</p>
             <div className="mt-4 flex space-x-6">
                 <div className="flex items-center space-x-2">
                     <Heart className="text-accent"/>

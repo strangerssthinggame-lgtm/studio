@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'VibeVerse',
+  title: 'Bondly',
   description: 'A social game app for fun, meaningful interactions.',
 };
 

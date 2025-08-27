@@ -93,7 +93,7 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-primary">
                 <path d="M12.0006 18.26L4.94715 22.2082L6.52248 14.2799L0.587891 8.7918L8.61493 7.84006L12.0006 0.5L15.3862 7.84006L23.4132 8.7918L17.4787 14.2799L19.054 22.2082L12.0006 18.26Z"></path>
               </svg>
-              <span className="">VibeVerse</span>
+              <span className="">Bondly</span>
             </Link>
           </div>
           <div className="flex-1">
@@ -165,7 +165,7 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-primary">
                     <path d="M12.0006 18.26L4.94715 22.2082L6.52248 14.2799L0.587891 8.7918L8.61493 7.84006L12.0006 0.5L15.3862 7.84006L23.4132 8.7918L17.4787 14.2799L19.054 22.2082L12.0006 18.26Z"></path>
                  </svg>
-                  <span className="font-headline">VibeVerse</span>
+                  <span className="font-headline">Bondly</span>
                 </Link>
                 {navLinks.map((link) => {
                   const isActive = pathname.startsWith(link.href);
