@@ -171,7 +171,12 @@ export default function ChatPage({ params }: { params: { id: string } }) {
             </Avatar>
             <div className="ml-4 flex-1">
                 <p className="text-lg font-semibold font-headline">{chat.name}</p>
-                <p className="text-sm text-muted-foreground">Online</p>
+                 <div className="flex items-center gap-2">
+                  {chat.online && (
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  )}
+                  <p className="text-sm text-muted-foreground">{chat.online ? 'Online' : 'Offline'}</p>
+                </div>
             </div>
             <GameSelectionDialog 
               open={isGameSelectionOpen} 

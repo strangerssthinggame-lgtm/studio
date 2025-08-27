@@ -66,10 +66,15 @@ export default function ChatListPage() {
                     "flex items-center gap-4 p-4 border-b border-border hover:bg-muted/50 cursor-pointer transition-colors duration-200",
                     chat.unread > 0 && "bg-primary/5"
                 )}>
-                  <Avatar className="h-14 w-14 border">
-                    <AvatarImage src={chat.avatar} alt={chat.name} data-ai-hint="profile avatar" />
-                    <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
+                  <div className="relative">
+                    <Avatar className="h-14 w-14 border">
+                      <AvatarImage src={chat.avatar} alt={chat.name} data-ai-hint="profile avatar" />
+                      <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    {chat.online && (
+                      <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-background rounded-full" />
+                    )}
+                  </div>
                   <div className="grid gap-1.5 flex-1">
                     <div className="flex items-baseline gap-2">
                         <p className="text-base font-bold font-headline tracking-wide">{chat.name}</p>
