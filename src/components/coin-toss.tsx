@@ -52,7 +52,7 @@ export default function CoinToss({ onTossFinish, deckName }: CoinTossProps) {
     if (isFlipping) return;
     setIsFlipping(true);
     setTimeout(() => {
-      const winner = Math.random() > 0.5 ? 'You' : 'Sophia';
+      const winner = Math.random() < (2 / 3) ? 'You' : 'Sophia';
       setResult(winner);
       setIsFlipping(false);
       
