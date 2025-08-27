@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Bell,
   Home,
@@ -30,12 +31,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 export default function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+
+  const navLinks = [
+    { href: "/dashboard", icon: Home, label: "Feed" },
+    { href: "/chat", icon: MessageSquare, label: "Chats", badge: 3 },
+    { href: "/dashboard/ai-prompts", icon: Sparkles, label: "AI Prompts" },
+  ];
+
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <div className="hidden border-r bg-muted/40 md:block">
@@ -54,30 +64,29 @@ export default function AppLayout({
           </div>
           <div className="flex-1">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-              >
-                <Home className="h-4 w-4" />
-                Feed
-              </Link>
-              <Link
-                href="/chat"
-                className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2 text-primary transition-all hover:text-primary"
-              >
-                <MessageSquare className="h-4 w-4" />
-                Chats
-                <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
-                  3
-                </Badge>
-              </Link>
-              <Link
-                href="/dashboard/ai-prompts"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-              >
-                <Sparkles className="h-4 w-4" />
-                AI Prompts
-              </Link>
+              {navLinks.map((link) => {
+                const isActive = pathname.startsWith(link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
+                      isActive
+                        ? "bg-muted text-primary"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    <link.icon className="h-4 w-4" />
+                    {link.label}
+                    {link.badge && (
+                      <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
+                        {link.badge}
+                      </Badge>
+                    )}
+                  </Link>
+                );
+              })}
             </nav>
           </div>
           <div className="mt-auto p-4">
@@ -124,30 +133,29 @@ export default function AppLayout({
                  </svg>
                   <span className="font-headline">VibeVerse</span>
                 </Link>
-                <Link
-                  href="/dashboard"
-                  className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-                >
-                  <Home className="h-5 w-5" />
-                  Feed
-                </Link>
-                <Link
-                  href="/chat"
-                  className="mx-[-0.65rem] flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground"
-                >
-                  <MessageSquare className="h-5 w-5" />
-                  Chats
-                  <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
-                    3
-                  </Badge>
-                </Link>
-                <Link
-                  href="/dashboard/ai-prompts"
-                  className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-                >
-                  <Sparkles className="h-5 w-5" />
-                  AI Prompts
-                </Link>
+                {navLinks.map((link) => {
+                  const isActive = pathname.startsWith(link.href);
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={cn(
+                        "mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2",
+                        isActive
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <link.icon className="h-5 w-5" />
+                      {link.label}
+                      {link.badge && (
+                        <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
+                          {link.badge}
+                        </Badge>
+                      )}
+                    </Link>
+                  );
+                })}
               </nav>
               <div className="mt-auto">
                 <Card>
