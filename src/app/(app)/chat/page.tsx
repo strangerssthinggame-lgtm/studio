@@ -61,27 +61,30 @@ export default function ChatListPage() {
       <div className="flex-1 -mx-4 -mb-4 overflow-y-auto">
           <div className="flex flex-col">
             {filteredChats.map(chat => (
-              <Link href={`/chat/${chat.id}`} key={chat.id}>
-                <div className={cn(
-                    "flex items-center gap-4 p-4 border-b border-border hover:bg-muted/50 cursor-pointer transition-colors duration-200",
+                <div key={chat.id} className={cn(
+                    "flex items-center gap-4 p-4 border-b border-border hover:bg-muted/50 transition-colors duration-200",
                     chat.unread > 0 && "bg-primary/5"
                 )}>
-                  <div className="relative">
-                    <Avatar className="h-14 w-14 border">
-                      <AvatarImage src={chat.avatar} alt={chat.name} data-ai-hint="profile avatar" />
-                      <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    {chat.online && (
-                      <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-background rounded-full" />
-                    )}
-                  </div>
-                  <div className="grid gap-1.5 flex-1">
-                    <div className="flex items-baseline gap-2">
-                        <p className="text-base font-bold font-headline tracking-wide">{chat.name}</p>
-                        <p className="text-xs text-muted-foreground">{chat.time}</p>
+                  <Link href={`/users/${chat.id}`}>
+                    <div className="relative">
+                      <Avatar className="h-14 w-14 border cursor-pointer">
+                        <AvatarImage src={chat.avatar} alt={chat.name} data-ai-hint="profile avatar" />
+                        <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      {chat.online && (
+                        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-background rounded-full" />
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">{chat.message}</p>
-                  </div>
+                  </Link>
+                  <Link href={`/chat/${chat.id}`} className="flex-1">
+                    <div className="grid gap-1.5">
+                      <div className="flex items-baseline gap-2">
+                          <p className="text-base font-bold font-headline tracking-wide">{chat.name}</p>
+                          <p className="text-xs text-muted-foreground">{chat.time}</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">{chat.message}</p>
+                    </div>
+                  </Link>
                   {chat.unread > 0 && (
                       <div className="flex flex-col items-center justify-center gap-1">
                         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">{chat.unread}</span>
@@ -94,7 +97,6 @@ export default function ChatListPage() {
                       </div>
                   )}
                 </div>
-              </Link>
             ))}
              {filteredChats.length === 0 && (
                 <div className="text-center text-muted-foreground p-8">
