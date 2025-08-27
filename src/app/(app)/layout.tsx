@@ -13,6 +13,7 @@ import {
   WandSparkles,
   User,
   LogOut,
+  Settings,
 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { auth } from "@/lib/firebase";
@@ -240,7 +241,12 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/settings">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
