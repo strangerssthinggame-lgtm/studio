@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, Users, Flame, Send, RefreshCw } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 const gameDecks = {
   Friends: [
@@ -38,10 +37,9 @@ type GameCardProps = {
     onGameFinish: () => void;
     deckName: 'Friends' | 'Date' | 'Spicy';
     onSendQuestion: (question: string) => void;
-    turn: 'me' | 'them';
 };
 
-export default function GameCard({ onGameFinish, deckName, onSendQuestion, turn }: GameCardProps) {
+export default function GameCard({ onGameFinish, deckName, onSendQuestion }: GameCardProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const questions = gameDecks[deckName];
   const { icon: Icon, title } = deckInfo[deckName];

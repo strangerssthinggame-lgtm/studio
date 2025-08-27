@@ -38,23 +38,21 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputValue.trim() === '') return;
+    if (inputValue.trim() === '' || !canAnswer) return;
 
     const newMessage: Message = {
         id: (messages.length + 1).toString(),
         text: inputValue,
         sender: 'me',
-        type: isAwaitingAnswer ? 'answer' : undefined,
+        type: 'answer',
     };
 
     setMessages([...messages, newMessage]);
     setInputValue('');
-    if(isAwaitingAnswer) {
-      setIsAwaitingAnswer(false);
-      
-      // After I answer, it's my turn to ask a question.
-      setGameTurn('me'); 
-    }
+    setIsAwaitingAnswer(false);
+    
+    // After I answer, it becomes the opponent's turn to ask a question.
+    setGameTurn('them'); 
   };
 
   const handleGameSelect = (deck: 'Friends' | 'Date' | 'Spicy') => {
@@ -79,6 +77,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   }
   
   const handleSendQuestion = (question: string) => {
+    // This function is called when it's MY turn to ask
     const newMessage: Message = {
       id: (messages.length + 1).toString(),
       text: question,
@@ -87,7 +86,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     };
     setMessages(prev => [...prev, newMessage]);
     setGameTurn(null); // No one's turn until they answer.
-    setIsAwaitingAnswer(true);
+    setIsAwaitingAnswer(true); // Now we are waiting for THEM to answer.
 
     // Simulate opponent's turn after a delay
     setTimeout(() => {
@@ -100,11 +99,27 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         };
         
         setMessages(prev => [...prev, opponentAnswer]);
-        setIsAwaitingAnswer(false); // Now it's their turn to ask
+        
+        // After they answer, it's my turn to answer THEIR question
+        setIsAwaitingAnswer(false);
+        // It's their turn to ask a question now.
         setGameTurn('them'); 
 
-    }, 2000);
+        // Simulate them asking a question
+         setTimeout(() => {
+            const opponentQuestion: Message = {
+                id: (messages.length + 3).toString(),
+                text: "What is your biggest fear?",
+                sender: 'them',
+                type: 'question'
+            };
+            setMessages(prev => [...prev, opponentQuestion]);
+            setGameTurn(null); // Turn is null while waiting for my answer
+            setIsAwaitingAnswer(true); // Now I need to answer.
+         }, 1500)
 
+
+    }, 2000);
   };
 
   const handleVibeCheckFinish = (matches: number) => {
@@ -112,16 +127,17 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     setVibeCheckState('complete');
   }
 
-  const isMyTurnInGame = gameStage === 'playing' && gameTurn === 'me' && !isAwaitingAnswer;
+  const isMyTurnInGame = gameStage === 'playing' && gameTurn === 'me';
+  const isTheirTurnInGame = gameStage === 'playing' && gameTurn === 'them';
   const canAnswer = gameStage === 'playing' && isAwaitingAnswer;
-  const isTheirTurnToAsk = gameStage === 'playing' && gameTurn === 'them' && !isAwaitingAnswer;
   
   const isChatInputDisabled = vibeCheckState !== 'complete' || (gameStage === 'playing' && !canAnswer);
+  
   const placeholderText = () => {
     if (vibeCheckState !== 'complete') return "Complete the Vibe Check to start chatting...";
     if (canAnswer) return "It's your turn to answer...";
     if (isMyTurnInGame) return "It's your turn to ask a question...";
-    if (isTheirTurnToAsk) return "Waiting for Sophia to ask...";
+    if (isTheirTurnInGame) return "Waiting for Sophia to ask...";
     if (gameStage === 'playing') return "The game is in progress...";
     return "Type a message...";
   }
@@ -170,7 +186,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
             {gameStage === 'toss' && deckName && <CoinToss onTossFinish={handleTossFinish} deckName={deckName} />}
             
-            {isMyTurnInGame && deckName && (
+            {isMyTurnInGame && !isAwaitingAnswer && deckName && (
                  <GameCard 
                     onGameFinish={handleGameFinish} 
                     deckName={deckName}
@@ -178,7 +194,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                 />
             )}
             
-            {isTheirTurnToAsk && (
+            {isTheirTurnInGame && !isAwaitingAnswer && (
                 <div className="text-center text-muted-foreground p-4 bg-muted/50 rounded-lg">
                     <p>Waiting for Sophia to ask a question...</p>
                 </div>
@@ -201,10 +217,11 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                         )}
                           <div className={cn(
                             "max-w-xs md:max-w-md lg:max-w-lg rounded-xl px-4 py-3 text-sm",
-                            message.sender === 'me' 
-                                ? 'bg-primary text-primary-foreground rounded-br-none' 
-                                : 'bg-muted rounded-bl-none',
-                            message.type === 'question' && 'border-2 border-primary/50 bg-primary/10 text-primary-foreground'
+                             message.type === 'question' 
+                                ? 'bg-muted border-2 border-primary/50 text-primary-foreground' 
+                                : (message.sender === 'me' 
+                                    ? 'bg-primary text-primary-foreground rounded-br-none' 
+                                    : 'bg-muted rounded-bl-none')
                         )}>
                             <p>{message.text}</p>
                         </div>
