@@ -72,7 +72,7 @@ export default function Home() {
             </p>
           </div>
           <Card className="shadow-lg">
-            <CardHeader>
+            <CardHeader className="text-center">
               <CardTitle className="text-2xl font-headline">Login</CardTitle>
               <CardDescription>
                 Sign in to start your next conversation adventure.
