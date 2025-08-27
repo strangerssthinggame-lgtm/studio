@@ -1,18 +1,37 @@
+
+'use client';
+
+import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { Search, Bell } from "lucide-react";
+import { Search, Bell, Users, Heart, Flame } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const chats = [
-  { id: '1', name: 'Sophia', message: "Hey! Loved your profile. Up for a game?", time: "5m ago", unread: 2, avatar: "https://picsum.photos/seed/sophia/100" },
-  { id: '2', name: 'Liam', message: "That was a fun game! Rematch soon?", time: "1h ago", unread: 0, avatar: "https://picsum.photos/seed/liam/100" },
-  { id: '3', name: 'Chloe', message: "You have a great taste in music!", time: "3h ago", unread: 0, avatar: "https://picsum.photos/seed/chloe/100" },
-  { id: '4', name: 'Mason', message: "Let's do this! Vibe Check, Date mode?", time: "1d ago", unread: 1, avatar: "https://picsum.photos/seed/mason/100" },
+  { id: '1', name: 'Sophia', message: "Hey! Loved your profile. Up for a game?", time: "5m ago", unread: 2, avatar: "https://picsum.photos/seed/sophia/100", vibe: 'date' },
+  { id: '2', name: 'Liam', message: "That was a fun game! Rematch soon?", time: "1h ago", unread: 0, avatar: "https://picsum.photos/seed/liam/100", vibe: 'friends' },
+  { id: '3', name: 'Chloe', message: "You have a great taste in music!", time: "3h ago", unread: 0, avatar: "https://picsum.photos/seed/chloe/100", vibe: 'spicy' },
+  { id: '4', name: 'Mason', message: "Let's do this! Vibe Check, Date mode?", time: "1d ago", unread: 1, avatar: "https://picsum.photos/seed/mason/100", vibe: 'date' },
 ]
 
+type FilterType = 'all' | 'friends' | 'date' | 'spicy';
+
 export default function ChatListPage() {
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+
+  const filteredChats = chats.filter(chat => 
+    activeFilter === 'all' || chat.vibe === activeFilter
+  );
+
+  const filterButtons = [
+      { name: 'All', value: 'all' as FilterType },
+      { name: 'Friends', value: 'friends' as FilterType, icon: Users },
+      { name: 'Date', value: 'date' as FilterType, icon: Heart },
+      { name: 'Spicy', value: 'spicy' as FilterType, icon: Flame },
+  ]
+
   return (
     <div className="flex flex-col h-full gap-4">
       <div className="flex items-center justify-between pb-4 border-b">
@@ -30,11 +49,29 @@ export default function ChatListPage() {
         <Input placeholder="Search chats..." className="pl-10 h-12 text-base" />
       </div>
 
-      <div className="flex-1 -mx-4 -mb-4">
+      <div className="flex items-center gap-2">
+        {filterButtons.map(filter => (
+             <Button 
+                key={filter.value} 
+                variant={activeFilter === filter.value ? 'default' : 'outline'}
+                onClick={() => setActiveFilter(filter.value)}
+                className="gap-2"
+            >
+                {filter.icon && <filter.icon />}
+                {filter.name}
+            </Button>
+        ))}
+      </div>
+
+
+      <div className="flex-1 -mx-4 -mb-4 overflow-y-auto">
           <div className="flex flex-col">
-            {chats.map(chat => (
+            {filteredChats.map(chat => (
               <Link href={`/chat/${chat.id}`} key={chat.id}>
-                <div className="flex items-center gap-4 p-4 border-b border-border hover:bg-muted/50 cursor-pointer transition-colors duration-200">
+                <div className={cn(
+                    "flex items-center gap-4 p-4 border-b border-border hover:bg-muted/50 cursor-pointer transition-colors duration-200",
+                    chat.unread > 0 && "bg-primary/5"
+                )}>
                   <Avatar className="h-14 w-14 border">
                     <AvatarImage src={chat.avatar} alt={chat.name} data-ai-hint="profile avatar" />
                     <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
@@ -47,11 +84,24 @@ export default function ChatListPage() {
                     <p className="text-sm text-muted-foreground truncate">{chat.message}</p>
                   </div>
                   {chat.unread > 0 && (
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">{chat.unread}</span>
+                      <div className="flex flex-col items-center justify-center gap-1">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">{chat.unread}</span>
+                        <div className={cn(
+                            "w-2.5 h-2.5 rounded-full",
+                             chat.vibe === 'friends' && 'bg-sky-500',
+                             chat.vibe === 'date' && 'bg-rose-500',
+                             chat.vibe === 'spicy' && 'bg-orange-500'
+                        )}/>
+                      </div>
                   )}
                 </div>
               </Link>
             ))}
+             {filteredChats.length === 0 && (
+                <div className="text-center text-muted-foreground p-8">
+                    <p>No chats found for the "{activeFilter}" filter.</p>
+                </div>
+             )}
           </div>
       </div>
     </div>
