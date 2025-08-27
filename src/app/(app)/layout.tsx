@@ -92,7 +92,20 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold font-headline">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-primary">
-                <path d="M12 4.435c-1.989-5.399-12-3.599-12 2.999 0 4.001 4 8.001 12 12.001 8-4 12-8.001 12-12.001 0-6.598-10.011-8.398-12-2.999z"/>
+                  <defs>
+                      <linearGradient id="logoGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" style={{stopColor: 'hsl(var(--primary))', stopOpacity: 1}} />
+                          <stop offset="100%" style={{stopColor: 'hsl(var(--accent))', stopOpacity: 1}} />
+                      </linearGradient>
+                  </defs>
+                  <path 
+                      fill="url(#logoGradient)"
+                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z M12 6.45C10.42 5.06 8.36 4.5 6.75 5.25c-2.32 1.09-3.43 3.99-2.58 6.38 1.15 3.23 4.28 5.37 7.83 5.37s6.68-2.14 7.83-5.37c.85-2.39-.26-5.29-2.58-6.38-1.61-.75-3.67-.19-5.25 1.2z"
+                  />
+                  <path
+                      fill="white"
+                      d="M12 11.23c-.78-1.1-2.25-1.55-3.5-1.12-1.39.49-2.07 2.22-1.5 3.5.67 1.77 2.37 2.94 4.33 2.94s3.66-1.17 4.33-2.94c.57-1.28-.11-3.01-1.5-3.5-1.25-.43-2.72.02-3.5 1.12z"
+                  />
               </svg>
               <span className="">Bondly</span>
             </Link>
@@ -164,7 +177,20 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
                   className="flex items-center gap-2 text-lg font-semibold mb-4"
                 >
                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-primary">
-                    <path d="M12 4.435c-1.989-5.399-12-3.599-12 2.999 0 4.001 4 8.001 12 12.001 8-4 12-8.001 12-12.001 0-6.598-10.011-8.398-12-2.999z"/>
+                    <defs>
+                      <linearGradient id="logoGradientMobile" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" style={{stopColor: 'hsl(var(--primary))', stopOpacity: 1}} />
+                          <stop offset="100%" style={{stopColor: 'hsl(var(--accent))', stopOpacity: 1}} />
+                      </linearGradient>
+                  </defs>
+                  <path 
+                      fill="url(#logoGradientMobile)"
+                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z M12 6.45C10.42 5.06 8.36 4.5 6.75 5.25c-2.32 1.09-3.43 3.99-2.58 6.38 1.15 3.23 4.28 5.37 7.83 5.37s6.68-2.14 7.83-5.37c.85-2.39-.26-5.29-2.58-6.38-1.61-.75-3.67-.19-5.25 1.2z"
+                  />
+                  <path
+                      fill="white"
+                      d="M12 11.23c-.78-1.1-2.25-1.55-3.5-1.12-1.39.49-2.07 2.22-1.5 3.5.67 1.77 2.37 2.94 4.33 2.94s3.66-1.17 4.33-2.94c.57-1.28-.11-3.01-1.5-3.5-1.25-.43-2.72.02-3.5 1.12z"
+                  />
                  </svg>
                   <span className="font-headline">Bondly</span>
                 </Link>
