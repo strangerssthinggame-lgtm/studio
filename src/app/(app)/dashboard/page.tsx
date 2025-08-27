@@ -19,8 +19,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Slider } from '@/components/ui/slider';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { userProfiles } from '@/lib/user-profile-data';
+import type { UserProfile } from '@/lib/user-profile-data';
 
 export default function DashboardPage() {
   const [filters, setFilters] = useState({
@@ -30,8 +31,8 @@ export default function DashboardPage() {
     gender: 'all',
   });
   
-  const [userQueue, setUserQueue] = useState(() => userProfiles);
-  const [history, setHistory] = useState<typeof userProfiles>([]);
+  const [userQueue, setUserQueue] = useState<UserProfile[]>([]);
+  const [history, setHistory] = useState<UserProfile[]>([]);
 
   const filteredUsers = useMemo(() => {
     return userProfiles.filter(user => {
@@ -47,15 +48,16 @@ export default function DashboardPage() {
     });
   }, [filters]);
 
-  const handleSwipe = useCallback((swipedUser: any, direction: 'left' | 'right') => {
-    setUserQueue(currentQueue => currentQueue.filter(u => u.id !== swipedUser.id));
+  const handleSwipe = useCallback((swipedUser: UserProfile, direction: 'left' | 'right') => {
+    setUserQueue(currentQueue => currentQueue.slice(0, currentQueue.length - 1));
     setHistory(prev => [...prev, swipedUser]);
   }, []);
 
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     setUserQueue(filteredUsers);
     setHistory([]);
-  };
+  }, [filteredUsers]);
+
 
   const handleFilterChange = (key: string, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -67,9 +69,9 @@ export default function DashboardPage() {
   }, [filteredUsers])
 
   // Apply filters on initial load
-  useState(() => {
+  useEffect(() => {
     applyFilters();
-  });
+  }, [applyFilters]);
 
 
   return (
@@ -180,17 +182,7 @@ export default function DashboardPage() {
       <div className="flex flex-1 items-center justify-center -mx-4">
         <div className="relative w-full max-w-sm h-[60vh] md:h-[70vh]">
           {userQueue.length > 0 ? (
-             <>
-              <div className="absolute inset-0 flex items-center justify-center text-center text-muted-foreground p-4 bg-muted rounded-lg -z-10">
-                    <div>
-                        <p className="text-lg font-semibold">That's everyone for now!</p>
-                        <p>You've seen all profiles matching your filters. Why not try adjusting them?</p>
-                        <Button onClick={resetDeck} variant="link" className="mt-4">
-                            <RotateCw className="mr-2"/>
-                            Reset Deck
-                        </Button>
-                    </div>
-                </div>
+             <div className="relative w-full h-full">
               {userQueue.map((user, index) => (
                   <ProfileCard
                     key={user.id}
@@ -198,13 +190,13 @@ export default function DashboardPage() {
                     onSwipe={handleSwipe}
                     style={{ 
                         zIndex: userQueue.length - index,
-                        transform: `scale(${1 - (userQueue.length - index - (userQueue.length - 1)) * 0.05}) translateY(${(userQueue.length - index - (userQueue.length - 1)) * -10}px)`,
+                        transform: `scale(${1 - (index * 0.05)}) translateY(${index * -10}px)`,
                         opacity: index > 2 ? 0 : 1,
                     }}
                   />
                 )).reverse()
             }
-             </>
+             </div>
           ) : (
             <div className="text-center text-muted-foreground p-4 bg-muted rounded-lg">
                 <p className="text-lg font-semibold">No More Profiles</p>
@@ -215,6 +207,18 @@ export default function DashboardPage() {
                 </Button>
             </div>
           )}
+           {userQueue.length <= 1 && (
+             <div className="absolute inset-0 flex items-center justify-center text-center text-muted-foreground p-4 bg-muted rounded-lg -z-10">
+                <div>
+                    <p className="text-lg font-semibold">That's everyone for now!</p>
+                    <p>You've seen all profiles matching your filters. Why not try adjusting them?</p>
+                    <Button onClick={resetDeck} variant="link" className="mt-4">
+                        <RotateCw className="mr-2"/>
+                        Reset Deck
+                    </Button>
+                </div>
+            </div>
+           )}
         </div>
       </div>
     </>

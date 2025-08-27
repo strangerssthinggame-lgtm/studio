@@ -40,6 +40,7 @@ export function ProfileCard({ user, onSwipe, style }: ProfileCardProps) {
         setTimeout(() => {
             onSwipe(user, direction);
             if (direction === 'right') {
+                // Simulate a match for demonstration
                 setShowMatchDialog(true);
             }
         }, 300);
