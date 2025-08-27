@@ -20,12 +20,12 @@ type Message = {
 type DeckTheme = 'default' | 'friends' | 'date' | 'spicy';
 
 export default function ChatPage({ params }: { params: { id: string } }) {
-  const [isGameFinished, setIsGameFinished] = useState(false);
+  const [isVibeCheckComplete, setIsVibeCheckComplete] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isGameSelectionOpen, setIsGameSelectionOpen] = useState(false);
   const [activeTheme, setActiveTheme] = useState<DeckTheme>('default');
-  const [gameStage, setGameStage] = useState<'pre-game' | 'toss' | 'playing'>('pre-game');
+  const [gameStage, setGameStage] = useState<'none' | 'toss' | 'playing'>('none');
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,9 +41,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     setInputValue('');
   };
 
-  const handleGameFinish = () => {
-    setIsGameFinished(true);
-    setGameStage('pre-game');
+  const handleVibeCheckFinish = () => {
+    setIsVibeCheckComplete(true);
   }
 
   const handleGameSelect = (deck: 'Friends' | 'Date' | 'Spicy') => {
@@ -53,9 +52,12 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   }
 
   const handleTossFinish = (winner: 'You' | 'Sophia') => {
-    // For now, we'll just proceed to the game.
-    // We can use the 'winner' info later to decide who asks the first question.
     setGameStage('playing');
+  }
+  
+  const handleGameFinish = () => {
+    setGameStage('none');
+    // Optional: Add a system message that the game has ended.
   }
 
   return (
@@ -77,7 +79,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
               onOpenChange={setIsGameSelectionOpen}
               onSelectDeck={handleGameSelect}
             >
-              <Button variant="outline">
+              <Button variant="outline" disabled={!isVibeCheckComplete}>
                 <Zap className="mr-2 h-4 w-4" />
                 Start Game
               </Button>
@@ -89,17 +91,17 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-background">
             
-            {gameStage === 'pre-game' && !isGameFinished && (
-                <VibeCheckCard onGameFinish={handleGameFinish} />
+            {!isVibeCheckComplete && (
+                <VibeCheckCard onGameFinish={handleVibeCheckFinish} />
             )}
 
-            {gameStage === 'toss' && <CoinToss onTossFinish={handleTossFinish} />}
+            {isVibeCheckComplete && gameStage === 'toss' && <CoinToss onTossFinish={handleTossFinish} />}
             
-            {gameStage === 'playing' && (
+            {isVibeCheckComplete && gameStage === 'playing' && (
                  <VibeCheckCard onGameFinish={handleGameFinish} forcePlay={true} />
             )}
 
-            {isGameFinished && (
+            {isVibeCheckComplete && gameStage === 'none' && (
                 <div className="space-y-4">
                      {messages.map((message) => (
                         <div 
@@ -131,16 +133,16 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         <div className="p-4 border-t bg-card">
             <form className="relative" onSubmit={handleSendMessage}>
                 <Input 
-                    placeholder={isGameFinished ? "Type a message..." : "Finish the Vibe Check to chat"} 
+                    placeholder={isVibeCheckComplete ? "Type a message..." : "Finish the Vibe Check to chat"} 
                     className="pr-24" 
-                    disabled={!isGameFinished} 
+                    disabled={!isVibeCheckComplete || gameStage !== 'none'} 
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center">
-                    <Button variant="ghost" size="icon" type="button" disabled={!isGameFinished}><Smile className="h-5 w-5"/></Button>
-                    <Button variant="ghost" size="icon" type="button" disabled={!isGameFinished}><Paperclip className="h-5 w-5"/></Button>
-                    <Button variant="default" size="icon" className="mr-2" type="submit" disabled={!isGameFinished}><Send className="h-5 w-5"/></Button>
+                    <Button variant="ghost" size="icon" type="button" disabled={!isVibeCheckComplete}><Smile className="h-5 w-5"/></Button>
+                    <Button variant="ghost" size="icon" type="button" disabled={!isVibeCheckComplete}><Paperclip className="h-5 w-5"/></Button>
+                    <Button variant="default" size="icon" className="mr-2" type="submit" disabled={!isVibeCheckComplete || gameStage !== 'none'}><Send className="h-5 w-5"/></Button>
                 </div>
             </form>
         </div>
