@@ -50,7 +50,9 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     setInputValue('');
     if(isAwaitingAnswer) {
       setIsAwaitingAnswer(false);
-      setGameTurn('them'); // It's now their turn to ask
+      
+      // After I answer, it's their turn to ask a question.
+      setGameTurn('them'); 
     }
   };
 
@@ -88,7 +90,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       type: 'question'
     };
     setMessages(prev => [...prev, newMessage]);
-    setGameTurn('them'); // Turn switches to them to answer
+    setGameTurn(null); // No one's turn until they answer.
     setIsAwaitingAnswer(true);
 
     // Simulate opponent's turn after a delay
@@ -100,18 +102,35 @@ export default function ChatPage({ params }: { params: { id: string } }) {
           sender: 'them',
           type: 'answer'
         };
-        setMessages(prev => [...prev, opponentAnswer]);
-        setIsAwaitingAnswer(false);
 
-        // It's now my turn to ask again
+        // Simulate opponent sending a new question
+        const opponentQuestion: Message = {
+          id: (messages.length + 3).toString(),
+          text: "What's the most adventurous thing you've ever done?",
+          sender: 'them',
+          type: 'question'
+        };
+
+        setMessages(prev => [...prev, opponentAnswer, opponentQuestion]);
+        setIsAwaitingAnswer(true); // Now I need to answer their question
         setGameTurn('me'); 
 
     }, 2000);
 
   };
 
-  const isMyTurnInGame = gameStage === 'playing' && gameTurn === 'me';
-  const isChatDisabled = !isVibeCheckComplete || gameStage === 'playing';
+  const isMyTurnInGame = gameStage === 'playing' && gameTurn === 'me' && !isAwaitingAnswer;
+  const canAnswer = gameStage === 'playing' && isAwaitingAnswer;
+  const isTheirTurnToAsk = gameStage === 'playing' && gameTurn === 'them' && !isAwaitingAnswer;
+  
+  const isChatInputDisabled = gameStage === 'playing' && !canAnswer;
+  const placeholderText = () => {
+    if (canAnswer) return "It's your turn to answer...";
+    if (isMyTurnInGame) return "It's your turn to ask a question...";
+    if (isTheirTurnToAsk) return "Waiting for Sophia to ask...";
+    if (gameStage === 'playing') return "The game is in progress...";
+    return "Type a message...";
+  }
 
 
   return (
@@ -133,7 +152,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
               onOpenChange={setIsGameSelectionOpen}
               onSelectDeck={handleGameSelect}
             >
-              <Button variant="outline" disabled={!isVibeCheckComplete}>
+              <Button variant="outline" disabled={!isVibeCheckComplete || gameStage === 'playing'}>
                 <Zap className="mr-2 h-4 w-4" />
                 Start Game
               </Button>
@@ -152,66 +171,68 @@ export default function ChatPage({ params }: { params: { id: string } }) {
             {isVibeCheckComplete && gameStage === 'none' && (
               <>
                 <VibeCheckResults totalMatches={vibeCheckMatches} />
-                <div className="space-y-4">
-                     {messages.map((message) => (
-                        <div 
-                            key={message.id} 
-                            className={cn(
-                                "flex items-end gap-2",
-                                message.sender === 'me' ? 'justify-end' : 'justify-start'
-                            )}
-                        >
-                            {message.sender === 'them' && (
-                                <Avatar className="h-8 w-8">
-                                    <AvatarImage src="https://picsum.photos/seed/sophia/100" alt="Sophia" data-ai-hint="profile avatar"/>
-                                    <AvatarFallback>S</AvatarFallback>
-                                </Avatar>
-                            )}
-                             <div className={cn(
-                                "max-w-xs md:max-w-md lg:max-w-lg rounded-xl px-4 py-3 text-sm",
-                                message.sender === 'me' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none',
-                                message.type === 'question' && 'border-2 border-primary/50 bg-primary/10 text-primary-foreground'
-                            )}>
-                                <p>{message.text}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
               </>
             )}
 
             {isVibeCheckComplete && gameStage === 'toss' && deckName && <CoinToss onTossFinish={handleTossFinish} deckName={deckName} />}
             
-            {isVibeCheckComplete && isMyTurnInGame && deckName && !isAwaitingAnswer && (
+            {isVibeCheckComplete && isMyTurnInGame && deckName && (
                  <GameCard 
                     onGameFinish={handleGameFinish} 
                     deckName={deckName}
                     onSendQuestion={handleSendQuestion}
-                    turn="me"
                 />
             )}
             
-            {gameStage === 'playing' && gameTurn === 'them' && !isAwaitingAnswer && (
+            {isTheirTurnToAsk && (
                 <div className="text-center text-muted-foreground p-4 bg-muted/50 rounded-lg">
                     <p>Waiting for Sophia to ask a question...</p>
                 </div>
             )}
+
+            <div className="space-y-4">
+                  {messages.map((message) => (
+                    <div 
+                        key={message.id} 
+                        className={cn(
+                            "flex items-end gap-2",
+                            message.sender === 'me' ? 'justify-end' : 'justify-start'
+                        )}
+                    >
+                        {message.sender === 'them' && (
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage src="https://picsum.photos/seed/sophia/100" alt="Sophia" data-ai-hint="profile avatar"/>
+                                <AvatarFallback>S</AvatarFallback>
+                            </Avatar>
+                        )}
+                          <div className={cn(
+                            "max-w-xs md:max-w-md lg:max-w-lg rounded-xl px-4 py-3 text-sm",
+                            message.sender === 'me' 
+                                ? 'bg-primary text-primary-foreground rounded-br-none' 
+                                : 'bg-muted rounded-bl-none',
+                            message.type === 'question' && 'border-2 border-primary/50 bg-primary/10 text-primary-foreground'
+                        )}>
+                            <p>{message.text}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
            
         </div>
 
         <div className="p-4 border-t bg-card rounded-b-xl">
             <form className="relative" onSubmit={handleSendMessage}>
                 <Input 
-                    placeholder={isChatDisabled ? (isAwaitingAnswer ? "It's your turn to answer..." : "The game is in progress...") : "Type a message..."}
+                    placeholder={placeholderText()}
                     className="pr-24" 
-                    disabled={isChatDisabled && !isAwaitingAnswer}
+                    disabled={isChatInputDisabled}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center">
-                    <Button variant="ghost" size="icon" type="button" disabled={isChatDisabled}><Smile className="h-5 w-5"/></Button>
-                    <Button variant="ghost" size="icon" type="button" disabled={isChatDisabled}><Paperclip className="h-5 w-5"/></Button>
-                    <Button variant="default" size="icon" className="mr-2" type="submit" disabled={isChatDisabled && !isAwaitingAnswer}><Send className="h-5 w-5"/></Button>
+                    <Button variant="ghost" size="icon" type="button" disabled={isChatInputDisabled}><Smile className="h-5 w-5"/></Button>
+                    <Button variant="ghost" size="icon" type="button" disabled={isChatInputDisabled}><Paperclip className="h-5 w-5"/></Button>
+                    <Button variant="default" size="icon" className="mr-2" type="submit" disabled={isChatInputDisabled}><Send className="h-5 w-5"/></Button>
                 </div>
             </form>
         </div>
