@@ -3,11 +3,11 @@
 import Link from "next/link";
 import {
   Bell,
-  Heart,
   Home,
   MessageSquare,
   Search,
   Users,
+  Sparkles,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -63,26 +63,19 @@ export default function AppLayout({
               </Link>
               <Link
                 href="/chat"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2 text-primary transition-all hover:text-primary"
               >
                 <MessageSquare className="h-4 w-4" />
                 Chats
                 <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
-                  6
+                  3
                 </Badge>
-              </Link>
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2 text-primary transition-all hover:text-primary"
-              >
-                <Heart className="h-4 w-4" />
-                Matches
               </Link>
               <Link
                 href="/dashboard/ai-prompts"
                 className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
               >
-                <Users className="h-4 w-4" />
+                <Sparkles className="h-4 w-4" />
                 AI Prompts
               </Link>
             </nav>
@@ -145,21 +138,14 @@ export default function AppLayout({
                   <MessageSquare className="h-5 w-5" />
                   Chats
                   <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
-                    6
+                    3
                   </Badge>
-                </Link>
-                <Link
-                  href="/dashboard"
-                  className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-                >
-                  <Heart className="h-5 w-5" />
-                  Matches
                 </Link>
                 <Link
                   href="/dashboard/ai-prompts"
                   className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
                 >
-                  <Users className="h-5 w-5" />
+                  <Sparkles className="h-5 w-5" />
                   AI Prompts
                 </Link>
               </nav>
