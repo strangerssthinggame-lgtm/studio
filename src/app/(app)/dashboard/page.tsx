@@ -22,6 +22,7 @@ import { Slider } from '@/components/ui/slider';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { userProfiles } from '@/lib/user-profile-data';
 import type { UserProfile } from '@/lib/user-profile-data';
+import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
   const [filters, setFilters] = useState({
@@ -75,7 +76,10 @@ export default function DashboardPage() {
 
 
   return (
-    <>
+    <div className={cn(
+        "flex flex-col h-full",
+        `theme-${filters.vibe}`
+    )}>
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-headline font-semibold tracking-tight">
@@ -221,6 +225,6 @@ export default function DashboardPage() {
            )}
         </div>
       </div>
-    </>
+    </div>
   );
 }
