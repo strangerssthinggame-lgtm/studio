@@ -52,8 +52,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     if(isAwaitingAnswer) {
       setIsAwaitingAnswer(false);
       
-      // After I answer, it's their turn to ask a question.
-      setGameTurn('them'); 
+      // After I answer, it's my turn to ask a question.
+      setGameTurn('me'); 
     }
   };
 
@@ -98,18 +98,10 @@ export default function ChatPage({ params }: { params: { id: string } }) {
           sender: 'them',
           type: 'answer'
         };
-
-        // Simulate opponent sending a new question
-        const opponentQuestion: Message = {
-          id: (messages.length + 3).toString(),
-          text: "What's the most adventurous thing you've ever done?",
-          sender: 'them',
-          type: 'question'
-        };
-
-        setMessages(prev => [...prev, opponentAnswer, opponentQuestion]);
-        setIsAwaitingAnswer(true); // Now I need to answer their question
-        setGameTurn('me'); 
+        
+        setMessages(prev => [...prev, opponentAnswer]);
+        setIsAwaitingAnswer(false); // Now it's their turn to ask
+        setGameTurn('them'); 
 
     }, 2000);
 
