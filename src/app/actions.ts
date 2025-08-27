@@ -2,20 +2,8 @@
 "use server";
 
 import { suggestPrompt, SuggestPromptInput } from "@/ai/flows/suggest-prompt";
-import { z } from "zod";
+import { FormSchema, FormState } from "@/lib/definitions";
 
-const VibeTagSchema = z.enum(["Witty", "Deep", "Flirty", "Funny", "Casual"]);
-export const FormSchema = z.object({
-  vibeTags: z.array(VibeTagSchema).min(1, "Please select at least one vibe tag."),
-});
-
-export type FormState = {
-  message: string;
-  suggestedPrompt?: string;
-  errors?: {
-    vibeTags?: string[];
-  };
-};
 
 export async function getSuggestedPrompt(
   input: SuggestPromptInput,

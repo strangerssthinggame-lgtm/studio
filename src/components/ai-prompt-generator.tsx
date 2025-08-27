@@ -2,7 +2,8 @@
 
 import { useFormState } from "react-dom";
 import { Button } from "@/components/ui/button";
-import { getSuggestedPrompt, FormState } from "@/app/actions";
+import { getSuggestedPrompt } from "@/app/actions";
+import { FormState } from "@/lib/definitions";
 import { Wand2, Copy } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
