@@ -22,7 +22,7 @@ const initialMessages: Message[] = [
 
 export default function ChatPage({ params }: { params: { id: string } }) {
   const [isGameFinished, setIsGameFinished] = useState(false);
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -38,6 +38,15 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     setMessages([...messages, newMessage]);
     setInputValue('');
   };
+
+  const handleGameFinish = (matchCount: number) => {
+    setIsGameFinished(true);
+    if (matchCount >=2) {
+        setMessages([{id: 'game-result', text: "You two are definitely on the same wavelength. The chat is now open!", sender: 'them'}]);
+    } else {
+        setMessages([{id: 'game-result', text: "You have some things in common. See where the conversation goes! The chat is now open.", sender: 'them'}]);
+    }
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh_-_theme(spacing.24))] bg-card rounded-xl border">
@@ -58,9 +67,9 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
             <div className="text-center text-xs text-muted-foreground">Today</div>
             
-            {!isGameFinished ? (
-                 <VibeCheckCard onGameFinish={() => setIsGameFinished(true)} />
-            ) : (
+            <VibeCheckCard onGameFinish={handleGameFinish} />
+
+            {isGameFinished && (
                 <div className="space-y-4">
                      {messages.map((message) => (
                         <div 
