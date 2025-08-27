@@ -45,6 +45,7 @@ export default function AppLayout({
   const navLinks = [
     { href: "/dashboard", icon: Home, label: "Feed" },
     { href: "/chat", icon: MessageSquare, label: "Chats", badge: 3 },
+    { href: "/notifications", icon: Bell, label: "Notifications", badge: 5 },
     { href: "/dashboard/ai-prompts", icon: WandSparkles, label: "AI Prompts" },
   ];
 

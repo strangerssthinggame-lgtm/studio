@@ -17,10 +17,12 @@ export default function ChatListPage() {
     <div className="flex flex-col h-full gap-4">
       <div className="flex items-center justify-between pb-4 border-b">
         <h1 className="text-3xl font-headline font-bold tracking-tight">Chats</h1>
-        <Button variant="outline" size="icon">
-            <Bell className="h-4 w-4" />
-            <span className="sr-only">Toggle notifications</span>
-        </Button>
+        <Link href="/notifications">
+            <Button variant="outline" size="icon">
+                <Bell className="h-4 w-4" />
+                <span className="sr-only">Toggle notifications</span>
+            </Button>
+        </Link>
       </div>
 
       <div className="relative">

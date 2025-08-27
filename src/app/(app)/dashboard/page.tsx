@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Slider } from '@/components/ui/slider';
 import { useState } from 'react';
+import Link from 'next/link';
 
 const allUsers = [
   {
@@ -210,10 +211,12 @@ export default function DashboardPage() {
                 </SheetFooter>
             </SheetContent>
             </Sheet>
-            <Button variant="outline" size="icon">
-              <Bell className="h-4 w-4" />
-              <span className="sr-only">Toggle notifications</span>
-            </Button>
+            <Link href="/notifications">
+              <Button variant="outline" size="icon">
+                <Bell className="h-4 w-4" />
+                <span className="sr-only">Toggle notifications</span>
+              </Button>
+            </Link>
         </div>
       </div>
       <div className="flex flex-1 items-center justify-center">
