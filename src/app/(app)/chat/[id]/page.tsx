@@ -230,10 +230,12 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                         )}
                     >
                         {message.sender === 'them' && (
-                            <Avatar className="h-8 w-8">
-                                <AvatarImage src={chat.avatar} alt={chat.name} data-ai-hint="profile avatar"/>
-                                <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
+                            <Link href={`/users/${chat.id}`}>
+                                <Avatar className="h-8 w-8">
+                                    <AvatarImage src={chat.avatar} alt={chat.name} data-ai-hint="profile avatar"/>
+                                    <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                            </Link>
                         )}
                           <div className={cn(
                             "max-w-xs md:max-w-md lg:max-w-lg rounded-xl px-4 py-3 text-sm",
