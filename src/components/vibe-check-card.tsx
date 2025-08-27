@@ -4,61 +4,110 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, ThumbsDown, Zap, Heart } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Zap, Heart, Sparkles, MessageCircle, ChevronsRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Progress } from './ui/progress';
 
-const question = {
-  text: "The perfect first date is a spontaneous adventure, not a fancy dinner. Agree or Disagree?",
-  options: [
-    { text: "Agree", icon: <ThumbsUp className="w-5 h-5" /> },
-    { text: "Disagree", icon: <ThumbsDown className="w-5 h-5" /> }
-  ]
+const questions = [
+  {
+    text: "The perfect first date is a spontaneous adventure, not a fancy dinner. Agree or Disagree?",
+    options: ["Agree", "Disagree"],
+    theirAnswer: "Agree"
+  },
+  {
+    text: "A quiet night in with a movie is better than a loud party. Thoughts?",
+    options: ["Movie Night", "Big Party"],
+    theirAnswer: "Movie Night"
+  },
+  {
+    text: "Is it a deal-breaker if your partner is a messy person?",
+    options: ["Yes, a deal-breaker", "No, I can live with it"],
+    theirAnswer: "No, I can live with it"
+  }
+];
+
+type VibeCheckCardProps = {
+    onGameFinish: () => void;
 };
 
-// Mock data for user's choice
-const theirChoice = "Agree";
 
-export default function VibeCheckCard() {
-  const [myChoice, setMyChoice] = useState<string | null>(null);
-  const [revealed, setRevealed] = useState(false);
+export default function VibeCheckCard({ onGameFinish }: VibeCheckCardProps) {
+  const [gameState, setGameState] = useState<'intro' | 'playing' | 'results'>('intro');
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [myAnswers, setMyAnswers] = useState<(string | null)[]>(Array(questions.length).fill(null));
+  const [showResult, setShowResult] = useState(false);
 
-  const handleChoice = (choice: string) => {
-    setMyChoice(choice);
-    // In a real app, this would submit the choice and wait for the other user.
-    // For this demo, we'll reveal immediately.
-    setTimeout(() => setRevealed(true), 500);
+  const handleStart = () => {
+    setGameState('playing');
   };
 
-  const isMatch = myChoice === theirChoice;
+  const handleChoice = (choice: string) => {
+    const newAnswers = [...myAnswers];
+    newAnswers[currentQuestionIndex] = choice;
+    setMyAnswers(newAnswers);
+    setShowResult(true);
+  };
+  
+  const handleNextQuestion = () => {
+      if(currentQuestionIndex < questions.length - 1) {
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+        setShowResult(false);
+      } else {
+        setGameState('results');
+        onGameFinish();
+      }
+  }
 
-  return (
-    <Card className="mx-auto w-full max-w-md text-center overflow-hidden">
+  const currentQuestion = questions[currentQuestionIndex];
+  const myCurrentChoice = myAnswers[currentQuestionIndex];
+  const isMatch = myCurrentChoice === currentQuestion.theirAnswer;
+  
+  const totalMatches = myAnswers.filter((answer, index) => answer === questions[index].theirAnswer).length;
+
+  const renderIntro = () => (
+    <>
         <CardHeader className="bg-muted/50">
             <CardTitle className="font-headline text-xl flex items-center justify-center gap-2">
-                <Zap className="text-primary"/> Vibe Check
+                <Sparkles className="text-primary"/> Vibe Check Time!
             </CardTitle>
-            <CardDescription>Answer the question to see if you vibe.</CardDescription>
+            <CardDescription>Sophia has invited you to play a game. The first card is ready.</CardDescription>
         </CardHeader>
         <CardContent className="p-6 flex flex-col items-center justify-center gap-6 min-h-[250px]">
-            <p className="text-lg font-semibold text-center">{question.text}</p>
+             <p className="text-lg font-semibold text-center">See if your vibes align before you start chatting.</p>
+             <Button onClick={handleStart}>
+                Start Vibe Check
+             </Button>
+        </CardContent>
+    </>
+  );
+
+  const renderPlaying = () => (
+    <>
+        <CardHeader className="bg-muted/50 p-4">
+            <CardTitle className="font-headline text-base flex items-center justify-center gap-2">
+                <Zap className="text-primary w-4 h-4"/> Vibe Check: Question {currentQuestionIndex + 1}/{questions.length}
+            </CardTitle>
+            <Progress value={((currentQuestionIndex + (showResult ? 1 : 0)) / questions.length) * 100} className="mt-2 h-2" />
+        </CardHeader>
+        <CardContent className="p-6 flex flex-col items-center justify-center gap-6 min-h-[250px]">
+            <p className="text-lg font-semibold text-center">{currentQuestion.text}</p>
             
-            {!revealed ? (
+            {!showResult ? (
                 <div className="flex gap-4 w-full">
-                    {question.options.map((option) => (
+                    {currentQuestion.options.map((option) => (
                         <Button 
-                            key={option.text}
+                            key={option}
                             variant="outline" 
                             className="w-full h-16 text-base"
-                            onClick={() => handleChoice(option.text)}
+                            onClick={() => handleChoice(option)}
                         >
-                            {option.icon}
-                            {option.text}
+                            {option}
                         </Button>
                     ))}
                 </div>
             ) : (
-                <div className="flex flex-col items-center gap-4 animate-in fade-in zoom-in-95">
+                <div className="flex flex-col items-center gap-4 animate-in fade-in zoom-in-95 w-full">
                     <div className={cn(
                         "flex items-center justify-center gap-2 p-3 rounded-full text-lg font-bold",
                         isMatch ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
@@ -74,7 +123,7 @@ export default function VibeCheckCard() {
                                 <AvatarFallback>Y</AvatarFallback>
                             </Avatar>
                             <span className="font-semibold">You</span>
-                            <span className="text-sm text-muted-foreground">{myChoice}</span>
+                            <span className="text-sm text-muted-foreground">{myCurrentChoice}</span>
                         </div>
                         <div className="flex flex-col items-center gap-2">
                             <Avatar>
@@ -82,14 +131,54 @@ export default function VibeCheckCard() {
                                 <AvatarFallback>S</AvatarFallback>
                             </Avatar>
                             <span className="font-semibold">Sophia</span>
-                            <span className="text-sm text-muted-foreground">{theirChoice}</span>
+                            <span className="text-sm text-muted-foreground">{currentQuestion.theirAnswer}</span>
                         </div>
                     </div>
 
-                    <Button variant="secondary" className="mt-4">Next Question</Button>
+                    <Button variant="secondary" className="mt-4" onClick={handleNextQuestion}>
+                         {currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'See Final Results'}
+                         <ChevronsRight className="w-4 h-4 ml-2"/>
+                    </Button>
                 </div>
             )}
         </CardContent>
+    </>
+  );
+
+  const renderResults = () => {
+    const isMajorVibe = totalMatches >= 2;
+    return (
+    <>
+        <CardHeader className="bg-muted/50">
+            <CardTitle className="font-headline text-xl flex items-center justify-center gap-2">
+                <Sparkles className="text-primary"/> Final Vibe Results
+            </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 flex flex-col items-center justify-center gap-4 min-h-[250px]">
+            <div className={cn(
+                "flex items-center justify-center gap-2 p-3 rounded-full text-xl font-bold",
+                isMajorVibe ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"
+            )}>
+                 {isMajorVibe ? <Heart className="w-7 h-7" fill="currentColor"/> : <Zap className="w-7 h-7"/>}
+                 {isMajorVibe ? "It's a Major Vibe!" : "Good Start!"}
+            </div>
+            <p className="text-lg font-semibold text-center">You matched on {totalMatches} out of {questions.length} questions!</p>
+            <p className="text-muted-foreground text-center px-4">
+                {isMajorVibe ? "You two are definitely on the same wavelength. The chat is now open!" : "You have some things in common. See where the conversation goes! The chat is now open."}
+            </p>
+            <Button>
+                <MessageCircle className="w-4 h-4 mr-2"/> Start Chatting
+            </Button>
+        </CardContent>
+    </>
+    )
+  }
+
+  return (
+    <Card className="mx-auto w-full max-w-md text-center overflow-hidden">
+        {gameState === 'intro' && renderIntro()}
+        {gameState === 'playing' && renderPlaying()}
+        {gameState === 'results' && renderResults()}
     </Card>
   );
 }

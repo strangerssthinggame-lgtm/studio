@@ -5,7 +5,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Paperclip, Send, Smile, MoreVertical } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
 import VibeCheckCard from "@/components/vibe-check-card";
 
@@ -16,7 +15,7 @@ const messages = [
 ];
 
 export default function ChatPage({ params }: { params: { id: string } }) {
-  const [showGame, setShowGame] = useState(false);
+  const [isGameFinished, setIsGameFinished] = useState(false);
 
   return (
     <div className="flex flex-col h-[calc(100vh_-_theme(spacing.24))] bg-card rounded-xl border">
@@ -51,31 +50,21 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                 </div>
             ))}
             
-            {showGame ? (
-                <VibeCheckCard />
-            ) : (
-                <Card className="mx-auto w-full max-w-md text-center">
-                    <CardHeader>
-                        <CardTitle className="font-headline text-xl">Vibe Check: Date</CardTitle>
-                        <CardDescription>Sophia has invited you to play a game. The first card is ready.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button onClick={() => setShowGame(true)}>
-                            View Card
-                        </Button>
-                    </CardContent>
-                </Card>
-            )}
+            <VibeCheckCard onGameFinish={() => setIsGameFinished(true)} />
 
         </div>
 
         <div className="p-4 border-t bg-background">
             <form className="relative">
-                <Input placeholder="Type a message..." className="pr-24" />
+                <Input 
+                    placeholder={isGameFinished ? "Type a message..." : "Finish the Vibe Check to chat"} 
+                    className="pr-24" 
+                    disabled={!isGameFinished} 
+                />
                 <div className="absolute inset-y-0 right-0 flex items-center">
-                    <Button variant="ghost" size="icon" type="button"><Smile className="h-5 w-5"/></Button>
-                    <Button variant="ghost" size="icon" type="button"><Paperclip className="h-5 w-5"/></Button>
-                    <Button variant="default" size="icon" className="mr-2" type="submit"><Send className="h-5 w-5"/></Button>
+                    <Button variant="ghost" size="icon" type="button" disabled={!isGameFinished}><Smile className="h-5 w-5"/></Button>
+                    <Button variant="ghost" size="icon" type="button" disabled={!isGameFinished}><Paperclip className="h-5 w-5"/></Button>
+                    <Button variant="default" size="icon" className="mr-2" type="submit" disabled={!isGameFinished}><Send className="h-5 w-5"/></Button>
                 </div>
             </form>
         </div>
