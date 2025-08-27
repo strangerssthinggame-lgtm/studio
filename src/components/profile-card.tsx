@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageSquare, Sparkles, X, RotateCw } from 'lucide-react';
+import { Heart, X, RotateCw, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   AlertDialog,
@@ -118,28 +118,30 @@ export function ProfileCard({ user, index, total }: ProfileCardProps) {
         )}
     </Card>
     <AlertDialog open={showMatchDialog} onOpenChange={onDialogClose}>
-        <AlertDialogContent className="max-w-xs">
+        <AlertDialogContent className="max-w-sm">
             <AlertDialogHeader className="items-center text-center">
-                 <div className="relative mb-4">
-                    <Avatar className="w-24 h-24 border-4 border-background">
+                 <div className="relative h-24 w-40 mb-4">
+                    <Avatar className="w-24 h-24 border-4 border-background absolute left-0 top-0">
                          <AvatarImage src="https://picsum.photos/100" alt="You" data-ai-hint="profile avatar" />
                          <AvatarFallback>Y</AvatarFallback>
                     </Avatar>
-                     <Avatar className="w-24 h-24 border-4 border-background absolute -right-16 top-0">
+                     <Avatar className="w-24 h-24 border-4 border-background absolute right-0 top-0">
                          <AvatarImage src={user.image} alt={user.name} data-ai-hint="profile avatar" />
                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
-                     <Heart className="absolute -right-3 -top-3 w-10 h-10 text-primary fill-primary" />
+                     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-primary/90 rounded-full flex items-center justify-center backdrop-blur-sm">
+                        <Heart className="w-7 h-7 text-primary-foreground" fill="currentColor" />
+                    </div>
                  </div>
-                <AlertDialogTitle className="font-headline text-2xl mt-4">It's a Vibe!</AlertDialogTitle>
+                <AlertDialogTitle className="font-headline text-3xl">It's a Vibe!</AlertDialogTitle>
                 <AlertDialogDescription>
                     You and {user.name} have liked each other. How about breaking the ice?
                 </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter className="flex-col gap-2">
+            <AlertDialogFooter className="flex-col gap-2 mt-2">
                 <Link href="/chat/1" className="w-full">
-                    <AlertDialogAction className="w-full bg-primary hover:bg-primary/90">
-                        <Sparkles className="mr-2 h-4 w-4" />
+                    <AlertDialogAction className="w-full h-12 text-lg">
+                        <Sparkles className="mr-2 h-5 w-5" />
                         Start Vibe Check
                     </AlertDialogAction>
                 </Link>
