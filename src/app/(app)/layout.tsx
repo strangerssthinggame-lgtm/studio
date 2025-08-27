@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -9,6 +10,7 @@ import {
   Search,
   Users,
   Sparkles,
+  User,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -65,7 +67,7 @@ export default function AppLayout({
           <div className="flex-1">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
               {navLinks.map((link) => {
-                const isActive = pathname.startsWith(link.href);
+                const isActive = pathname === link.href || (link.href !== "/dashboard" && pathname.startsWith(link.href));
                 return (
                   <Link
                     key={link.href}
@@ -200,6 +202,12 @@ export default function AppLayout({
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/profile">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem>Settings</DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
