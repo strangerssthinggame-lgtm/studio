@@ -1,11 +1,24 @@
 "use client"
 import React, { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Heart, X, RotateCw } from 'lucide-react';
+import { Heart, MessageSquare, Sparkles, X, RotateCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+
 
 type User = {
   name: string;
@@ -25,21 +38,32 @@ type ProfileCardProps = {
 export function ProfileCard({ user, index, total }: ProfileCardProps) {
     const [isSwiped, setIsSwiped] = useState(false);
     const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+    const [showMatchDialog, setShowMatchDialog] = useState(false);
 
     const handleSwipe = (direction: 'left' | 'right') => {
-        setSwipeDirection(direction);
-        setIsSwiped(true);
+        if (direction === 'right') {
+            setShowMatchDialog(true);
+        } else {
+            setSwipeDirection(direction);
+            setIsSwiped(true);
+        }
     };
     
-    // This is a mock reset for demo purposes
     const handleReset = () => {
         setIsSwiped(false);
         setSwipeDirection(null);
+    }
+
+    const onDialogClose = () => {
+        setShowMatchDialog(false);
+        setSwipeDirection('right');
+        setIsSwiped(true);
     }
   
     const rotation = (index % 2 === 0 ? 1 : -1) * (Math.floor(index / 2) + 1) * 1.5;
 
   return (
+    <>
     <Card
       className={cn(
         "absolute w-full h-full transition-all duration-300 ease-in-out transform shadow-2xl rounded-2xl overflow-hidden cursor-grab active:cursor-grabbing",
@@ -93,5 +117,36 @@ export function ProfileCard({ user, index, total }: ProfileCardProps) {
             </div>
         )}
     </Card>
+    <AlertDialog open={showMatchDialog} onOpenChange={onDialogClose}>
+        <AlertDialogContent className="max-w-xs">
+            <AlertDialogHeader className="items-center text-center">
+                 <div className="relative mb-4">
+                    <Avatar className="w-24 h-24 border-4 border-background">
+                         <AvatarImage src="https://picsum.photos/100" alt="You" data-ai-hint="profile avatar" />
+                         <AvatarFallback>Y</AvatarFallback>
+                    </Avatar>
+                     <Avatar className="w-24 h-24 border-4 border-background absolute -right-16 top-0">
+                         <AvatarImage src={user.image} alt={user.name} data-ai-hint="profile avatar" />
+                         <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                     <Heart className="absolute -right-3 -top-3 w-10 h-10 text-primary fill-primary" />
+                 </div>
+                <AlertDialogTitle className="font-headline text-2xl mt-4">It's a Vibe!</AlertDialogTitle>
+                <AlertDialogDescription>
+                    You and {user.name} have liked each other. How about breaking the ice?
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-col gap-2">
+                <Link href="/chat/1" className="w-full">
+                    <AlertDialogAction className="w-full bg-primary hover:bg-primary/90">
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Start Vibe Check
+                    </AlertDialogAction>
+                </Link>
+                <AlertDialogCancel className="m-0">Keep Swiping</AlertDialogCancel>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+  </>
   );
 }
