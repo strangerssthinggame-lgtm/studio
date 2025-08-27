@@ -15,11 +15,6 @@ type Message = {
     sender: 'me' | 'them';
 };
 
-const initialMessages: Message[] = [
-    { id: '1', text: "Hey! That was a fun game. Your answer to the last question was interesting!", sender: 'them' },
-];
-
-
 export default function ChatPage({ params }: { params: { id: string } }) {
   const [isGameFinished, setIsGameFinished] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -67,7 +62,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
             <div className="text-center text-xs text-muted-foreground">Today</div>
             
-            <VibeCheckCard onGameFinish={handleGameFinish} />
+            {!isGameFinished && <VibeCheckCard onGameFinish={handleGameFinish} />}
 
             {isGameFinished && (
                 <div className="space-y-4">
