@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Camera, Edit, MapPin, User, FileImage, PlusCircle } from 'lucide-react';
+import Link from 'next/link';
 
 const userProfile = {
   name: 'Alex',
@@ -31,7 +32,7 @@ export default function ProfilePage() {
         <Image
           src={userProfile.banner}
           alt="Profile banner"
-          layout="fill"
+          fill
           objectFit="cover"
           data-ai-hint="profile banner"
         />
@@ -73,9 +74,11 @@ export default function ProfilePage() {
                   {userProfile.location}
                 </div>
               </div>
-              <Button variant="outline" className="mt-4 md:mt-0">
-                <Edit className="mr-2 h-4 w-4" /> Edit Profile
-              </Button>
+              <Link href="/profile/edit">
+                <Button variant="outline" className="mt-4 md:mt-0">
+                  <Edit className="mr-2 h-4 w-4" /> Edit Profile
+                </Button>
+              </Link>
             </div>
             
             <div className="mt-6 border-t pt-6">
@@ -98,7 +101,7 @@ export default function ProfilePage() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                         {userProfile.gallery.map((photo) => (
                             <div key={photo.id} className="aspect-square relative rounded-lg overflow-hidden group">
-                                <Image src={photo.src} alt={`Gallery photo ${photo.id}`} layout="fill" objectFit="cover" data-ai-hint={photo.hint} />
+                                <Image src={photo.src} alt={`Gallery photo ${photo.id}`} fill objectFit="cover" data-ai-hint={photo.hint} />
                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                     <Button variant="destructive" size="sm">Remove</Button>
                                  </div>
