@@ -9,7 +9,7 @@ import {
   MessageSquare,
   Search,
   Users,
-  Sparkles,
+  WandSparkles,
   User,
 } from "lucide-react";
 
@@ -45,7 +45,7 @@ export default function AppLayout({
   const navLinks = [
     { href: "/dashboard", icon: Home, label: "Feed" },
     { href: "/chat", icon: MessageSquare, label: "Chats", badge: 3 },
-    { href: "/dashboard/ai-prompts", icon: Sparkles, label: "AI Prompts" },
+    { href: "/dashboard/ai-prompts", icon: WandSparkles, label: "AI Prompts" },
   ];
 
   return (
@@ -59,10 +59,6 @@ export default function AppLayout({
               </svg>
               <span className="">VibeVerse</span>
             </Link>
-            <Button variant="outline" size="icon" className="ml-auto h-8 w-8">
-              <Bell className="h-4 w-4" />
-              <span className="sr-only">Toggle notifications</span>
-            </Button>
           </div>
           <div className="flex-1">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">

@@ -1,8 +1,9 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, Bell } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const chats = [
   { id: '1', name: 'Sophia', message: "Hey! Loved your profile. Up for a game?", time: "5m ago", unread: 2, avatar: "https://picsum.photos/seed/sophia/100" },
@@ -16,6 +17,10 @@ export default function ChatListPage() {
     <div className="flex flex-col h-full gap-4">
       <div className="flex items-center justify-between pb-4 border-b">
         <h1 className="text-3xl font-headline font-bold tracking-tight">Chats</h1>
+        <Button variant="outline" size="icon">
+            <Bell className="h-4 w-4" />
+            <span className="sr-only">Toggle notifications</span>
+        </Button>
       </div>
 
       <div className="relative">

@@ -2,7 +2,7 @@
 'use client';
 
 import { ProfileCard } from '@/components/profile-card';
-import { Filter, Users, Calendar, MapPin, Sparkles } from 'lucide-react';
+import { Filter, Users, Calendar, MapPin, Sparkles, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -116,99 +116,105 @@ export default function DashboardPage() {
             Swipe right to connect, left to pass. Find your next vibe.
           </p>
         </div>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline">
-              <Filter className="mr-2 h-4 w-4" />
-              Filters
-            </Button>
-          </SheetTrigger>
-          <SheetContent>
-            <SheetHeader className="text-left border-b pb-4">
-              <SheetTitle className="font-headline">Discovery Settings</SheetTitle>
-              <SheetDescription>
-                Refine your discovery settings to find the perfect vibe.
-              </SheetDescription>
-            </SheetHeader>
-            <div className="grid gap-8 py-6">
-              <div className="grid grid-cols-1 items-start gap-4">
-                <Label className="flex items-center gap-2 text-base font-semibold"><Sparkles className="w-5 h-5 text-primary"/> Vibe</Label>
-                <RadioGroup 
-                    value={filters.vibe}
-                    onValueChange={(value) => handleFilterChange('vibe', value)}
-                    className="grid grid-cols-3 gap-2">
-                    <Label htmlFor="friends" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
-                        <RadioGroupItem value="friends" id="friends" className="sr-only"/>
-                        Friends
-                    </Label>
-                     <Label htmlFor="date" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
-                        <RadioGroupItem value="date" id="date" className="sr-only"/>
-                        Date
-                    </Label>
-                     <Label htmlFor="spicy" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
-                        <RadioGroupItem value="spicy" id="spicy" className="sr-only"/>
-                        Spicy
-                    </Label>
-                </RadioGroup>
-              </div>
-
-              <div className="grid grid-cols-1 items-start gap-4">
-                <Label htmlFor="geography" className="flex items-center gap-2 text-base font-semibold"><MapPin className="w-5 h-5 text-primary"/> Region</Label>
-                <Input 
-                  id="geography" 
-                  placeholder="New York, USA"
-                  value={filters.region}
-                  onChange={(e) => handleFilterChange('region', e.target.value)}
-                  />
-              </div>
-              
-              <div className="grid grid-cols-1 items-start gap-4">
-                <Label htmlFor="age-range" className="flex items-center gap-2 text-base font-semibold"><Calendar className="w-5 h-5 text-primary"/> Age Range</Label>
-                <div className="flex items-center gap-4 pt-2">
-                  <span className="text-sm text-muted-foreground w-8 text-center">{filters.ageRange[0]}</span>
-                  <Slider
-                    id="age-range"
-                    value={filters.ageRange}
-                    onValueChange={(value) => handleFilterChange('ageRange', value)}
-                    max={60}
-                    min={18}
-                    step={1}
-                  />
-                  <span className="text-sm text-muted-foreground w-8 text-center">{filters.ageRange[1]}</span>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 items-start gap-4">
-                <Label className="flex items-center gap-2 text-base font-semibold"><Users className="w-5 h-5 text-primary"/> Gender</Label>
-                <RadioGroup 
-                    value={filters.gender}
-                    onValueChange={(value) => handleFilterChange('gender', value)}
-                    className="grid grid-cols-3 gap-2">
-                  <Label htmlFor="all" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
-                    <RadioGroupItem value="all" id="all" className="sr-only"/>
-                    All
-                  </Label>
-                  <Label htmlFor="male" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
-                    <RadioGroupItem value="male" id="male" className="sr-only"/>
-                    Male
-                  </Label>
-                  <Label htmlFor="female" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
-                    <RadioGroupItem value="female" id="female" className="sr-only"/>
-                    Female
-                  </Label>
-                </RadioGroup>
-              </div>
-
-            </div>
-            <SheetFooter>
-              <SheetClose asChild>
-                <Button type="submit" className="w-full" onClick={applyFilters}>
-                  Apply Filters
+        <div className="flex items-center gap-2">
+            <Sheet>
+            <SheetTrigger asChild>
+                <Button variant="outline">
+                <Filter className="mr-2 h-4 w-4" />
+                Filters
                 </Button>
-              </SheetClose>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
+            </SheetTrigger>
+            <SheetContent>
+                <SheetHeader className="text-left border-b pb-4">
+                <SheetTitle className="font-headline">Discovery Settings</SheetTitle>
+                <SheetDescription>
+                    Refine your discovery settings to find the perfect vibe.
+                </SheetDescription>
+                </SheetHeader>
+                <div className="grid gap-8 py-6">
+                <div className="grid grid-cols-1 items-start gap-4">
+                    <Label className="flex items-center gap-2 text-base font-semibold"><Sparkles className="w-5 h-5 text-primary"/> Vibe</Label>
+                    <RadioGroup 
+                        value={filters.vibe}
+                        onValueChange={(value) => handleFilterChange('vibe', value)}
+                        className="grid grid-cols-3 gap-2">
+                        <Label htmlFor="friends" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
+                            <RadioGroupItem value="friends" id="friends" className="sr-only"/>
+                            Friends
+                        </Label>
+                        <Label htmlFor="date" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
+                            <RadioGroupItem value="date" id="date" className="sr-only"/>
+                            Date
+                        </Label>
+                        <Label htmlFor="spicy" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
+                            <RadioGroupItem value="spicy" id="spicy" className="sr-only"/>
+                            Spicy
+                        </Label>
+                    </RadioGroup>
+                </div>
+
+                <div className="grid grid-cols-1 items-start gap-4">
+                    <Label htmlFor="geography" className="flex items-center gap-2 text-base font-semibold"><MapPin className="w-5 h-5 text-primary"/> Region</Label>
+                    <Input 
+                    id="geography" 
+                    placeholder="New York, USA"
+                    value={filters.region}
+                    onChange={(e) => handleFilterChange('region', e.target.value)}
+                    />
+                </div>
+                
+                <div className="grid grid-cols-1 items-start gap-4">
+                    <Label htmlFor="age-range" className="flex items-center gap-2 text-base font-semibold"><Calendar className="w-5 h-5 text-primary"/> Age Range</Label>
+                    <div className="flex items-center gap-4 pt-2">
+                    <span className="text-sm text-muted-foreground w-8 text-center">{filters.ageRange[0]}</span>
+                    <Slider
+                        id="age-range"
+                        value={filters.ageRange}
+                        onValueChange={(value) => handleFilterChange('ageRange', value)}
+                        max={60}
+                        min={18}
+                        step={1}
+                    />
+                    <span className="text-sm text-muted-foreground w-8 text-center">{filters.ageRange[1]}</span>
+                    </div>
+                </div>
+                
+                <div className="grid grid-cols-1 items-start gap-4">
+                    <Label className="flex items-center gap-2 text-base font-semibold"><Users className="w-5 h-5 text-primary"/> Gender</Label>
+                    <RadioGroup 
+                        value={filters.gender}
+                        onValueChange={(value) => handleFilterChange('gender', value)}
+                        className="grid grid-cols-3 gap-2">
+                    <Label htmlFor="all" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
+                        <RadioGroupItem value="all" id="all" className="sr-only"/>
+                        All
+                    </Label>
+                    <Label htmlFor="male" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
+                        <RadioGroupItem value="male" id="male" className="sr-only"/>
+                        Male
+                    </Label>
+                    <Label htmlFor="female" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
+                        <RadioGroupItem value="female" id="female" className="sr-only"/>
+                        Female
+                    </Label>
+                    </RadioGroup>
+                </div>
+
+                </div>
+                <SheetFooter>
+                <SheetClose asChild>
+                    <Button type="submit" className="w-full" onClick={applyFilters}>
+                    Apply Filters
+                    </Button>
+                </SheetClose>
+                </SheetFooter>
+            </SheetContent>
+            </Sheet>
+            <Button variant="outline" size="icon">
+              <Bell className="h-4 w-4" />
+              <span className="sr-only">Toggle notifications</span>
+            </Button>
+        </div>
       </div>
       <div className="flex flex-1 items-center justify-center">
         {filteredUsers.length > 0 ? (
