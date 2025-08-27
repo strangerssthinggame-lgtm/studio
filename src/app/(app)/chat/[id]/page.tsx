@@ -16,11 +16,14 @@ type Message = {
     sender: 'me' | 'them';
 };
 
+type DeckTheme = 'default' | 'friends' | 'date' | 'spicy';
+
 export default function ChatPage({ params }: { params: { id: string } }) {
   const [isGameFinished, setIsGameFinished] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isGameSelectionOpen, setIsGameSelectionOpen] = useState(false);
+  const [activeTheme, setActiveTheme] = useState<DeckTheme>('default');
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,14 +44,12 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   }
 
   const handleGameSelect = (deck: 'Friends' | 'Date' | 'Spicy') => {
-    // For now, just log the selected deck.
-    // In the future, this will trigger the game invitation.
-    console.log("Selected deck:", deck);
+    setActiveTheme(deck.toLowerCase() as DeckTheme);
     setIsGameSelectionOpen(false);
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh_-_theme(spacing.24))] bg-card rounded-xl border">
+    <div className={cn("flex flex-col h-[calc(100vh_-_theme(spacing.24))] bg-card rounded-xl border transition-colors duration-500", `theme-${activeTheme}`)}>
         <div className="flex items-center p-4 border-b">
             <Avatar>
                 <AvatarImage src="https://picsum.photos/seed/sophia/100" alt="Sophia" data-ai-hint="profile avatar" />

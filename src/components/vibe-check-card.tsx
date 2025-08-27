@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, ThumbsDown, Zap, Heart, Sparkles, MessageCircle, ChevronsRight } from 'lucide-react';
+import { Heart, Zap, Sparkles, ChevronsRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Progress } from './ui/progress';
@@ -72,7 +72,7 @@ export default function VibeCheckCard({ onGameFinish }: VibeCheckCardProps) {
         : "You have some things in common. See where the conversation goes! The chat is now open.";
 
     return (
-        <Card className="mx-auto w-full max-w-md text-center overflow-hidden">
+        <Card className="mx-auto w-full max-w-md text-center overflow-hidden animate-in fade-in-50 zoom-in-95">
              <CardHeader className="bg-muted/50">
                 <CardTitle className="font-headline text-xl flex items-center justify-center gap-2">
                     <Sparkles className="text-primary"/> Final Vibe Results
@@ -94,7 +94,7 @@ export default function VibeCheckCard({ onGameFinish }: VibeCheckCardProps) {
   }
 
   const renderIntro = () => (
-    <>
+    <div className="animate-in fade-in-50 zoom-in-95">
         <CardHeader className="bg-muted/50">
             <CardTitle className="font-headline text-xl flex items-center justify-center gap-2">
                 <Sparkles className="text-primary"/> Vibe Check Time!
@@ -107,11 +107,11 @@ export default function VibeCheckCard({ onGameFinish }: VibeCheckCardProps) {
                 Start Vibe Check
              </Button>
         </CardContent>
-    </>
+    </div>
   );
 
   const renderPlaying = () => (
-    <>
+    <div className="animate-in fade-in-50 zoom-in-95">
         <CardHeader className="bg-muted/50 p-4">
             <CardTitle className="font-headline text-base flex items-center justify-center gap-2">
                 <Zap className="text-primary w-4 h-4"/> Vibe Check: Question {currentQuestionIndex + 1}/{questions.length}
@@ -170,7 +170,7 @@ export default function VibeCheckCard({ onGameFinish }: VibeCheckCardProps) {
                 </div>
             )}
         </CardContent>
-    </>
+    </div>
   );
 
   return (

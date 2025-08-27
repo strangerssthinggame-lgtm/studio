@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
+  :root, .theme-default {
     --background: 277 33% 95%;
     --foreground: 287 42% 10%;
     --card: 277 33% 98%;
@@ -38,6 +38,73 @@
     --sidebar-border: 277 33% 88%;
     --sidebar-ring: 287 42% 53%;
   }
+
+  .theme-friends {
+    --background: 210 40% 98%;
+    --foreground: 215 28% 17%;
+    --card: 210 40% 100%;
+    --card-foreground: 215 28% 17%;
+    --popover: 210 40% 100%;
+    --popover-foreground: 215 28% 17%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 215 28% 17%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 210 40% 90%;
+    --input: 210 40% 90%;
+    --ring: 217 91% 60%;
+  }
+
+  .theme-date {
+    --background: 348 83% 98%;
+    --foreground: 349 63% 18%;
+    --card: 348 83% 100%;
+    --card-foreground: 349 63% 18%;
+    --popover: 348 83% 100%;
+    --popover-foreground: 349 63% 18%;
+    --primary: 347 77% 58%;
+    --primary-foreground: 348 83% 98%;
+    --secondary: 348 83% 96%;
+    --secondary-foreground: 349 63% 18%;
+    --muted: 348 83% 96%;
+    --muted-foreground: 349 33% 65%;
+    --accent: 347 77% 58%;
+    --accent-foreground: 348 83% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 348 83% 90%;
+    --input: 348 83% 90%;
+    --ring: 347 77% 58%;
+  }
+
+  .theme-spicy {
+    --background: 20 100% 98%;
+    --foreground: 15 84% 15%;
+    --card: 20 100% 100%;
+    --card-foreground: 15 84% 15%;
+    --popover: 20 100% 100%;
+    --popover-foreground: 15 84% 15%;
+    --primary: 14 90% 55%;
+    --primary-foreground: 20 100% 98%;
+    --secondary: 20 100% 96%;
+    --secondary-foreground: 15 84% 15%;
+    --muted: 20 100% 96%;
+    --muted-foreground: 15 40% 65%;
+    --accent: 14 90% 55%;
+    --accent-foreground: 20 100% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 20 100% 90%;
+    --input: 20 100% 90%;
+    --ring: 14 90% 55%;
+  }
+  
   .dark {
     --background: 287 20% 10%;
     --foreground: 277 33% 95%;
