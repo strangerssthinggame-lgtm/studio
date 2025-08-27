@@ -1,5 +1,5 @@
 import { ProfileCard } from '@/components/profile-card';
-import { Filter } from 'lucide-react';
+import { Filter, Users, Calendar, MapPin, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -28,7 +28,7 @@ const users = [
   {
     name: 'Liam',
     age: 27,
-    bio: 'Tech enthusiast and weekend hiker. My dog is my best friend. Let\'s talk about the future of AI or the best trails.',
+    bio: "Tech enthusiast and weekend hiker. My dog is my best friend. Let's talk about the future of AI or the best trails.",
     tags: ['Tech', 'Hiking', 'Dogs', 'Sci-Fi'],
     image: 'https://picsum.photos/seed/liam/600/800',
     aiHint: 'man portrait',
@@ -36,7 +36,7 @@ const users = [
   {
     name: 'Chloe',
     age: 22,
-    bio: 'Musician and dreamer. I find beauty in small things. Let\'s create a playlist for our first date.',
+    bio: "Musician and dreamer. I find beauty in small things. Let's create a playlist for our first date.",
     tags: ['Music', 'Concerts', 'Creative', 'Vegan'],
     image: 'https://picsum.photos/seed/chloe/600/800',
     aiHint: 'woman smiling',
@@ -71,21 +71,40 @@ export default function DashboardPage() {
             </Button>
           </SheetTrigger>
           <SheetContent>
-            <SheetHeader className="text-left">
-              <SheetTitle className="font-headline">Filters</SheetTitle>
+            <SheetHeader className="text-left border-b pb-4">
+              <SheetTitle className="font-headline">Discovery Settings</SheetTitle>
               <SheetDescription>
                 Refine your discovery settings to find the perfect vibe.
               </SheetDescription>
             </SheetHeader>
-            <div className="grid gap-6 py-6">
-              <div className="grid grid-cols-1 items-center gap-4">
-                <Label htmlFor="geography">Geography</Label>
+            <div className="grid gap-8 py-6">
+              <div className="grid grid-cols-1 items-start gap-4">
+                <Label className="flex items-center gap-2 text-base font-semibold"><Sparkles className="w-5 h-5 text-primary"/> Vibe</Label>
+                <RadioGroup defaultValue="date" className="grid grid-cols-3 gap-2">
+                    <Label htmlFor="friends" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
+                        <RadioGroupItem value="friends" id="friends" className="sr-only"/>
+                        Friends
+                    </Label>
+                     <Label htmlFor="date" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
+                        <RadioGroupItem value="date" id="date" className="sr-only"/>
+                        Date
+                    </Label>
+                     <Label htmlFor="spicy" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
+                        <RadioGroupItem value="spicy" id="spicy" className="sr-only"/>
+                        Spicy
+                    </Label>
+                </RadioGroup>
+              </div>
+
+              <div className="grid grid-cols-1 items-start gap-4">
+                <Label htmlFor="geography" className="flex items-center gap-2 text-base font-semibold"><MapPin className="w-5 h-5 text-primary"/> Region</Label>
                 <Input id="geography" placeholder="New York, USA" />
               </div>
-              <div className="grid grid-cols-1 items-center gap-4">
-                <Label htmlFor="age-range">Age Range</Label>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-muted-foreground">18</span>
+              
+              <div className="grid grid-cols-1 items-start gap-4">
+                <Label htmlFor="age-range" className="flex items-center gap-2 text-base font-semibold"><Calendar className="w-5 h-5 text-primary"/> Age Range</Label>
+                <div className="flex items-center gap-4 pt-2">
+                  <span className="text-sm text-muted-foreground w-4">18</span>
                   <Slider
                     id="age-range"
                     defaultValue={[18, 35]}
@@ -93,38 +112,28 @@ export default function DashboardPage() {
                     min={18}
                     step={1}
                   />
-                  <span className="text-sm text-muted-foreground">60</span>
+                  <span className="text-sm text-muted-foreground w-4">60</span>
                 </div>
               </div>
-              <div className="grid grid-cols-1 items-center gap-4">
-                <Label>Gender</Label>
-                <RadioGroup defaultValue="all" className="flex gap-4">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="all" id="all" />
-                    <Label htmlFor="all" className="font-normal">
-                      All
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="male" id="male" />
-                    <Label htmlFor="male" className="font-normal">
-                      Male
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="female" id="female" />
-                    <Label htmlFor="female" className="font-normal">
-                      Female
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="other" id="other" />
-                    <Label htmlFor="other" className="font-normal">
-                      Other
-                    </Label>
-                  </div>
+              
+              <div className="grid grid-cols-1 items-start gap-4">
+                <Label className="flex items-center gap-2 text-base font-semibold"><Users className="w-5 h-5 text-primary"/> Gender</Label>
+                <RadioGroup defaultValue="all" className="grid grid-cols-3 gap-2">
+                  <Label htmlFor="all" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
+                    <RadioGroupItem value="all" id="all" className="sr-only"/>
+                    All
+                  </Label>
+                  <Label htmlFor="male" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
+                    <RadioGroupItem value="male" id="male" className="sr-only"/>
+                    Male
+                  </Label>
+                  <Label htmlFor="female" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
+                    <RadioGroupItem value="female" id="female" className="sr-only"/>
+                    Female
+                  </Label>
                 </RadioGroup>
               </div>
+
             </div>
             <SheetFooter>
               <SheetClose asChild>
