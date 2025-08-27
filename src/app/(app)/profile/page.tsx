@@ -77,12 +77,14 @@ export default function ProfilePage() {
                 <Edit className="mr-2 h-4 w-4" /> Edit Profile
               </Button>
             </div>
+            
+            <div className="mt-6 border-t pt-6">
+                <h2 className="text-lg font-headline font-semibold flex items-center">
+                    About Me
+                </h2>
+                <p className="mt-2 text-muted-foreground text-base">{userProfile.bio}</p>
+            </div>
 
-            <Card className="mt-6 bg-muted/30">
-              <CardContent className="p-4">
-                <p className="text-card-foreground/80">{userProfile.bio}</p>
-              </CardContent>
-            </Card>
           </div>
         </div>
 
