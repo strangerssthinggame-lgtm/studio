@@ -92,7 +92,7 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold font-headline">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-primary">
-                <path d="M12.0006 18.26L4.94715 22.2082L6.52248 14.2799L0.587891 8.7918L8.61493 7.84006L12.0006 0.5L15.3862 7.84006L23.4132 8.7918L17.4787 14.2799L19.054 22.2082L12.0006 18.26Z"></path>
+                <path d="M12 4.435c-1.989-5.399-12-3.599-12 2.999 0 4.001 4 8.001 12 12.001 8-4 12-8.001 12-12.001 0-6.598-10.011-8.398-12-2.999z"/>
               </svg>
               <span className="">Bondly</span>
             </Link>
@@ -164,7 +164,7 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
                   className="flex items-center gap-2 text-lg font-semibold mb-4"
                 >
                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-primary">
-                    <path d="M12.0006 18.26L4.94715 22.2082L6.52248 14.2799L0.587891 8.7918L8.61493 7.84006L12.0006 0.5L15.3862 7.84006L23.4132 8.7918L17.4787 14.2799L19.054 22.2082L12.0006 18.26Z"></path>
+                    <path d="M12 4.435c-1.989-5.399-12-3.599-12 2.999 0 4.001 4 8.001 12 12.001 8-4 12-8.001 12-12.001 0-6.598-10.011-8.398-12-2.999z"/>
                  </svg>
                   <span className="font-headline">Bondly</span>
                 </Link>
