@@ -66,8 +66,8 @@ export default function DashboardPage() {
   
   const resetDeck = useCallback(() => {
       setUserQueue(filteredUsers);
-      setHistory([]);
-  }, [filteredUsers])
+      history.length > 0 && setHistory([]);
+  }, [filteredUsers, history.length])
 
   // Apply filters on initial load
   useEffect(() => {
@@ -111,7 +111,7 @@ export default function DashboardPage() {
                     onValueChange={(value) => handleFilterChange('vibe', value)}
                     className="grid grid-cols-3 gap-2">
                     <Label htmlFor="friends" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
-                        <RadioGroupItem value="friend" id="friends" className="sr-only"/>
+                        <RadioGroupItem value="friends" id="friends" className="sr-only"/>
                         Friends
                     </Label>
                     <Label htmlFor="date" className="rounded-lg border p-4 text-center cursor-pointer hover:bg-accent/50 has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary transition-all">
