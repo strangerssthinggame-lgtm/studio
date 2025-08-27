@@ -6,11 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Paperclip, Send, Smile, MoreVertical, Zap } from "lucide-react";
 import { useState } from "react";
-import VibeCheckCard from "@/components/vibe-check-card";
 import { cn } from "@/lib/utils";
 import GameSelectionDialog from "@/components/game-selection-dialog";
 import CoinToss from "@/components/coin-toss";
-import { VibeCheckResults } from "@/components/vibe-check-results";
 import GameCard from "@/components/game-card";
 
 type Message = {
@@ -23,8 +21,6 @@ type Message = {
 export type DeckTheme = 'default' | 'friends' | 'date' | 'spicy';
 
 export default function ChatPage({ params }: { params: { id: string } }) {
-  const [isVibeCheckComplete, setIsVibeCheckComplete] = useState(false);
-  const [vibeCheckMatches, setVibeCheckMatches] = useState(0);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isGameSelectionOpen, setIsGameSelectionOpen] = useState(false);
@@ -55,11 +51,6 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       setGameTurn('them'); 
     }
   };
-
-  const handleVibeCheckFinish = (matches: number) => {
-    setVibeCheckMatches(matches);
-    setIsVibeCheckComplete(true);
-  }
 
   const handleGameSelect = (deck: 'Friends' | 'Date' | 'Spicy') => {
     setActiveTheme(deck.toLowerCase() as DeckTheme);
@@ -152,7 +143,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
               onOpenChange={setIsGameSelectionOpen}
               onSelectDeck={handleGameSelect}
             >
-              <Button variant="outline" disabled={!isVibeCheckComplete || gameStage === 'playing'}>
+              <Button variant="outline" disabled={gameStage === 'playing'}>
                 <Zap className="mr-2 h-4 w-4" />
                 Start Game
               </Button>
@@ -163,20 +154,10 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-background">
-            
-            {!isVibeCheckComplete && (
-                <VibeCheckCard onGameFinish={handleVibeCheckFinish} />
-            )}
 
-            {isVibeCheckComplete && gameStage === 'none' && (
-              <>
-                <VibeCheckResults totalMatches={vibeCheckMatches} />
-              </>
-            )}
-
-            {isVibeCheckComplete && gameStage === 'toss' && deckName && <CoinToss onTossFinish={handleTossFinish} deckName={deckName} />}
+            {gameStage === 'toss' && deckName && <CoinToss onTossFinish={handleTossFinish} deckName={deckName} />}
             
-            {isVibeCheckComplete && isMyTurnInGame && deckName && (
+            {isMyTurnInGame && deckName && (
                  <GameCard 
                     onGameFinish={handleGameFinish} 
                     deckName={deckName}
