@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Camera, Edit, MapPin, User, FileImage, PlusCircle } from 'lucide-react';
+import { Camera, Edit, MapPin, User, FileImage, PlusCircle, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 const userProfile = {
@@ -14,6 +14,7 @@ const userProfile = {
   bio: 'Just a human vibing. Developer by day, dreamer by night. I believe in connecting with people on a deeper level. Let\'s talk about anything from the latest tech trends to the mysteries of the universe.',
   avatar: 'https://picsum.photos/100',
   banner: 'https://picsum.photos/1600/400',
+  vibes: ['Friend', 'Date', 'Casual'],
   interests: ['Photography', 'Hiking', 'Indie Music', 'Sci-Fi Movies', 'Coffee Enthusiast', 'Yoga'],
   gallery: [
     { id: 1, src: 'https://picsum.photos/seed/gallery1/400/400', hint: 'mountain landscape' },
@@ -80,6 +81,14 @@ export default function ProfilePage() {
                 </Button>
               </Link>
             </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+                {userProfile.vibes.map((vibe) => (
+                    <Badge key={vibe} variant="default" className="text-base px-3 py-1">
+                        {vibe}
+                    </Badge>
+                ))}
+            </div>
             
             <div className="mt-6 border-t pt-6">
                 <h2 className="text-lg font-headline font-semibold flex items-center">
@@ -121,7 +130,7 @@ export default function ProfilePage() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-headline"><User/> My Interests</CardTitle>
                     <CardDescription>The things that make me, me. Click to edit your interests.</CardDescription>
-                </CardHeader>
+                </Header>
                 <CardContent>
                     <div className="flex flex-wrap gap-2">
                         {userProfile.interests.map((interest) => (
