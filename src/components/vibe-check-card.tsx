@@ -28,7 +28,7 @@ const questions = [
 ];
 
 type VibeCheckCardProps = {
-    onGameFinish: (matchCount: number) => void;
+    onGameFinish: () => void;
 };
 
 
@@ -50,13 +50,12 @@ export default function VibeCheckCard({ onGameFinish }: VibeCheckCardProps) {
   };
   
   const handleNextQuestion = () => {
-      const totalMatches = myAnswers.filter((answer, index) => answer === questions[index].theirAnswer).length;
       if(currentQuestionIndex < questions.length - 1) {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
         setShowResult(false);
       } else {
         setGameState('results');
-        onGameFinish(totalMatches);
+        onGameFinish();
       }
   }
 
@@ -68,6 +67,10 @@ export default function VibeCheckCard({ onGameFinish }: VibeCheckCardProps) {
 
   if (gameState === 'results') {
     const isMajorVibe = totalMatches >= 2;
+    const resultText = isMajorVibe 
+        ? "You two are definitely on the same wavelength. The chat is now open!" 
+        : "You have some things in common. See where the conversation goes! The chat is now open.";
+
     return (
         <Card className="mx-auto w-full max-w-md text-center overflow-hidden">
              <CardHeader className="bg-muted/50">
@@ -84,6 +87,7 @@ export default function VibeCheckCard({ onGameFinish }: VibeCheckCardProps) {
                     {isMajorVibe ? "It's a Major Vibe!" : "Good Start!"}
                 </div>
                 <p className="text-lg font-semibold text-center">You matched on {totalMatches} out of {questions.length} questions!</p>
+                <p className="text-sm text-muted-foreground px-4">{resultText}</p>
             </CardContent>
         </Card>
     )

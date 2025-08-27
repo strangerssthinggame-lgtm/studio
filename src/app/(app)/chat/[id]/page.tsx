@@ -34,13 +34,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     setInputValue('');
   };
 
-  const handleGameFinish = (matchCount: number) => {
+  const handleGameFinish = () => {
     setIsGameFinished(true);
-    if (matchCount >=2) {
-        setMessages([{id: 'game-result', text: "You two are definitely on the same wavelength. The chat is now open!", sender: 'them'}]);
-    } else {
-        setMessages([{id: 'game-result', text: "You have some things in common. See where the conversation goes! The chat is now open.", sender: 'them'}]);
-    }
   }
 
   return (
@@ -62,7 +57,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
             <div className="text-center text-xs text-muted-foreground">Today</div>
             
-            {!isGameFinished && <VibeCheckCard onGameFinish={handleGameFinish} />}
+            <VibeCheckCard onGameFinish={handleGameFinish} />
 
             {isGameFinished && (
                 <div className="space-y-4">
