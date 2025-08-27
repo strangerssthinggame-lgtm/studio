@@ -48,8 +48,12 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   const handleLogout = async () => {
-    await signOut(auth);
-    router.push('/');
+    try {
+        await signOut(auth);
+        router.push('/');
+    } catch (error) {
+        console.error('Error signing out: ', error);
+    }
   }
 
   const navLinks = [
