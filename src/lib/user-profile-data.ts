@@ -13,6 +13,7 @@ export type UserProfile = {
   vibes: string[];
   interests: string[];
   gallery: { id: number; src: string; hint: string }[];
+  availability: string;
 };
 
 export const userProfiles: UserProfile[] = [
@@ -36,6 +37,7 @@ export const userProfiles: UserProfile[] = [
         { id: 5, src: 'https://picsum.photos/seed/sophia-gallery5/400/400', hint: 'city park' },
         { id: 6, src: 'https://picsum.photos/seed/sophia-gallery6/400/400', hint: 'sculpture' },
     ],
+    availability: 'Evenings & Weekends',
   },
   {
     id: '2',
@@ -57,6 +59,7 @@ export const userProfiles: UserProfile[] = [
         { id: 5, src: 'https://picsum.photos/seed/liam-gallery5/400/400', hint: 'headphones' },
         { id: 6, src: 'https://picsum.photos/seed/liam-gallery6/400/400', hint: 'drone' },
     ],
+    availability: 'Weekends',
   },
   {
     id: '3',
@@ -78,6 +81,7 @@ export const userProfiles: UserProfile[] = [
         { id: 5, src: 'https://picsum.photos/seed/chloe-gallery5/400/400', hint: 'notebook lyrics' },
         { id: 6, src: 'https://picsum.photos/seed/chloe-gallery6/400/400', hint: 'microphone' },
     ],
+    availability: 'Afternoons',
   },
    {
     id: '4',
@@ -99,6 +103,7 @@ export const userProfiles: UserProfile[] = [
         { id: 5, src: 'https://picsum.photos/seed/mason-gallery5/400/400', hint: 'movie tickets' },
         { id: 6, src: 'https://picsum.photos/seed/mason-gallery6/400/400', hint: 'chef kitchen' },
     ],
+    availability: 'Mornings',
   },
   {
     id: '5',
@@ -120,5 +125,6 @@ export const userProfiles: UserProfile[] = [
       { id: 5, src: 'https://picsum.photos/seed/olivia-gallery5/400/400', hint: 'cat sleeping' },
       { id: 6, src: 'https://picsum.photos/seed/olivia-gallery6/400/400', hint: 'reading glasses' },
     ],
+    availability: 'Anytime',
   },
 ];

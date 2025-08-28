@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Camera, Edit, MapPin, User, FileImage, PlusCircle, Sparkles } from 'lucide-react';
+import { Camera, Edit, MapPin, User, FileImage, PlusCircle, Sparkles, Clock } from 'lucide-react';
 import Link from 'next/link';
 
 const userProfile = {
@@ -24,6 +24,7 @@ const userProfile = {
     { id: 5, src: 'https://picsum.photos/seed/gallery5/400/400', hint: 'pet dog' },
     { id: 6, src: 'https://picsum.photos/seed/gallery6/400/400', hint: 'food plate' },
   ],
+  availability: 'Evenings & Weekends',
 };
 
 export default function ProfilePage() {
@@ -100,6 +101,39 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 font-headline"><Clock/> My Availability</CardTitle>
+                    <CardDescription>When you're usually active.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Badge variant="secondary" className="text-base px-4 py-2 w-full justify-center">
+                        {userProfile.availability}
+                    </Badge>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 font-headline"><User/> My Interests</CardTitle>
+                    <CardDescription>The things that make me, me.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                        {userProfile.interests.map((interest) => (
+                            <Badge key={interest} variant="secondary" className="text-base px-3 py-1 cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors">
+                                {interest}
+                            </Badge>
+                        ))}
+                         <Button variant="ghost" size="sm" className="text-primary hover:text-primary">
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Interest
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+
+
         <div className="mt-8">
             <Card>
                 <CardHeader>
@@ -125,26 +159,6 @@ export default function ProfilePage() {
             </Card>
         </div>
 
-         <div className="mt-8">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 font-headline"><User/> My Interests</CardTitle>
-                    <CardDescription>The things that make me, me. Click to edit your interests.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                        {userProfile.interests.map((interest) => (
-                            <Badge key={interest} variant="secondary" className="text-base px-3 py-1 cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors">
-                                {interest}
-                            </Badge>
-                        ))}
-                         <Button variant="ghost" size="sm" className="text-primary hover:text-primary">
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add Interest
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
       </div>
     </div>
   );

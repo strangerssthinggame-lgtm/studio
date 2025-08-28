@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Heart, MessageSquare, MapPin, User, FileImage, PlusCircle } from 'lucide-react';
+import { Heart, MessageSquare, MapPin, User, FileImage, PlusCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { userProfiles } from '@/lib/user-profile-data';
 import { notFound } from 'next/navigation';
@@ -79,6 +79,36 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
 
           </div>
         </div>
+        
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 font-headline"><Clock/> Availability</CardTitle>
+                    <CardDescription>When {userProfile.name} is usually active.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Badge variant="secondary" className="text-base px-4 py-2 w-full justify-center">
+                        {userProfile.availability}
+                    </Badge>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 font-headline"><User/> Interests</CardTitle>
+                    <CardDescription>The things that make them, them.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                        {userProfile.interests.map((interest) => (
+                            <Badge key={interest} variant="secondary" className="text-base px-3 py-1">
+                                {interest}
+                            </Badge>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+
 
         <div className="mt-8">
             <Card>
@@ -92,24 +122,6 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
                             <div key={photo.id} className="aspect-square relative rounded-lg overflow-hidden group">
                                 <Image src={photo.src} alt={`Gallery photo ${photo.id}`} fill objectFit="cover" data-ai-hint={photo.hint} />
                             </div>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
-
-         <div className="mt-8">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 font-headline"><User/> Interests</CardTitle>
-                    <CardDescription>The things that make them, them.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                        {userProfile.interests.map((interest) => (
-                            <Badge key={interest} variant="secondary" className="text-base px-3 py-1">
-                                {interest}
-                            </Badge>
                         ))}
                     </div>
                 </CardContent>
