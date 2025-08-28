@@ -43,6 +43,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import React from "react";
 
 const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -55,6 +56,15 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
         router.push('/');
     } catch (error) {
         console.error('Error signing out: ', error);
+    }
+  }
+
+  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const query = formData.get('search') as string;
+    if(query) {
+      router.push(`/search?q=${encodeURIComponent(query)}`);
     }
   }
 
@@ -239,11 +249,12 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
             </SheetContent>
           </Sheet>
           <div className="w-full flex-1">
-            <form>
+            <form onSubmit={handleSearch}>
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
+                  name="search"
                   placeholder="Search users..."
                   className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
                 />

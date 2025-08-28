@@ -14,10 +14,13 @@ type FilterType = 'all' | 'friends' | 'date' | 'spicy';
 
 export default function ChatListPage() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredChats = chats.filter(chat => 
-    activeFilter === 'all' || chat.vibe === activeFilter
-  );
+  const filteredChats = chats.filter(chat => {
+    const filterMatch = activeFilter === 'all' || chat.vibe === activeFilter;
+    const searchMatch = chat.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return filterMatch && searchMatch;
+  });
 
   const filterButtons = [
       { name: 'All', value: 'all' as FilterType },
@@ -40,7 +43,12 @@ export default function ChatListPage() {
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-        <Input placeholder="Search chats..." className="pl-10 h-12 text-base" />
+        <Input 
+          placeholder="Search chats..." 
+          className="pl-10 h-12 text-base" 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
       </div>
 
       <div className="flex items-center gap-2">
@@ -103,7 +111,7 @@ export default function ChatListPage() {
             ))}
              {filteredChats.length === 0 && (
                 <div className="text-center text-muted-foreground p-8">
-                    <p>No chats found for the "{activeFilter}" filter.</p>
+                    <p>No chats found matching your search.</p>
                 </div>
              )}
           </div>
