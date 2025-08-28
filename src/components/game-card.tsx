@@ -69,14 +69,18 @@ type GameCardProps = {
 
 export default function GameCard({ onGameFinish, deckName, gameType, onSendQuestion, opponentName }: GameCardProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedTod, setSelectedTod] = useState<'truth' | 'dare'>('truth');
   
   const questions = gameDecks[deckName].truth;
   const dares = gameDecks[deckName].dare;
 
   const { icon: Icon, title } = deckInfo[deckName];
 
-  const handleSendQuestion = (question: string) => {
-    onSendQuestion(question);
+  const handleSendQuestion = () => {
+    const questionToSend = selectedTod === 'truth'
+      ? `Truth: ${currentQuestion}`
+      : `Dare: ${currentDare}`;
+    onSendQuestion(questionToSend);
   }
 
   const handleCycleContent = () => {
@@ -101,7 +105,7 @@ export default function GameCard({ onGameFinish, deckName, gameType, onSendQuest
               <span className="sr-only">Next Question</span>
           </Button>
           <Button 
-              onClick={() => handleSendQuestion(currentQuestion)}
+              onClick={() => onSendQuestion(currentQuestion)}
               className="w-full h-14 text-lg"
           >
               <Send className="w-5 h-5 mr-2"/>
@@ -114,37 +118,54 @@ export default function GameCard({ onGameFinish, deckName, gameType, onSendQuest
   const renderTruthOrDare = () => (
       <div className="w-full space-y-4">
         <div className="space-y-2">
-            <div 
-              className="group relative p-4 rounded-lg border-2 border-sky-500 bg-sky-500/10 text-center transition-all duration-300"
+            <button
+              onClick={() => setSelectedTod('truth')}
+              className={cn(
+                  "group relative p-4 rounded-lg border-2 text-center transition-all duration-300 w-full",
+                  selectedTod === 'truth' 
+                    ? 'border-sky-500 bg-sky-500/10'
+                    : 'border-muted bg-muted/30 hover:bg-muted/70'
+              )}
             >
                 <div className="absolute top-2 right-2 bg-sky-500 text-white rounded-full px-2 py-0.5 text-xs font-bold">TRUTH</div>
-                <p className="font-semibold text-sky-800 dark:text-sky-200 mt-4">{currentQuestion}</p>
-            </div>
-            <Button onClick={() => handleSendQuestion(`Truth: ${currentQuestion}`)} className="w-full">
-                Send Truth
-            </Button>
+                <p className={cn(
+                    "font-semibold mt-4",
+                     selectedTod === 'truth' ? 'text-sky-800 dark:text-sky-200' : 'text-card-foreground'
+                )}>{currentQuestion}</p>
+            </button>
         </div>
 
         <div className="space-y-2">
-             <div 
-              className="group relative p-4 rounded-lg border-2 border-orange-500 bg-orange-500/10 text-center transition-all duration-300"
+             <button
+              onClick={() => setSelectedTod('dare')}
+              className={cn(
+                  "group relative p-4 rounded-lg border-2 text-center transition-all duration-300 w-full",
+                  selectedTod === 'dare' 
+                    ? 'border-orange-500 bg-orange-500/10'
+                    : 'border-muted bg-muted/30 hover:bg-muted/70'
+              )}
             >
                 <div className="absolute top-2 right-2 bg-orange-500 text-white rounded-full px-2 py-0.5 text-xs font-bold">DARE</div>
-                <p className="font-semibold text-orange-800 dark:text-orange-200 mt-4">{currentDare}</p>
-            </div>
-             <Button onClick={() => handleSendQuestion(`Dare: ${currentDare}`)} className="w-full" variant="secondary">
-                Send Dare
-            </Button>
+                <p className={cn(
+                    "font-semibold mt-4",
+                     selectedTod === 'dare' ? 'text-orange-800 dark:text-orange-200' : 'text-card-foreground'
+                )}>{currentDare}</p>
+            </button>
         </div>
         
          <div className="flex items-center gap-4 w-full pt-4">
              <Button 
                 variant="outline"
                 onClick={handleCycleContent}
-                className="w-full"
+                className="h-14"
             >
-                <RefreshCw className="w-5 h-5 mr-2"/>
-                Shuffle
+                <RefreshCw className="w-5 h-5"/>
+            </Button>
+            <Button
+                onClick={handleSendQuestion}
+                className="w-full h-14 text-lg"
+            >
+                Send
             </Button>
          </div>
       </div>
@@ -174,3 +195,4 @@ export default function GameCard({ onGameFinish, deckName, gameType, onSendQuest
     </Card>
   );
 }
+
