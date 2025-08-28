@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Camera, Edit, MapPin, User, FileImage, PlusCircle, X, Save, Sparkles } from 'lucide-react';
+import { Camera, Edit, MapPin, User, FileImage, PlusCircle, X, Save, Sparkles, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,6 +28,7 @@ const userProfile = {
     { id: 3, src: 'https://picsum.photos/seed/gallery3/400/400', hint: 'abstract art' },
     { id: 4, src: 'https://picsum.photos/seed/gallery4/400/400', hint: 'portrait smiling' },
   ],
+  availability: 'Evenings & Weekends',
 };
 
 const allVibes = ['Friend', 'Date', 'Casual', 'Spicy', 'Serious'];
@@ -106,6 +107,19 @@ export default function EditProfilePage() {
             </div>
         </CardContent>
       </Card>
+
+      <div className="mt-8">
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 font-headline"><Clock/> My Availability</CardTitle>
+                <CardDescription>Let others know when you're typically free to chat or play.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Label htmlFor="availability">Availability</Label>
+                <Input id="availability" value={profile.availability} onChange={(e) => setProfile({...profile, availability: e.target.value})} placeholder="e.g., Evenings & Weekends" />
+            </CardContent>
+        </Card>
+      </div>
 
        <div className="mt-8">
             <Card>
