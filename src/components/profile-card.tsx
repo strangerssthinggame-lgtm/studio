@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Heart, X, Sparkles } from 'lucide-react';
+import { Heart, X, Sparkles, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   AlertDialog,
@@ -88,6 +88,11 @@ export function ProfileCard({ user, onSwipe, style }: ProfileCardProps) {
                 <Button onClick={() => handleSwipe('left')} variant="destructive" size="icon" className="w-16 h-16 rounded-full shadow-lg bg-white/90 hover:bg-white text-destructive backdrop-blur-sm transition-transform hover:scale-105">
                     <X className="w-8 h-8"/>
                 </Button>
+                 <Link href={`/chat/${user.id}`}>
+                    <Button variant="outline" size="icon" className="w-12 h-12 rounded-full shadow-lg bg-white/80 hover:bg-white text-primary backdrop-blur-sm transition-transform hover:scale-105">
+                        <Zap className="w-6 h-6"/>
+                    </Button>
+                </Link>
                 <Button onClick={() => handleSwipe('right')} variant="default" size="icon" className="w-16 h-16 rounded-full shadow-lg bg-primary/90 hover:bg-primary text-primary-foreground backdrop-blur-sm transition-transform hover:scale-105">
                     <Heart className="w-8 h-8" fill="currentColor"/>
                 </Button>
