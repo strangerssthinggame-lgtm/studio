@@ -1,0 +1,152 @@
+
+.onboarding-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    position: relative;
+    transition: background 0.5s ease;
+    user-select: none;
+    overflow: hidden;
+}
+
+.gradient-bg {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transition: all 0.5s ease;
+}
+
+.gradient-bg.page-1 {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.gradient-bg.page-2 {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.skip-btn {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    color: rgba(255,255,255,0.8);
+    font-size: 16px;
+    font-weight: 600;
+    background: none;
+    border: none;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.content {
+    text-align: center;
+    padding-top: 80px;
+    max-width: 350px;
+}
+
+.icon-container {
+    width: 120px;
+    height: 120px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 40px;
+}
+
+.title {
+    font-size: 32px;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 16px;
+}
+
+.subtitle {
+    font-size: 20px;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 24px;
+    font-weight: 500;
+}
+
+.description {
+    font-size: 16px;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.5;
+}
+
+.indicators {
+    display: flex;
+    justify-content: center;
+    margin: 60px 0 40px;
+    gap: 8px;
+}
+
+.indicator {
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.3);
+    transition: all 0.3s ease;
+}
+
+.indicator.active {
+    width: 24px;
+    background: white;
+}
+
+.indicator.inactive {
+    width: 8px;
+}
+
+.navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding-bottom: 50px;
+}
+
+.nav-btn {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px;
+}
+
+.nav-btn:disabled {
+    opacity: 0.3;
+}
+
+.next-btn {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 25px;
+    padding: 12px 24px;
+}
+
+.app-logo {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255,255,255,0.6);
+    font-size: 18px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+@media (max-width: 480px) {
+    .title { font-size: 28px; }
+    .subtitle { font-size: 18px; }
+    .icon-container {
+        width: 100px;
+        height: 100px;
+        margin-bottom: 30px;
+    }
+}
