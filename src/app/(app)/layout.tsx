@@ -15,6 +15,7 @@ import {
   LogOut,
   Settings,
   Share2,
+  LifeBuoy,
 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { auth } from "@/lib/firebase";
@@ -286,7 +287,12 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
                   <span>Settings</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/support">
+                  <LifeBuoy className="mr-2 h-4 w-4" />
+                  <span>Support</span>
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
