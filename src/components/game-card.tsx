@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, Users, Flame, Send, RefreshCw, Wand2 } from 'lucide-react';
+import { Heart, Users, Flame, Send, RefreshCw, Wand2, ShieldQuestion } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { GameType } from '@/app/(app)/chat/[id]/page';
 
@@ -63,25 +63,18 @@ type GameCardProps = {
     onGameFinish: () => void;
     deckName: 'Friends' | 'Date' | 'Spicy';
     gameType: GameType;
-    onSendQuestion: (question: string) => void;
+    onSendVibeQuestion: (question: string) => void;
+    onSendChallenge: (truth: string, dare: string) => void;
     opponentName: string;
 };
 
-export default function GameCard({ onGameFinish, deckName, gameType, onSendQuestion, opponentName }: GameCardProps) {
+export default function GameCard({ onGameFinish, deckName, gameType, onSendVibeQuestion, onSendChallenge, opponentName }: GameCardProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedTod, setSelectedTod] = useState<'truth' | 'dare'>('truth');
   
   const questions = gameDecks[deckName].truth;
   const dares = gameDecks[deckName].dare;
 
   const { icon: Icon, title } = deckInfo[deckName];
-
-  const handleSendQuestion = () => {
-    const questionToSend = selectedTod === 'truth'
-      ? `Truth: ${currentQuestion}`
-      : `Dare: ${currentDare}`;
-    onSendQuestion(questionToSend);
-  }
 
   const handleCycleContent = () => {
     setCurrentQuestionIndex((prevIndex) => (prevIndex + 1) % questions.length);
@@ -105,7 +98,7 @@ export default function GameCard({ onGameFinish, deckName, gameType, onSendQuest
               <span className="sr-only">Next Question</span>
           </Button>
           <Button 
-              onClick={() => onSendQuestion(currentQuestion)}
+              onClick={() => onSendVibeQuestion(currentQuestion)}
               className="w-full h-14 text-lg"
           >
               <Send className="w-5 h-5 mr-2"/>
@@ -116,41 +109,25 @@ export default function GameCard({ onGameFinish, deckName, gameType, onSendQuest
   );
 
   const renderTruthOrDare = () => (
-      <div className="w-full space-y-4">
+      <div className="w-full space-y-4 text-center">
         <div className="space-y-2">
-            <button
-              onClick={() => setSelectedTod('truth')}
-              className={cn(
-                  "group relative p-4 rounded-lg border-2 text-center transition-all duration-300 w-full",
-                  selectedTod === 'truth' 
-                    ? 'border-sky-500 bg-sky-500/10'
-                    : 'border-muted bg-muted/30 hover:bg-muted/70'
-              )}
+            <div
+              className="group relative p-4 rounded-lg border-2 text-center transition-all duration-300 w-full border-sky-500 bg-sky-500/10"
             >
                 <div className="absolute top-2 right-2 bg-sky-500 text-white rounded-full px-2 py-0.5 text-xs font-bold">TRUTH</div>
-                <p className={cn(
-                    "font-semibold mt-4",
-                     selectedTod === 'truth' ? 'text-sky-800 dark:text-sky-200' : 'text-card-foreground'
-                )}>{currentQuestion}</p>
-            </button>
+                <p className="font-semibold mt-4 text-sky-800 dark:text-sky-200">{currentQuestion}</p>
+            </div>
         </div>
 
+        <p className="font-bold text-muted-foreground">OR</p>
+
         <div className="space-y-2">
-             <button
-              onClick={() => setSelectedTod('dare')}
-              className={cn(
-                  "group relative p-4 rounded-lg border-2 text-center transition-all duration-300 w-full",
-                  selectedTod === 'dare' 
-                    ? 'border-orange-500 bg-orange-500/10'
-                    : 'border-muted bg-muted/30 hover:bg-muted/70'
-              )}
+             <div
+              className="group relative p-4 rounded-lg border-2 text-center transition-all duration-300 w-full border-orange-500 bg-orange-500/10"
             >
                 <div className="absolute top-2 right-2 bg-orange-500 text-white rounded-full px-2 py-0.5 text-xs font-bold">DARE</div>
-                <p className={cn(
-                    "font-semibold mt-4",
-                     selectedTod === 'dare' ? 'text-orange-800 dark:text-orange-200' : 'text-card-foreground'
-                )}>{currentDare}</p>
-            </button>
+                <p className="font-semibold mt-4 text-orange-800 dark:text-orange-200">{currentDare}</p>
+            </div>
         </div>
         
          <div className="flex items-center gap-4 w-full pt-4">
@@ -162,10 +139,11 @@ export default function GameCard({ onGameFinish, deckName, gameType, onSendQuest
                 <RefreshCw className="w-5 h-5"/>
             </Button>
             <Button
-                onClick={handleSendQuestion}
+                onClick={() => onSendChallenge(currentQuestion, currentDare)}
                 className="w-full h-14 text-lg"
             >
-                Send
+                <ShieldQuestion className="mr-2"/>
+                Challenge {opponentName}
             </Button>
          </div>
       </div>
@@ -195,4 +173,3 @@ export default function GameCard({ onGameFinish, deckName, gameType, onSendQuest
     </Card>
   );
 }
-

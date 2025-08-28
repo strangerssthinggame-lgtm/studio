@@ -16,13 +16,20 @@ import { chats, Chat } from "@/lib/chat-data";
 import { notFound, useRouter } from 'next/navigation';
 import Link from "next/link";
 import { AIPromptPopover } from "@/components/ai-prompt-popover";
+import { ChallengeCard } from "@/components/challenge-card";
 
 
 type Message = {
     id: string;
-    text: string;
     sender: 'me' | 'them';
-    type?: 'question' | 'answer';
+    type?: 'question' | 'answer' | 'challenge' | 'system';
+    text?: string;
+    challenge?: {
+        truth: string;
+        dare: string;
+        isResponded: boolean;
+        choice?: 'truth' | 'dare';
+    }
 };
 
 export type DeckTheme = 'default' | 'friends' | 'date' | 'spicy';
@@ -91,8 +98,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     // Optional: Add a system message that the game has ended.
   }
   
-  const handleSendQuestion = (question: string) => {
-    // This function is called when it's MY turn to ask
+  const handleSendVibeQuestion = (question: string) => {
+    // This function is called when it's MY turn to ask a VIBE question
     const newMessage: Message = {
       id: (messages.length + 1).toString(),
       text: question,
@@ -115,9 +122,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         
         setMessages(prev => [...prev, opponentAnswer]);
         
-        // After they answer, it's my turn to answer THEIR question
-        setIsAwaitingAnswer(false);
-        // It's their turn to ask a question now.
+        // After they answer, it's their turn to ask a question now.
         setGameTurn('them'); 
 
         // Simulate them asking a question
@@ -136,6 +141,47 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
     }, 2000);
   };
+  
+  const handleSendChallenge = (truth: string, dare: string) => {
+    // This function is called when it's MY turn to send a challenge
+    const newChallenge: Message = {
+        id: (messages.length + 1).toString(),
+        sender: 'me',
+        type: 'challenge',
+        challenge: {
+            truth,
+            dare,
+            isResponded: false
+        }
+    };
+    setMessages(prev => [...prev, newChallenge]);
+    setGameTurn('them'); // It is now their turn to respond to my challenge
+    setIsAwaitingAnswer(true); // They need to respond to the challenge
+  }
+
+  const handleChallengeResponse = (messageId: string, choice: 'truth' | 'dare') => {
+      // THIS IS THE OPPONENT's simulated response
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId && msg.challenge
+        ? { ...msg, challenge: {...msg.challenge, isResponded: true, choice: choice} }
+        : msg
+      ));
+      
+      setIsAwaitingAnswer(false);
+      
+      // Simulate them answering...
+      setTimeout(() => {
+        const theirAnswer: Message = {
+            id: (messages.length + 2).toString(),
+            sender: 'them',
+            type: 'answer',
+            text: `Okay, I chose ${choice}. Here's my answer...`
+        }
+        setMessages(prev => [...prev, theirAnswer]);
+        setGameTurn('them'); // Now it's their turn to send a challenge
+      }, 1500);
+
+  }
 
   const handleVibeCheckFinish = (matches: number) => {
     setVibeCheckMatches(matches);
@@ -154,9 +200,10 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   
   const placeholderText = () => {
     if (vibeCheckState !== 'complete') return "Complete the Vibe Check to start chatting...";
-    if (canAnswer) return "It's your turn to answer...";
-    if (isMyTurnInGame) return "It's your turn to ask a question...";
-    if (isTheirTurnInGame) return `Waiting for ${chat.name} to ask...`;
+    if (canAnswer && gameType === 'vibe') return "It's your turn to answer...";
+    if (isAwaitingAnswer && gameType === 'truth-or-dare') return `Waiting for ${chat.name} to choose...`;
+    if (isMyTurnInGame) return `It's your turn to ask a question...`;
+    if (isTheirTurnInGame) return `Waiting for ${chat.name} to challenge you...`;
     if (gameStage === 'playing') return "The game is in progress...";
     return "Type a message...";
   }
@@ -221,7 +268,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                     onGameFinish={handleGameFinish} 
                     deckName={deckName}
                     gameType={gameType}
-                    onSendQuestion={handleSendQuestion}
+                    onSendVibeQuestion={handleSendVibeQuestion}
+                    onSendChallenge={handleSendChallenge}
                     opponentName={chat.name}
                 />
             )}
@@ -233,34 +281,47 @@ export default function ChatPage({ params }: { params: { id: string } }) {
             )}
 
             <div className="space-y-4">
-                  {messages.map((message) => (
-                    <div 
-                        key={message.id} 
-                        className={cn(
-                            "flex items-end gap-2",
-                            message.sender === 'me' ? 'justify-end' : 'justify-start'
-                        )}
-                    >
-                        {message.sender === 'them' && (
-                            <Link href={`/users/${chat.id}`}>
-                                <Avatar className="h-8 w-8">
-                                    <AvatarImage src={chat.avatar} alt={chat.name} data-ai-hint="profile avatar"/>
-                                    <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                            </Link>
-                        )}
-                          <div className={cn(
-                            "max-w-xs md:max-w-md lg:max-w-lg rounded-xl px-4 py-3 text-sm",
-                             message.type === 'question' 
-                                ? 'bg-muted border-2 border-primary/50 text-primary' 
-                                : (message.sender === 'me' 
-                                    ? 'bg-primary text-primary-foreground rounded-br-none' 
-                                    : 'bg-muted rounded-bl-none')
-                        )}>
-                            <p>{message.text}</p>
+                  {messages.map((message) => {
+                    if (message.type === 'challenge' && message.challenge) {
+                        return (
+                             <ChallengeCard
+                                key={message.id}
+                                message={message}
+                                onRespond={handleChallengeResponse}
+                                currentUser="them" // In a real app, this would be dynamic. For simulation, the user is always responding.
+                            />
+                        )
+                    }
+
+                    return (
+                        <div 
+                            key={message.id} 
+                            className={cn(
+                                "flex items-end gap-2",
+                                message.sender === 'me' ? 'justify-end' : 'justify-start'
+                            )}
+                        >
+                            {message.sender === 'them' && (
+                                <Link href={`/users/${chat.id}`}>
+                                    <Avatar className="h-8 w-8">
+                                        <AvatarImage src={chat.avatar} alt={chat.name} data-ai-hint="profile avatar"/>
+                                        <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                </Link>
+                            )}
+                            <div className={cn(
+                                "max-w-xs md:max-w-md lg:max-w-lg rounded-xl px-4 py-3 text-sm",
+                                message.type === 'question' 
+                                    ? 'bg-muted border-2 border-primary/50 text-primary' 
+                                    : (message.sender === 'me' 
+                                        ? 'bg-primary text-primary-foreground rounded-br-none' 
+                                        : 'bg-muted rounded-bl-none')
+                            )}>
+                                <p>{message.text}</p>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    )
+                  })}
             </div>
            
         </div>
