@@ -1,8 +1,13 @@
+
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bell, MessageSquare, Heart, Zap } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const notifications = [
   {
@@ -13,6 +18,7 @@ const notifications = [
     time: "5m ago",
     read: false,
     icon: <Heart className="w-5 h-5 text-rose-500" />,
+    userId: '1',
   },
   {
     id: 2,
@@ -22,6 +28,7 @@ const notifications = [
     time: "1h ago",
     read: false,
     icon: <MessageSquare className="w-5 h-5 text-blue-500" />,
+    userId: '2',
   },
   {
     id: 3,
@@ -31,6 +38,7 @@ const notifications = [
     time: "3h ago",
     read: true,
     icon: <Zap className="w-5 h-5 text-orange-500" />,
+    userId: '3',
   },
     {
     id: 4,
@@ -40,11 +48,25 @@ const notifications = [
     time: "1d ago",
     read: true,
     icon: <MessageSquare className="w-5 h-5 text-blue-500" />,
+    userId: '4',
   },
 ];
 
 export default function NotificationsPage() {
   const unreadNotifications = notifications.filter(n => !n.read).length;
+  const router = useRouter();
+
+  const getNotificationLink = (notification: typeof notifications[0]) => {
+      switch(notification.type) {
+          case 'new_message':
+          case 'game_invite':
+              return `/chat/${notification.userId}`;
+          case 'new_match':
+              return `/users/${notification.userId}`;
+          default:
+              return '#';
+      }
+  }
 
   return (
     <div className="flex flex-col h-full gap-6">
@@ -60,7 +82,7 @@ export default function NotificationsPage() {
         <CardContent className="p-0">
           <div className="flex flex-col">
             {notifications.map((notification, index) => (
-              <div key={notification.id}>
+              <Link href={getNotificationLink(notification)} key={notification.id}>
                 <div className={cn(
                     "flex items-start gap-4 p-4 hover:bg-muted/50 cursor-pointer transition-colors duration-200",
                     !notification.read && "bg-primary/5"
@@ -80,7 +102,7 @@ export default function NotificationsPage() {
                   )}
                 </div>
                 {index < notifications.length - 1 && <Separator />}
-              </div>
+              </Link>
             ))}
           </div>
         </CardContent>
