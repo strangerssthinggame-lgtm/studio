@@ -29,10 +29,12 @@ const questions = [
 
 type VibeCheckCardProps = {
     onGameFinish: (matches: number) => void;
+    opponentName: string;
+    opponentAvatar: string;
 };
 
 
-export default function VibeCheckCard({ onGameFinish }: VibeCheckCardProps) {
+export default function VibeCheckCard({ onGameFinish, opponentName, opponentAvatar }: VibeCheckCardProps) {
   const [gameState, setGameState] = useState<'intro' | 'playing'>('intro');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [myAnswers, setMyAnswers] = useState<(string | null)[]>(Array(questions.length).fill(null));
@@ -65,14 +67,24 @@ export default function VibeCheckCard({ onGameFinish }: VibeCheckCardProps) {
   
   const renderIntro = () => (
     <div className="animate-in fade-in-50 zoom-in-95">
-        <CardHeader className="bg-muted/50">
+        <CardHeader className="bg-muted/50 items-center text-center">
+            <div className="relative h-16 w-32 mb-4">
+                <Avatar className="w-16 h-16 border-4 border-background absolute left-0 top-0">
+                    <AvatarImage src="https://picsum.photos/100" alt="You" data-ai-hint="profile avatar" />
+                    <AvatarFallback>Y</AvatarFallback>
+                </Avatar>
+                <Avatar className="w-16 h-16 border-4 border-background absolute right-0 top-0">
+                    <AvatarImage src={opponentAvatar} alt={opponentName} data-ai-hint="profile avatar" />
+                    <AvatarFallback>{opponentName.charAt(0)}</AvatarFallback>
+                </Avatar>
+            </div>
             <CardTitle className="font-headline text-xl flex items-center justify-center gap-2">
-                <Sparkles className="text-primary"/> Vibe Check Time!
+                <Sparkles className="text-primary"/> Vibe Check with {opponentName}
             </CardTitle>
-            <CardDescription>Sophia has invited you to play a game. The first card is ready.</CardDescription>
+            <CardDescription>See if your vibes align before you start chatting.</CardDescription>
         </CardHeader>
-        <CardContent className="p-6 flex flex-col items-center justify-center gap-6 min-h-[250px]">
-             <p className="text-lg font-semibold text-center">See if your vibes align before you start chatting.</p>
+        <CardContent className="p-6 flex flex-col items-center justify-center gap-6 min-h-[200px]">
+             <p className="text-lg font-semibold text-center">The first question is ready.</p>
              <Button onClick={handleStart}>
                 Start Vibe Check
              </Button>
@@ -125,10 +137,10 @@ export default function VibeCheckCard({ onGameFinish }: VibeCheckCardProps) {
                         </div>
                         <div className="flex flex-col items-center gap-2">
                             <Avatar>
-                                <AvatarImage src="https://picsum.photos/seed/sophia/100" alt="Sophia" data-ai-hint="profile avatar"/>
-                                <AvatarFallback>S</AvatarFallback>
+                                <AvatarImage src={opponentAvatar} alt={opponentName} data-ai-hint="profile avatar"/>
+                                <AvatarFallback>{opponentName.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <span className="font-semibold">Sophia</span>
+                            <span className="font-semibold">{opponentName}</span>
                             <span className="text-sm text-muted-foreground">{currentQuestion.theirAnswer}</span>
                         </div>
                     </div>

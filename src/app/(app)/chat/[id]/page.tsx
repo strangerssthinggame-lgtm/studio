@@ -239,7 +239,11 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   if (vibeCheckState === 'needed') {
       return (
         <div className="flex flex-col h-[calc(100vh_-_theme(spacing.24))] rounded-xl border items-center justify-center bg-muted/20">
-            <VibeCheckCard onGameFinish={handleVibeCheckFinish} />
+            <VibeCheckCard 
+                onGameFinish={handleVibeCheckFinish} 
+                opponentName={chat.name} 
+                opponentAvatar={chat.avatar} 
+            />
         </div>
       )
   }
