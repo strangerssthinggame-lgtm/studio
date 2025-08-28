@@ -112,27 +112,32 @@ export default function GameCard({ onGameFinish, deckName, gameType, onSendQuest
   );
 
   const renderTruthOrDare = () => (
-      <>
-        <div className="flex gap-4 w-full">
-            {/* Truth Card */}
-            <button 
-              onClick={() => handleSendQuestion(`Truth: ${currentQuestion}`)}
-              className="group relative w-1/2 p-4 rounded-lg border-2 border-sky-500 bg-sky-500/10 hover:bg-sky-500/20 text-center transition-all duration-300"
+      <div className="w-full space-y-4">
+        <div className="space-y-2">
+            <div 
+              className="group relative p-4 rounded-lg border-2 border-sky-500 bg-sky-500/10 text-center transition-all duration-300"
             >
                 <div className="absolute top-2 right-2 bg-sky-500 text-white rounded-full px-2 py-0.5 text-xs font-bold">TRUTH</div>
                 <p className="font-semibold text-sky-800 dark:text-sky-200 mt-4">{currentQuestion}</p>
-            </button>
+            </div>
+            <Button onClick={() => handleSendQuestion(`Truth: ${currentQuestion}`)} className="w-full">
+                Send Truth
+            </Button>
+        </div>
 
-            {/* Dare Card */}
-             <button 
-              onClick={() => handleSendQuestion(`Dare: ${currentDare}`)}
-              className="group relative w-1/2 p-4 rounded-lg border-2 border-orange-500 bg-orange-500/10 hover:bg-orange-500/20 text-center transition-all duration-300"
+        <div className="space-y-2">
+             <div 
+              className="group relative p-4 rounded-lg border-2 border-orange-500 bg-orange-500/10 text-center transition-all duration-300"
             >
                 <div className="absolute top-2 right-2 bg-orange-500 text-white rounded-full px-2 py-0.5 text-xs font-bold">DARE</div>
                 <p className="font-semibold text-orange-800 dark:text-orange-200 mt-4">{currentDare}</p>
-            </button>
+            </div>
+             <Button onClick={() => handleSendQuestion(`Dare: ${currentDare}`)} className="w-full" variant="secondary">
+                Send Dare
+            </Button>
         </div>
-         <div className="flex items-center gap-4 w-full">
+        
+         <div className="flex items-center gap-4 w-full pt-4">
              <Button 
                 variant="outline"
                 onClick={handleCycleContent}
@@ -142,7 +147,7 @@ export default function GameCard({ onGameFinish, deckName, gameType, onSendQuest
                 Shuffle
             </Button>
          </div>
-      </>
+      </div>
   );
 
 
