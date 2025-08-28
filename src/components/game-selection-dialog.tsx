@@ -27,7 +27,7 @@ type GameSelectionDialogProps = {
     children: React.ReactNode;
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSelectDeck: (deck: Deck) => void;
+    onSelectDeck: (deck: Deck, gameType: GameType) => void;
 };
 
 export default function GameSelectionDialog({ children, open, onOpenChange, onSelectDeck }: GameSelectionDialogProps) {
@@ -56,9 +56,7 @@ export default function GameSelectionDialog({ children, open, onOpenChange, onSe
   }
   
   const handleDeckSelect = (deck: Deck) => {
-    // For now, both game types will trigger the same onSelectDeck function.
-    // This can be expanded later.
-    onSelectDeck(deck);
+    onSelectDeck(deck, selectedGameType!);
   }
 
 
