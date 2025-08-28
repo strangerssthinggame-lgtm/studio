@@ -6,50 +6,80 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Heart, Users, Flame, Send, RefreshCw, Wand2, ShieldQuestion } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { GameType } from '@/app/(app)/chat/[id]/page';
+import type { GameType, GameLevel } from '@/app/(app)/chat/[id]/page';
 
 const gameDecks = {
   Friends: {
-    truth: [
-      "What's the most useless talent you have?",
-      "If you could only eat one food for the rest of your life, what would it be?",
-      "What's the most embarrassing thing you've ever done?",
-      "What's a weird food combination you love?",
-    ],
-    dare: [
-      "Send the 3rd emoji on your recently used list.",
-      "Share a screenshot of your phone's home screen.",
-      "Tell a cheesy joke.",
-      "Spell your name backwards with your eyes closed.",
-    ],
+    1: {
+      truth: [
+        "What's the most useless talent you have?",
+        "If you could only eat one food for the rest of your life, what would it be?",
+        "What's the most embarrassing thing you've ever done?",
+        "What's a weird food combination you love?",
+      ],
+      dare: [
+        "Send the 3rd emoji on your recently used list.",
+        "Share a screenshot of your phone's home screen.",
+        "Tell a cheesy joke.",
+        "Spell your name backwards with your eyes closed.",
+      ],
+    },
+    2: {
+        truth: ["What's a goal you have for the next year?", "Who is your biggest role model?", "What's something you're proud of?"],
+        dare: ["Send a voice note saying 'I'm awesome!'", "Recommend a song you have on repeat.", "Share the last meme you saved."]
+    },
+    3: {
+        truth: ["What's one of your biggest fears?", "What's a secret you've never told anyone?", "What's something you want to change about yourself?"],
+        dare: ["Call a friend and sing them 'Happy Birthday'.", "Post an old photo of yourself on your story.", "Do 10 pushups on camera."]
+    }
   },
   Date: {
-    truth: [
-      "What's a relationship deal-breaker for you?",
-      "What are you most passionate about in life?",
-      "What's the most important lesson you've learned from past relationships?",
-      "What does your ideal weekend look like?",
-    ],
-     dare: [
-      "Send a 10-second voice note saying 'hello'.",
-      "Describe your perfect date in 3 words.",
-      "Send a selfie right now.",
-      "Share your most-played song on Spotify/Apple Music.",
-    ],
+    1: {
+        truth: [
+          "What's a relationship deal-breaker for you?",
+          "What are you most passionate about in life?",
+          "What's the most important lesson you've learned from past relationships?",
+          "What does your ideal weekend look like?",
+        ],
+        dare: [
+          "Send a 10-second voice note saying 'hello'.",
+          "Describe your perfect date in 3 words.",
+          "Send a selfie right now.",
+          "Share your most-played song on Spotify/Apple Music.",
+        ],
+    },
+    2: {
+        truth: ["What are you looking for in a partner?", "What's your love language?", "What's a quality you admire most in people?"],
+        dare: ["Send a picture of your favorite outfit.", "Tell me a secret about yourself.", "Plan a hypothetical first date."]
+    },
+    3: {
+        truth: ["What is your biggest turn-on?", "Have you ever been in love?", "What's your most controversial opinion on relationships?"],
+        dare: ["Describe what you're wearing in one sentence.", "Send a picture of your neck.", "Whisper a secret to the camera."]
+    }
   },
   Spicy: {
-    truth: [
-      "What's your biggest turn-on?",
-      "Describe your ideal romantic fantasy.",
-      "What's the most adventurous thing you've ever done?",
-      "What's a secret you've never told anyone?",
-    ],
-     dare: [
-      "Take a picture of your neck.",
-      "Describe what you're wearing in one sentence.",
-      "Send a GIF that describes your current mood.",
-      "Whisper a secret to the camera (or phone).",
-    ],
+    1: {
+        truth: [
+          "What's your biggest turn-on?",
+          "Describe your ideal romantic fantasy.",
+          "What's the most adventurous thing you've ever done?",
+          "What's a secret you've never told anyone?",
+        ],
+         dare: [
+          "Take a picture of your neck.",
+          "Describe what you're wearing in one sentence.",
+          "Send a GIF that describes your current mood.",
+          "Whisper a secret to the camera (or phone).",
+        ],
+    },
+    2: {
+        truth: ["What's something you find attractive that most people don't?", "What's the naughtiest thing you've done in public?", "What's your go-to move to get someone's attention?"],
+        dare: ["Send a picture of your hand.", "Bite your lip and send a selfie.", "Describe your ideal kiss in one word."]
+    },
+    3: {
+        truth: ["What's a fantasy you've never shared?", "What's the most scandalous thing on your bucket list?", "What's the biggest risk you've taken for pleasure?"],
+        dare: ["Send a 5-second video of you winking.", "Describe the last time you felt truly desired.", "Take a picture of your favorite part of your body."]
+    }
   },
 };
 
@@ -63,16 +93,17 @@ type GameCardProps = {
     onGameFinish: () => void;
     deckName: 'Friends' | 'Date' | 'Spicy';
     gameType: GameType;
+    gameLevel: GameLevel;
     onSendVibeQuestion: (question: string) => void;
     onSendChallenge: (truth: string, dare: string) => void;
     opponentName: string;
 };
 
-export default function GameCard({ onGameFinish, deckName, gameType, onSendVibeQuestion, onSendChallenge, opponentName }: GameCardProps) {
+export default function GameCard({ onGameFinish, deckName, gameType, gameLevel, onSendVibeQuestion, onSendChallenge, opponentName }: GameCardProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   
-  const questions = gameDecks[deckName].truth;
-  const dares = gameDecks[deckName].dare;
+  const questions = gameDecks[deckName][gameLevel].truth;
+  const dares = gameDecks[deckName][gameLevel].dare;
 
   const { icon: Icon, title } = deckInfo[deckName];
 
@@ -155,7 +186,7 @@ export default function GameCard({ onGameFinish, deckName, gameType, onSendVibeQ
         <CardHeader className="bg-muted/50 p-4">
             <CardTitle className="font-headline text-lg flex items-center justify-center gap-2 text-primary">
                 <Icon className="w-5 h-5"/> 
-                {gameType === 'truth-or-dare' ? "Truth or Dare" : "Vibe Game"}: Your Turn
+                {gameType === 'truth-or-dare' ? "Truth or Dare" : "Vibe Game"}: Level {gameLevel}
             </CardTitle>
             <CardDescription className="text-xs">
                 {gameType === 'truth-or-dare' 
@@ -173,3 +204,5 @@ export default function GameCard({ onGameFinish, deckName, gameType, onSendVibeQ
     </Card>
   );
 }
+
+    

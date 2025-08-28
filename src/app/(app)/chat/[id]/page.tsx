@@ -34,6 +34,7 @@ type Message = {
 
 export type DeckTheme = 'default' | 'friends' | 'date' | 'spicy';
 export type GameType = 'vibe' | 'truth-or-dare';
+export type GameLevel = 1 | 2 | 3;
 
 export default function ChatPage({ params }: { params: { id: string } }) {
   const chat: Chat | undefined = chats.find(c => c.id === params.id);
@@ -46,6 +47,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   const [gameStage, setGameStage] = useState<'none' | 'toss' | 'playing'>('none');
   const [deckName, setDeckName] = useState<'Friends' | 'Date' | 'Spicy' | ''>('');
   const [gameType, setGameType] = useState<GameType | null>(null);
+  const [gameLevel, setGameLevel] = useState<GameLevel | null>(null);
   const [gameTurn, setGameTurn] = useState<'me' | 'them' | null>(null);
   const [isAwaitingAnswer, setIsAwaitingAnswer] = useState(false);
   const [vibeCheckState, setVibeCheckState] = useState<'needed' | 'in_progress' | 'complete'>('needed');
@@ -75,10 +77,11 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     setGameTurn('them'); 
   };
 
-  const handleGameSelect = (deck: 'Friends' | 'Date' | 'Spicy', type: 'Vibe Game' | 'Truth or Dare') => {
+  const handleGameSelect = (deck: 'Friends' | 'Date' | 'Spicy', type: GameType, level: GameLevel) => {
     setActiveTheme(deck.toLowerCase() as DeckTheme);
     setDeckName(deck);
-    setGameType(type === 'Vibe Game' ? 'vibe' : 'truth-or-dare');
+    setGameType(type);
+    setGameLevel(level);
     setIsGameSelectionOpen(false);
     setGameStage('toss');
   }
@@ -93,6 +96,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     setActiveTheme(chat.vibe as DeckTheme || 'default');
     setDeckName('');
     setGameType(null);
+    setGameLevel(null);
     setGameTurn(null);
     setIsAwaitingAnswer(false);
     // Optional: Add a system message that the game has ended.
@@ -266,7 +270,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
             <GameSelectionDialog 
               open={isGameSelectionOpen} 
               onOpenChange={setIsGameSelectionOpen}
-              onSelectDeck={handleGameSelect}
+              onGameSelect={handleGameSelect}
             >
               <Button variant="outline" disabled={gameStage === 'playing'}>
                 <Zap className="mr-2 h-4 w-4" />
@@ -284,11 +288,12 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
             {gameStage === 'toss' && deckName && <CoinToss onTossFinish={handleTossFinish} deckName={deckName} opponentName={chat.name} opponentAvatar={chat.avatar} />}
             
-            {isMyTurnInGame && !isAwaitingAnswer && deckName && gameType && (
+            {isMyTurnInGame && !isAwaitingAnswer && deckName && gameType && gameLevel && (
                  <GameCard 
                     onGameFinish={handleGameFinish} 
                     deckName={deckName}
                     gameType={gameType}
+                    gameLevel={gameLevel}
                     onSendVibeQuestion={handleSendVibeQuestion}
                     onSendChallenge={handleSendChallenge}
                     opponentName={chat.name}
@@ -310,7 +315,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                                 message={message}
                                 onRespond={handleChallengeResponse}
                                 currentUser={chat.id === message.sender ? 'them' : 'me'}
-                                isMyTurnToRespond={message.sender === 'me' && gameTurn === 'them'}
+                                isMyTurnToRespond={message.sender === 'them' && gameTurn === 'me'}
                             />
                         )
                     }
@@ -369,3 +374,5 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     </div>
   )
 }
+
+    

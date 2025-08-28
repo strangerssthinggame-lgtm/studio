@@ -10,12 +10,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Zap, Heart, Users, Flame, Gamepad2, ArrowLeft } from "lucide-react";
+import { Zap, Heart, Users, Flame, Gamepad2, ArrowLeft, ChevronsUp, ChevronUp, Signal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import React, { useState } from "react";
+import type { GameType, GameLevel } from "@/app/(app)/chat/[id]/page";
 
 type Deck = 'Friends' | 'Date' | 'Spicy';
-type GameType = 'Vibe Game' | 'Truth or Dare';
 
 const decks = [
   { name: 'Friends', icon: Users, description: 'Lighthearted questions to get to know each other.', color: 'bg-sky-500' },
@@ -23,25 +23,48 @@ const decks = [
   { name: 'Spicy', icon: Flame, description: 'Turn up the heat with some flirty questions.', color: 'bg-orange-500' },
 ] as const;
 
+const levels: { name: string, level: GameLevel, icon: React.ElementType, description: string }[] = [
+    { name: 'Level 1: Icebreakers', level: 1, icon: ChevronUp, description: "Light and easy questions to get started." },
+    { name: 'Level 2: Connecting', level: 2, icon: ChevronsUp, description: "Deeper questions to build a connection."},
+    { name: 'Level 3: Intimate', level: 3, icon: Signal, description: "Revealing prompts to see if you truly vibe." },
+]
+
 type GameSelectionDialogProps = {
     children: React.ReactNode;
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSelectDeck: (deck: Deck, gameType: GameType) => void;
+    onGameSelect: (deck: Deck, gameType: GameType, level: GameLevel) => void;
 };
 
-export default function GameSelectionDialog({ children, open, onOpenChange, onSelectDeck }: GameSelectionDialogProps) {
-  const [selectionStep, setSelectionStep] = useState<'gameType' | 'deck'>('gameType');
+export default function GameSelectionDialog({ children, open, onOpenChange, onGameSelect }: GameSelectionDialogProps) {
+  const [selectionStep, setSelectionStep] = useState<'gameType' | 'deck' | 'level'>('gameType');
   const [selectedGameType, setSelectedGameType] = useState<GameType | null>(null);
+  const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null);
 
   const handleGameTypeSelect = (gameType: GameType) => {
     setSelectedGameType(gameType);
     setSelectionStep('deck');
   }
+  
+  const handleDeckSelect = (deck: Deck) => {
+    setSelectedDeck(deck);
+    setSelectionStep('level');
+  }
+  
+  const handleLevelSelect = (level: GameLevel) => {
+      if (selectedDeck && selectedGameType) {
+          onGameSelect(selectedDeck, selectedGameType, level);
+      }
+  }
 
   const handleBack = () => {
-    setSelectionStep('gameType');
-    setSelectedGameType(null);
+    if (selectionStep === 'level') {
+        setSelectionStep('deck');
+        setSelectedDeck(null);
+    } else if (selectionStep === 'deck') {
+        setSelectionStep('gameType');
+        setSelectedGameType(null);
+    }
   }
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -51,12 +74,27 @@ export default function GameSelectionDialog({ children, open, onOpenChange, onSe
         setTimeout(() => {
             setSelectionStep('gameType');
             setSelectedGameType(null);
+            setSelectedDeck(null);
         }, 200);
     }
   }
   
-  const handleDeckSelect = (deck: Deck) => {
-    onSelectDeck(deck, selectedGameType!);
+  const getDialogTitle = () => {
+      switch (selectionStep) {
+          case 'gameType': return 'Choose Your Game';
+          case 'deck': return `Decks for ${selectedGameType}`;
+          case 'level': return `Levels for ${selectedDeck} Deck`;
+          default: return 'Start a Game';
+      }
+  }
+  
+   const getDialogDescription = () => {
+      switch (selectionStep) {
+          case 'gameType': return "Select which game you'd like to play.";
+          case 'deck': return "Select a deck to start the game.";
+          case 'level': return "Choose the intensity level for your game.";
+          default: return '';
+      }
   }
 
 
@@ -68,28 +106,26 @@ export default function GameSelectionDialog({ children, open, onOpenChange, onSe
       <DialogContent className="max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            {selectionStep === 'deck' && (
+            {selectionStep !== 'gameType' && (
                 <Button variant="ghost" size="icon" onClick={handleBack} className="h-8 w-8">
                     <ArrowLeft />
                 </Button>
             )}
             <DialogTitle className="flex items-center gap-2 font-headline text-2xl">
                 <Zap className="text-primary"/>
-                {selectionStep === 'gameType' ? 'Choose Your Game' : `Decks for ${selectedGameType}`}
+                {getDialogTitle()}
             </DialogTitle>
           </div>
-          <DialogDescription className={cn(selectionStep === 'deck' && "pl-10")}>
-            {selectionStep === 'gameType' 
-              ? "Select which game you'd like to play with Sophia."
-              : "Select a deck to start the game."}
+          <DialogDescription className={cn(selectionStep !== 'gameType' && "pl-10")}>
+            {getDialogDescription()}
           </DialogDescription>
         </DialogHeader>
         
-        {selectionStep === 'gameType' ? (
+        {selectionStep === 'gameType' && (
              <div className="grid gap-4 py-4">
                 <button
                     className="flex items-start gap-4 rounded-lg border p-4 text-left text-sm transition-all hover:bg-accent"
-                    onClick={() => handleGameTypeSelect('Vibe Game')}
+                    onClick={() => handleGameTypeSelect('vibe')}
                 >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
                         <Gamepad2 className="h-6 w-6" />
@@ -101,7 +137,7 @@ export default function GameSelectionDialog({ children, open, onOpenChange, onSe
                 </button>
                  <button
                     className="flex items-start gap-4 rounded-lg border p-4 text-left text-sm transition-all hover:bg-accent"
-                    onClick={() => handleGameTypeSelect('Truth or Dare')}
+                    onClick={() => handleGameTypeSelect('truth-or-dare')}
                 >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/80 text-accent-foreground">
                         <Flame className="h-6 w-6" />
@@ -112,7 +148,9 @@ export default function GameSelectionDialog({ children, open, onOpenChange, onSe
                     </div>
                 </button>
             </div>
-        ) : (
+        )}
+        
+        {selectionStep === 'deck' && (
              <div className="grid gap-4 py-4">
                 {decks.map((deck) => (
                     <button
@@ -131,8 +169,31 @@ export default function GameSelectionDialog({ children, open, onOpenChange, onSe
                 ))}
             </div>
         )}
+        
+        {selectionStep === 'level' && (
+            <div className="grid gap-4 py-4">
+                {levels.map((level) => (
+                    <button
+                        key={level.name}
+                        className="flex items-start gap-4 rounded-lg border p-4 text-left text-sm transition-all hover:bg-accent"
+                        onClick={() => handleLevelSelect(level.level)}
+                    >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
+                           <level.icon className="h-6 w-6" />
+                        </div>
+                        <div className="flex-1">
+                            <p className="font-semibold">{level.name}</p>
+                            <p className="text-muted-foreground">{level.description}</p>
+                        </div>
+                    </button>
+                ))}
+            </div>
+        )}
+
 
       </DialogContent>
     </Dialog>
   );
 }
+
+    
