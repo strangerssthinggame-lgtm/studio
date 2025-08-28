@@ -23,13 +23,13 @@ type ChallengeCardProps = {
     message: Message;
     onRespond: (messageId: string, choice: 'truth' | 'dare') => void;
     currentUser: 'me' | 'them';
+    isMyTurnToRespond: boolean;
 };
 
-export function ChallengeCard({ message, onRespond, currentUser }: ChallengeCardProps) {
+export function ChallengeCard({ message, onRespond, currentUser, isMyTurnToRespond }: ChallengeCardProps) {
     if (!message.challenge) return null;
 
     const { truth, dare, isResponded, choice } = message.challenge;
-    const isMyTurnToRespond = message.sender !== currentUser && !isResponded;
     const opponentName = message.sender === 'me' ? 'You' : 'They';
 
     return (
@@ -43,7 +43,7 @@ export function ChallengeCard({ message, onRespond, currentUser }: ChallengeCard
                     Truth or Dare Challenge
                 </CardTitle>
                  <CardDescription className="text-xs text-center">
-                    {isResponded ? `${opponentName} chose ${choice}!` : `It's your turn to choose!`}
+                    {isResponded ? `${opponentName} chose ${choice}!` : (isMyTurnToRespond ? 'Choose your response!' : `It's your turn to choose!`)}
                  </CardDescription>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
@@ -85,7 +85,7 @@ export function ChallengeCard({ message, onRespond, currentUser }: ChallengeCard
                 {isResponded && (
                     <div className="text-center pt-4 text-muted-foreground flex items-center justify-center gap-2">
                         <Check className="w-5 h-5 text-green-500"/>
-                        <p>Waiting for their response...</p>
+                        { message.sender === 'me' ? `Waiting for their response...` : `Waiting for your response...` }
                     </div>
                 )}
             </CardContent>

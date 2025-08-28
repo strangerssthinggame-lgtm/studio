@@ -155,7 +155,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         }
     };
     setMessages(prev => [...prev, newChallenge]);
-    setGameTurn('them'); // It is now their turn to respond to my challenge
+    setGameTurn(null); // Turn is null while we wait for them to respond
     setIsAwaitingAnswer(true); // They need to respond to the challenge
   }
 
@@ -167,7 +167,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         : msg
       ));
       
-      setIsAwaitingAnswer(false);
+      setIsAwaitingAnswer(false); // I no longer need to wait for them to choose
       
       // Simulate them answering...
       setTimeout(() => {
@@ -178,7 +178,26 @@ export default function ChatPage({ params }: { params: { id: string } }) {
             text: `Okay, I chose ${choice}. Here's my answer...`
         }
         setMessages(prev => [...prev, theirAnswer]);
-        setGameTurn('them'); // Now it's their turn to send a challenge
+        setGameTurn('them'); // Now it's their turn to send a challenge...
+
+        // ...and now they send a challenge back
+        setTimeout(() => {
+             const theirChallenge: Message = {
+                id: (messages.length + 3).toString(),
+                sender: 'them',
+                type: 'challenge',
+                challenge: {
+                    truth: "What's the most childish thing you still do?",
+                    dare: "Show me the last photo you took on your phone.",
+                    isResponded: false
+                }
+            };
+            setMessages(prev => [...prev, theirChallenge]);
+            setGameTurn('me'); // Now it's MY turn to respond
+            setIsAwaitingAnswer(true);
+        }, 2000);
+
+
       }, 1500);
 
   }
@@ -194,16 +213,18 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
   const isMyTurnInGame = gameStage === 'playing' && gameTurn === 'me';
   const isTheirTurnInGame = gameStage === 'playing' && gameTurn === 'them';
-  const canAnswer = gameStage === 'playing' && isAwaitingAnswer;
+  const canAnswer = gameStage === 'playing' && isAwaitingAnswer && (messages[messages.length-1]?.sender === 'them' && (messages[messages.length-1]?.type === 'question' || messages[messages.length-1]?.type === 'challenge'));
+
   
   const isChatInputDisabled = vibeCheckState !== 'complete' || (gameStage === 'playing' && !canAnswer);
   
   const placeholderText = () => {
     if (vibeCheckState !== 'complete') return "Complete the Vibe Check to start chatting...";
     if (canAnswer && gameType === 'vibe') return "It's your turn to answer...";
-    if (isAwaitingAnswer && gameType === 'truth-or-dare') return `Waiting for ${chat.name} to choose...`;
-    if (isMyTurnInGame) return `It's your turn to ask a question...`;
-    if (isTheirTurnInGame) return `Waiting for ${chat.name} to challenge you...`;
+    if (isMyTurnInGame && gameType === 'truth-or-dare' && !isAwaitingAnswer) return `It's your turn to send a challenge...`;
+    if (isAwaitingAnswer && gameType === 'truth-or-dare' && messages[messages.length -1].sender === 'me') return `Waiting for ${chat.name} to choose...`;
+    if (isMyTurnInGame) return `It's your turn...`;
+    if (isTheirTurnInGame) return `Waiting for ${chat.name}...`;
     if (gameStage === 'playing') return "The game is in progress...";
     return "Type a message...";
   }
@@ -288,7 +309,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                                 key={message.id}
                                 message={message}
                                 onRespond={handleChallengeResponse}
-                                currentUser="them" // In a real app, this would be dynamic. For simulation, the user is always responding.
+                                currentUser={chat.id === message.sender ? 'them' : 'me'}
+                                isMyTurnToRespond={message.sender === 'me' && gameTurn === 'them'}
                             />
                         )
                     }
