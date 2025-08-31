@@ -1,11 +1,13 @@
 
+
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Camera, Edit, MapPin, User, FileImage, PlusCircle, Sparkles, Clock } from 'lucide-react';
+import { Camera, Edit, MapPin, User, FileImage, PlusCircle, Sparkles, Clock, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
+import OrderHistory from '@/components/order-history';
 
 const userProfile = {
   name: 'Alex',
@@ -158,6 +160,19 @@ export default function ProfilePage() {
                 </CardContent>
             </Card>
         </div>
+        
+         <div className="mt-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 font-headline"><ShoppingBag/> Order History</CardTitle>
+                    <CardDescription>Your past purchases from the Bondly store.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <OrderHistory />
+                </CardContent>
+            </Card>
+        </div>
+
 
       </div>
     </div>
