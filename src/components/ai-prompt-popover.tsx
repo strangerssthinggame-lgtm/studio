@@ -36,7 +36,7 @@ export function AIPromptPopover({ previousInteractions, children, onSuggestion, 
       setOpen(false);
       toast({
         title: "Suggestion Inserted!",
-        description: "The AI prompt has been added to your message.",
+        description: "The Buddy AI prompt has been added to your message.",
       });
     }
   };
@@ -59,7 +59,7 @@ export function AIPromptPopover({ previousInteractions, children, onSuggestion, 
         <PopoverContent className="w-80">
             <form action={formAction} className="space-y-4">
                 <div className="space-y-2">
-                    <h4 className="font-medium leading-none">AI Prompt Helper</h4>
+                    <h4 className="font-medium leading-none">Buddy AI Helper</h4>
                     <p className="text-sm text-muted-foreground">
                         Select some vibes to generate a conversation starter.
                     </p>

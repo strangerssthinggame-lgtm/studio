@@ -12,11 +12,11 @@ import { useToast } from "@/hooks/use-toast";
 
 const vibeTags = ["Witty", "Deep", "Flirty", "Funny", "Casual"];
 
-type AiPromptGeneratorProps = {
+type BuddyAiGeneratorProps = {
   previousInteractions: string;
 };
 
-export default function AiPromptGenerator({ previousInteractions }: AiPromptGeneratorProps) {
+export default function BuddyAiGenerator({ previousInteractions }: BuddyAiGeneratorProps) {
   const initialState: FormState = { message: "" };
   const getSuggestedPromptWithPrevInteractions = getSuggestedPrompt.bind(null, { previousInteractions });
   const [state, formAction] = useFormState(getSuggestedPromptWithPrevInteractions, initialState);

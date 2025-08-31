@@ -77,7 +77,7 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
     { href: "/chat", icon: MessageSquare, label: "Chats", badge: 3 },
     { href: "/store", icon: ShoppingCart, label: "Store" },
     { href: "/invite", icon: Share2, label: "Invite Friends" },
-    { href: "/dashboard/ai-prompts", icon: WandSparkles, label: "AI Prompts" },
+    { href: "/dashboard/buddy-ai", icon: WandSparkles, label: "Buddy AI" },
   ];
 
   if (loading) {
