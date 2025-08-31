@@ -30,8 +30,8 @@ export default function InvitePage() {
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: 'Join me on VibeVerse!',
-                    text: 'Let\'s connect and play some games on VibeVerse.',
+                    title: 'Join me on Bondly!',
+                    text: 'Let\'s connect and play some games on Bondly.',
                     url: inviteLink,
                 });
             } catch (error) {
@@ -57,7 +57,7 @@ export default function InvitePage() {
             <Card className="w-full max-w-md">
                 <CardHeader className="text-center">
                     <CardTitle className="font-headline text-3xl">Invite a Friend</CardTitle>
-                    <CardDescription>Share the link below or let them scan the QR code to join VibeVerse.</CardDescription>
+                    <CardDescription>Share the link below or let them scan the QR code to join Bondly.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center gap-6">
                     <div className="p-4 bg-white rounded-lg border">

@@ -11,7 +11,7 @@ export default function StorePage() {
     <div className="flex flex-col h-full gap-6">
       <div className="flex items-center justify-between pb-4 border-b">
         <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-headline font-bold tracking-tight">VibeVerse Store</h1>
+          <h1 className="text-3xl font-headline font-bold tracking-tight">Bondly Store</h1>
           <p className="text-muted-foreground">Get your hands on our exclusive physical card games.</p>
         </div>
       </div>
