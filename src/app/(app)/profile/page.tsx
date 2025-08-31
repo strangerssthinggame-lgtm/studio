@@ -5,11 +5,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Camera, Edit, MapPin, User, FileImage, PlusCircle, Sparkles, Clock, ShoppingBag } from 'lucide-react';
+import { Camera, Edit, MapPin, User, FileImage, PlusCircle, Sparkles, Clock, ShoppingBag, Eye } from 'lucide-react';
 import Link from 'next/link';
 import OrderHistory from '@/components/order-history';
 
 const userProfile = {
+  id: 'current_user_id', // A placeholder ID for the current user
   name: 'Alex',
   username: '@alex_codes',
   location: 'San Francisco, CA',
@@ -78,11 +79,18 @@ export default function ProfilePage() {
                   {userProfile.location}
                 </div>
               </div>
-              <Link href="/profile/edit">
-                <Button variant="outline" className="mt-4 md:mt-0">
-                  <Edit className="mr-2 h-4 w-4" /> Edit Profile
-                </Button>
-              </Link>
+              <div className="flex gap-2">
+                <Link href={`/users/${userProfile.id}`}>
+                  <Button variant="secondary">
+                    <Eye className="mr-2 h-4 w-4" /> Preview
+                  </Button>
+                </Link>
+                <Link href="/profile/edit">
+                  <Button variant="outline">
+                    <Edit className="mr-2 h-4 w-4" /> Edit Profile
+                  </Button>
+                </Link>
+              </div>
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">

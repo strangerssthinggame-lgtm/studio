@@ -6,16 +6,56 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Heart, MessageSquare, MapPin, User, FileImage, PlusCircle, Clock } from 'lucide-react';
+import { Heart, MessageSquare, MapPin, User, FileImage, Clock, Edit, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { userProfiles } from '@/lib/user-profile-data';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
+
+// Mock current user ID
+const currentUserId = 'current_user_id';
+
+const currentUserProfile = {
+  id: 'current_user_id',
+  name: 'Alex',
+  username: '@alex_codes',
+  location: 'San Francisco, CA',
+  bio: 'Just a human vibing. Developer by day, dreamer by night. I believe in connecting with people on a deeper level. Let\'s talk about anything from the latest tech trends to the mysteries of the universe.',
+  avatar: 'https://picsum.photos/100',
+  banner: 'https://picsum.photos/1600/400',
+  vibes: ['Friend', 'Date', 'Casual'],
+  interests: ['Photography', 'Hiking', 'Indie Music', 'Sci-Fi Movies', 'Coffee Enthusiast', 'Yoga'],
+  gallery: [
+    { id: 1, src: 'https://picsum.photos/seed/gallery1/400/400', hint: 'mountain landscape' },
+    { id: 2, src: 'https://picsum.photos/seed/gallery2/400/400', hint: 'city skyline' },
+    { id: 3, src: 'https://picsum.photos/seed/gallery3/400/400', hint: 'abstract art' },
+    { id: 4, src: 'https://picsum.photos/seed/gallery4/400/400', hint: 'portrait smiling' },
+    { id: 5, src: 'https://picsum.photos/seed/gallery5/400/400', hint: 'pet dog' },
+    { id: 6, src: 'https://picsum.photos/seed/gallery6/400/400', hint: 'food plate' },
+  ],
+  availability: 'Evenings & Weekends',
+};
+
 
 export default function UserProfilePage({ params }: { params: { id: string } }) {
-  const userProfile = userProfiles.find(p => p.id === params.id);
+  const router = useRouter();
 
-  if (!userProfile) {
+  const isOwnProfile = params.id === currentUserId;
+  
+  // Use the mock current user's data if it's their own profile preview
+  const userProfileData = isOwnProfile ? currentUserProfile : userProfiles.find(p => p.id === params.id);
+
+  if (!userProfileData) {
     notFound();
+  }
+  
+  const userProfile = {
+      ...userProfileData,
+      // If it's a preview of own profile, don't show the real user's profile data
+      name: isOwnProfile ? currentUserProfile.name : userProfileData.name,
+  }
+
+  const handleEditRedirect = () => {
+    router.push('/profile/edit');
   }
 
   return (
@@ -51,14 +91,22 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
                 </div>
               </div>
               <div className="flex gap-2 mt-4 md:mt-0">
-                  <Button variant="outline">
-                      <Heart className="mr-2 h-4 w-4" /> Like
-                  </Button>
-                   <Link href={`/chat/${userProfile.id}`}>
-                      <Button>
-                          <MessageSquare className="mr-2 h-4 w-4" /> Message
+                  {isOwnProfile ? (
+                       <Button onClick={handleEditRedirect}>
+                          <Edit className="mr-2 h-4 w-4" /> Edit My Profile
                       </Button>
-                  </Link>
+                  ) : (
+                    <>
+                      <Button variant="outline">
+                          <Heart className="mr-2 h-4 w-4" /> Like
+                      </Button>
+                      <Link href={`/chat/${userProfile.id}`}>
+                          <Button>
+                              <MessageSquare className="mr-2 h-4 w-4" /> Message
+                          </Button>
+                      </Link>
+                    </>
+                  )}
               </div>
             </div>
 
@@ -72,7 +120,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
             
             <div className="mt-6 border-t pt-6">
                 <h2 className="text-lg font-headline font-semibold flex items-center">
-                    About Me
+                    About {isOwnProfile ? 'Me' : userProfile.name}
                 </h2>
                 <p className="mt-2 text-muted-foreground text-base">{userProfile.bio}</p>
             </div>
@@ -84,7 +132,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-headline"><Clock/> Availability</CardTitle>
-                    <CardDescription>When {userProfile.name} is usually active.</CardDescription>
+                    <CardDescription>When {isOwnProfile ? 'I am' : `${userProfile.name} is`} usually active.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Badge variant="secondary" className="text-base px-4 py-2 w-full justify-center">
@@ -95,7 +143,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-headline"><User/> Interests</CardTitle>
-                    <CardDescription>The things that make them, them.</CardDescription>
+                    <CardDescription>The things that make {isOwnProfile ? 'me' : 'them'}, {isOwnProfile ? 'me' : 'them'}.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-wrap gap-2">
@@ -114,7 +162,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-headline"><FileImage/> Photo Gallery</CardTitle>
-                    <CardDescription>A glimpse into {userProfile.name}'s world.</CardDescription>
+                    <CardDescription>A glimpse into {isOwnProfile ? 'my' : `${userProfile.name}'s`} world.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
