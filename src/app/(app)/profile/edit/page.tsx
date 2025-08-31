@@ -20,7 +20,7 @@ const userProfile = {
   bio: 'Just a human vibing. Developer by day, dreamer by night. I believe in connecting with people on a deeper level. Let\'s talk about anything from the latest tech trends to the mysteries of the universe.',
   avatar: 'https://picsum.photos/100',
   banner: 'https://picsum.photos/1600/400',
-  vibes: ['Friend', 'Date', 'Casual'],
+  vibe: 'Date', // Changed from 'vibes' array to single 'vibe'
   interests: ['Photography', 'Hiking', 'Indie Music', 'Sci-Fi Movies', 'Coffee Enthusiast', 'Yoga'],
   gallery: [
     { id: 1, src: 'https://picsum.photos/seed/gallery1/400/400', hint: 'mountain landscape' },
@@ -57,13 +57,8 @@ export default function EditProfilePage() {
     });
   };
   
-  const handleVibeToggle = (vibe: string) => {
-      setProfile(prev => {
-          const vibes = prev.vibes.includes(vibe)
-            ? prev.vibes.filter(v => v !== vibe)
-            : [...prev.vibes, vibe];
-          return {...prev, vibes};
-      })
+  const handleVibeSelect = (vibe: string) => {
+      setProfile(prev => ({ ...prev, vibe: vibe }));
   }
 
   return (
@@ -124,14 +119,14 @@ export default function EditProfilePage() {
        <div className="mt-8">
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 font-headline"><Sparkles/> My Vibes</CardTitle>
-                    <CardDescription>Select the tags that best describe the connections you're looking for.</CardDescription>
+                    <CardTitle className="flex items-center gap-2 font-headline"><Sparkles/> My Vibe</CardTitle>
+                    <CardDescription>Select the tag that best describes the connection you're looking for.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-wrap gap-2">
                         {allVibes.map((vibe) => (
-                            <button key={vibe} onClick={() => handleVibeToggle(vibe)}>
-                                <Badge variant={profile.vibes.includes(vibe) ? 'default' : 'secondary'} className="text-base px-4 py-2 cursor-pointer">
+                            <button key={vibe} onClick={() => handleVibeSelect(vibe)}>
+                                <Badge variant={profile.vibe === vibe ? 'default' : 'secondary'} className="text-base px-4 py-2 cursor-pointer">
                                     {vibe}
                                 </Badge>
                             </button>
