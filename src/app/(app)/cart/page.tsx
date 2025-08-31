@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Image from 'next/image';
@@ -34,7 +35,7 @@ export default function CartPage() {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>{cart.length} item{cart.length > 1 ? 's' : ''} in your cart</CardTitle>
+                <CardTitle>{cart.reduce((acc, item) => acc + item.quantity, 0)} item(s) in your cart</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <ul className="divide-y">
@@ -49,7 +50,7 @@ export default function CartPage() {
                       />
                       <div className="flex-1">
                         <p className="font-semibold">{item.name}</p>
-                        <p className="text-sm text-muted-foreground">{item.price}</p>
+                        <p className="text-sm text-muted-foreground">${parseFloat(item.price.replace('$', '')).toFixed(2)}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <Input
@@ -67,6 +68,9 @@ export default function CartPage() {
                         >
                           <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>
+                      </div>
+                      <div className='font-semibold'>
+                        ${(parseFloat(item.price.replace('$', '')) * item.quantity).toFixed(2)}
                       </div>
                     </li>
                   ))}
@@ -112,4 +116,3 @@ export default function CartPage() {
     </div>
   );
 }
-
