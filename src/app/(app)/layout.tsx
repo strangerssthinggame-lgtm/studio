@@ -264,6 +264,18 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
               </div>
             </form>
           </div>
+          <Link href="/store">
+            <Button variant="ghost" size="icon">
+                <ShoppingCart/>
+                <span className="sr-only">Open cart</span>
+            </Button>
+          </Link>
+          <Link href="/notifications">
+            <Button variant="ghost" size="icon">
+                <Bell/>
+                <span className="sr-only">Toggle notifications</span>
+            </Button>
+          </Link>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
