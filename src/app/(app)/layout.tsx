@@ -46,10 +46,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import React from "react";
+import { CartProvider, useCart } from "@/hooks/use-cart";
 
 const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const { user, loading } = useAuth();
+  const { cart } = useCart();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -264,11 +266,14 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
               </div>
             </form>
           </div>
-          <Link href="/store">
+          <Link href="/cart" className="relative">
             <Button variant="ghost" size="icon">
                 <ShoppingCart/>
                 <span className="sr-only">Open cart</span>
             </Button>
+            {cart.length > 0 && (
+              <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0" variant="destructive">{cart.length}</Badge>
+            )}
           </Link>
           <Link href="/notifications">
             <Button variant="ghost" size="icon">
@@ -325,8 +330,10 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
-        <AuthProvider>
-            <AppLayoutContent>{children}</AppLayoutContent>
-        </AuthProvider>
+      <AuthProvider>
+        <CartProvider>
+          <AppLayoutContent>{children}</AppLayoutContent>
+        </CartProvider>
+      </AuthProvider>
     )
 }

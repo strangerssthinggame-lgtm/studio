@@ -1,12 +1,29 @@
 
+
+'use client';
+
 import Image from 'next/image';
 import { products } from '@/lib/store-data';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useCart } from '@/hooks/use-cart';
+import { useToast } from '@/hooks/use-toast';
 
 export default function StorePage() {
+  const { addToCart } = useCart();
+  const { toast } = useToast();
+
+  const handleAddToCart = (product: typeof products[0]) => {
+    addToCart(product);
+    toast({
+      title: "Added to Cart!",
+      description: `${product.name} has been added to your cart.`,
+    });
+  };
+
+
   return (
     <div className="flex flex-col h-full gap-6">
       <div className="flex items-center justify-between pb-4 border-b">
@@ -37,7 +54,7 @@ export default function StorePage() {
             </CardContent>
             <CardFooter className="p-6 pt-0 flex justify-between items-center">
                 <p className="text-2xl font-bold text-primary">{product.price}</p>
-                <Button>
+                <Button onClick={() => handleAddToCart(product)}>
                     <ShoppingCart className="mr-2"/>
                     Add to Cart
                 </Button>
