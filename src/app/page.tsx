@@ -4,13 +4,21 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function RootPage() {
   const router = useRouter();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    router.replace('/onboarding');
-  }, [router]);
+    if (!loading) {
+      if (user) {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/onboarding');
+      }
+    }
+  }, [router, user, loading]);
 
   return (
     <div className="flex h-screen w-screen items-center justify-center">

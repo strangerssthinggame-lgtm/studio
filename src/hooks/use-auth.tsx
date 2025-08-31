@@ -5,7 +5,6 @@ import { useState, useEffect, createContext, useContext, ReactNode } from 'react
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, firestore } from '@/lib/firebase';
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
-import { usePathname, useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
@@ -20,8 +19,6 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const pathname = usePathname();
-  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -41,12 +38,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
         }
         setUser(user);
-        
-        // Redirect to dashboard if they are on the landing page
-        if(pathname === '/') {
-            router.push('/dashboard');
-        }
-
       } else {
         setUser(null);
       }
@@ -54,7 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [router, pathname]);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, loading }}>
