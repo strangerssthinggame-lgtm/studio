@@ -7,7 +7,7 @@ import { products } from '@/lib/store-data';
 import type { Product } from '@/lib/store-data';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, ArrowRight } from 'lucide-react';
+import { ShoppingCart, ArrowRight, PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
@@ -33,11 +33,22 @@ export default function StorePage() {
         <div className="flex items-center justify-between pb-4 border-b">
           <div className="flex flex-col gap-1">
             <h1 className="text-3xl font-headline font-bold tracking-tight">Bondly Store</h1>
-            <p className="text-muted-foreground">Get your hands on our exclusive physical card games.</p>
+            <p className="text-muted-foreground">Get your hands on our exclusive physical card games or create your own.</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <Card className="flex flex-col overflow-hidden group border-2 border-dashed hover:border-primary/50 transition-colors">
+                 <CardContent className="p-6 flex-1 flex flex-col items-center justify-center text-center">
+                    <PlusCircle className="w-12 h-12 text-muted-foreground mb-4"/>
+                    <CardTitle className="font-headline text-xl mb-2">Create Your Own Deck</CardTitle>
+                    <CardDescription className="flex-1">Unleash your creativity and design a custom deck of questions for any occasion.</CardDescription>
+                     <Button variant="outline" className="mt-4">
+                      Start Creating
+                    </Button>
+                </CardContent>
+            </Card>
+
           {products.map((product) => (
             <Card key={product.id} className="flex flex-col overflow-hidden group">
               <CardHeader className="p-0">
