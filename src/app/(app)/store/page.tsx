@@ -38,16 +38,18 @@ export default function StorePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <Card className="flex flex-col overflow-hidden group border-2 border-dashed hover:border-primary/50 transition-colors">
-                 <CardContent className="p-6 flex-1 flex flex-col items-center justify-center text-center">
-                    <PlusCircle className="w-12 h-12 text-muted-foreground mb-4"/>
-                    <CardTitle className="font-headline text-xl mb-2">Create Your Own Deck</CardTitle>
-                    <CardDescription className="flex-1">Unleash your creativity and design a custom deck of questions for any occasion.</CardDescription>
-                     <Button variant="outline" className="mt-4">
-                      Start Creating
-                    </Button>
-                </CardContent>
-            </Card>
+            <Link href="/store/create-deck">
+                <Card className="flex flex-col overflow-hidden group border-2 border-dashed hover:border-primary/50 transition-colors h-full">
+                     <CardContent className="p-6 flex-1 flex flex-col items-center justify-center text-center">
+                        <PlusCircle className="w-12 h-12 text-muted-foreground mb-4"/>
+                        <CardTitle className="font-headline text-xl mb-2">Create Your Own Deck</CardTitle>
+                        <CardDescription className="flex-1">Unleash your creativity and design a custom deck of questions for any occasion.</CardDescription>
+                         <Button variant="outline" className="mt-4">
+                          Start Creating
+                        </Button>
+                    </CardContent>
+                </Card>
+            </Link>
 
           {products.map((product) => (
             <Card key={product.id} className="flex flex-col overflow-hidden group">
