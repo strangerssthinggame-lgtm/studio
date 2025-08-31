@@ -16,6 +16,7 @@ import {
   Settings,
   Share2,
   LifeBuoy,
+  ShoppingCart,
 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { auth } from "@/lib/firebase";
@@ -72,6 +73,7 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
   const navLinks = [
     { href: "/dashboard", icon: Home, label: "Feed" },
     { href: "/chat", icon: MessageSquare, label: "Chats", badge: 3 },
+    { href: "/store", icon: ShoppingCart, label: "Store" },
     { href: "/notifications", icon: Bell, label: "Notifications", badge: 5 },
     { href: "/invite", icon: Share2, label: "Invite Friends" },
     { href: "/dashboard/ai-prompts", icon: WandSparkles, label: "AI Prompts" },
