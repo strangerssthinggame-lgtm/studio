@@ -61,7 +61,7 @@ export default function LoginPage() {
               Connect, play, and find your vibe.
             </p>
           </div>
-          <Card className="shadow-lg">
+          <Card className="shadow-lg bg-card/80 backdrop-blur-lg">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-headline">Login</CardTitle>
               <CardDescription>
@@ -108,7 +108,7 @@ export default function LoginPage() {
           className="h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent"></div>
-        <div className="absolute bottom-10 left-10 right-10 p-6 bg-black/30 backdrop-blur-md rounded-xl text-white">
+        <div className="absolute bottom-10 left-10 right-10 p-6 bg-black/50 backdrop-blur-md rounded-xl text-white">
             <h2 className="text-3xl font-headline font-bold">Meaningful Connections, Made Fun.</h2>
             <p className="mt-2 text-lg">Bondly is more than just a chat app. It's a space for genuine interaction through playful, structured games.</p>
             <div className="mt-4 flex space-x-6">
