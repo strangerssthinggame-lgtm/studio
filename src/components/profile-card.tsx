@@ -119,7 +119,7 @@ export function ProfileCard({ user, onSwipe, style, isTopCard, animationState, s
             style={{
                 ...style,
                 transform: `${style?.transform || ''} ${cardTransform}`.trim(),
-                transition: animationState?.isDragging ? 'none' : style?.transition,
+                transition: animationState?.isDragging ? 'none' : 'all 0.3s ease-in-out',
                 touchAction: isTopCard ? 'none' : 'auto'
             }}
             className={cn(
