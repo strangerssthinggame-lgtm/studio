@@ -19,15 +19,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Slider } from '@/components/ui/slider';
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type { UserProfile } from '@/lib/user-profile-data';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { firestore } from '@/lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card } from '@/components/ui/card';
 import { userProfiles } from '@/lib/user-profile-data';
+import { Card } from '@/components/ui/card';
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
@@ -43,6 +43,10 @@ export default function DashboardPage() {
   const [history, setHistory] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Animation state lifted to the parent
+  const [animationState, setAnimationState] = useState({ x: 0, y: 0, rotation: 0, isDragging: false });
+  const cardBeingDragged = useRef<string | null>(null);
+
   const filteredUsers = useMemo(() => {
     if (isLoading) return [];
     return allUsers.filter(u => {
@@ -57,10 +61,11 @@ export default function DashboardPage() {
       return regionMatch && ageMatch && genderMatch && vibeMatch;
     });
   }, [filters, allUsers, isLoading]);
-
+  
   const handleSwipe = useCallback((swipedUser: UserProfile, direction: 'left' | 'right') => {
     setUserQueue(currentQueue => currentQueue.slice(0, currentQueue.length - 1));
     setHistory(prev => [...prev, swipedUser]);
+    setAnimationState({ x: 0, y: 0, rotation: 0, isDragging: false });
   }, []);
 
   const applyFilters = useCallback(() => {
@@ -76,13 +81,13 @@ export default function DashboardPage() {
   const resetDeck = useCallback(() => {
       setUserQueue(filteredUsers);
       history.length > 0 && setHistory([]);
-  }, [filteredUsers, history.length])
+  }, [filteredUsers, history.length]);
 
-  // Apply filters whenever the source data or filter settings change
   useEffect(() => {
     applyFilters();
   }, [applyFilters]);
 
+  const topCard = userQueue[userQueue.length - 1];
 
   return (
     <div className={cn(
@@ -200,32 +205,39 @@ export default function DashboardPage() {
             </Card>
           ) : userQueue.length > 0 ? (
              <div className="relative w-full h-full">
-              {userQueue.map((user, index) => (
-                  <ProfileCard
-                    key={user.id}
-                    user={user}
-                    onSwipe={handleSwipe}
-                    isTopCard={index === userQueue.length - 1}
-                    style={{ 
-                        zIndex: userQueue.length - index,
-                        transform: `scale(${1 - ((userQueue.length - 1 - index) * 0.05)}) translateY(${(userQueue.length - 1 - index) * -10}px)`,
-                        opacity: (userQueue.length - 1 - index) > 2 ? 0 : 1,
-                    }}
-                  />
-                ))}
-            {userQueue.length <= 1 && (
-                 <div className="absolute inset-0 flex items-center justify-center text-center text-muted-foreground p-4 bg-muted rounded-lg -z-10">
-                    <div>
-                        <p className="text-lg font-semibold">That's everyone for now!</p>
-                        <p>You've seen all profiles matching your filters. Why not try adjusting them?</p>
-                        <Button onClick={resetDeck} variant="link" className="mt-4">
-                            <RotateCw className="mr-2"/>
-                            Reset Deck
-                        </Button>
-                    </div>
-                </div>
-            )}
-             </div>
+              {userQueue.map((user, index) => {
+                  const isTopCard = index === userQueue.length - 1;
+                  const isSecondCard = index === userQueue.length - 2;
+
+                  const dragDistance = Math.abs(animationState.x);
+                  const swipeProgress = Math.min(dragDistance / 200, 1); // 200 is swipe threshold
+
+                  const dynamicScale = isSecondCard ? 0.95 + 0.05 * swipeProgress : 1;
+                  const dynamicTranslateY = isSecondCard ? -10 + 10 * swipeProgress : 0;
+                  
+                  const baseScale = 1 - ((userQueue.length - 1 - index) * 0.05);
+                  const baseTranslateY = (userQueue.length - 1 - index) * -10;
+                  
+                  const cardStyle: React.CSSProperties = {
+                    zIndex: userQueue.length - index,
+                    transform: `scale(${isSecondCard ? dynamicScale : baseScale}) translateY(${isSecondCard ? dynamicTranslateY : baseTranslateY}px)`,
+                    opacity: (userQueue.length - 1 - index) > 2 ? 0 : 1,
+                    transition: animationState.isDragging ? 'none' : 'all 0.3s ease-in-out'
+                  }
+                  
+                  return (
+                      <ProfileCard
+                        key={user.id}
+                        user={user}
+                        onSwipe={handleSwipe}
+                        isTopCard={isTopCard}
+                        animationState={isTopCard ? animationState : undefined}
+                        setAnimationState={isTopCard ? setAnimationState : undefined}
+                        style={cardStyle}
+                      />
+                  )
+              })}
+            </div>
           ) : (
             <div className="text-center text-muted-foreground p-4 bg-muted rounded-lg">
                 <p className="text-lg font-semibold">No More Profiles</p>
