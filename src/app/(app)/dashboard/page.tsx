@@ -26,6 +26,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { firestore } from '@/lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card } from '@/components/ui/card';
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
