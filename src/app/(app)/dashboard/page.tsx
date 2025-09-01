@@ -256,6 +256,18 @@ export default function DashboardPage() {
                   />
                 )).reverse()
             }
+            {userQueue.length <= 1 && (
+                 <div className="absolute inset-0 flex items-center justify-center text-center text-muted-foreground p-4 bg-muted rounded-lg -z-10">
+                    <div>
+                        <p className="text-lg font-semibold">That's everyone for now!</p>
+                        <p>You've seen all profiles matching your filters. Why not try adjusting them?</p>
+                        <Button onClick={resetDeck} variant="link" className="mt-4">
+                            <RotateCw className="mr-2"/>
+                            Reset Deck
+                        </Button>
+                    </div>
+                </div>
+            )}
              </div>
           ) : (
             <div className="text-center text-muted-foreground p-4 bg-muted rounded-lg">
@@ -267,18 +279,6 @@ export default function DashboardPage() {
                 </Button>
             </div>
           )}
-           {userQueue.length <= 1 && !isLoading && (
-             <div className="absolute inset-0 flex items-center justify-center text-center text-muted-foreground p-4 bg-muted rounded-lg -z-10">
-                <div>
-                    <p className="text-lg font-semibold">That's everyone for now!</p>
-                    <p>You've seen all profiles matching your filters. Why not try adjusting them?</p>
-                    <Button onClick={resetDeck} variant="link" className="mt-4">
-                        <RotateCw className="mr-2"/>
-                        Reset Deck
-                    </Button>
-                </div>
-            </div>
-           )}
         </div>
       </div>
     </div>
