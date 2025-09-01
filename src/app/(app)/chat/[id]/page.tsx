@@ -250,10 +250,10 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
   return (
     <div className={cn(
-        "flex flex-col h-[calc(100vh_-_theme(spacing.24))] rounded-xl border transition-colors duration-500",
+        "flex flex-col h-[calc(100vh_-_theme(spacing.24))] rounded-xl border transition-colors duration-500 glassy",
         `theme-${activeTheme}`
     )}>
-        <div className="flex items-center p-4 border-b bg-card rounded-t-xl">
+        <div className="flex items-center p-4 border-b bg-card/80 rounded-t-xl">
             <Link href={`/users/${chat.id}`} className="cursor-pointer">
               <Avatar>
                   <AvatarImage src={chat.avatar} alt={chat.name} data-ai-hint="profile avatar" />
@@ -286,7 +286,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
             </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-background">
+        <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-transparent">
             
             {vibeCheckState === 'complete' && <VibeCheckResults totalMatches={vibeCheckMatches} />}
 
@@ -357,7 +357,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
            
         </div>
 
-        <div className="p-4 border-t bg-card rounded-b-xl">
+        <div className="p-4 border-t bg-card/80 rounded-b-xl">
             <form className="relative" onSubmit={handleSendMessage}>
                 <Input 
                     placeholder={placeholderText()}

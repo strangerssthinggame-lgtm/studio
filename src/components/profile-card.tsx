@@ -125,6 +125,7 @@ export function ProfileCard({ user, onSwipe, style, isTopCard }: ProfileCardProp
             "absolute w-full h-full shadow-2xl rounded-2xl overflow-hidden",
              isTopCard ? "cursor-grab active:cursor-grabbing" : "cursor-default",
              isSwiped && "transition-all duration-300 ease-in-out", // Only apply transition on final swipe
+             "bg-background/10 border-0"
         )}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
@@ -173,7 +174,7 @@ export function ProfileCard({ user, onSwipe, style, isTopCard }: ProfileCardProp
             </div>
         </Card>
         <AlertDialog open={showMatchDialog} onOpenChange={onDialogClose}>
-            <AlertDialogContent className="max-w-sm">
+            <AlertDialogContent className="max-w-sm glassy">
                 <AlertDialogHeader className="items-center text-center">
                     <div className="relative h-24 w-40 mb-4">
                         <Avatar className="w-24 h-24 border-4 border-background absolute left-0 top-0">

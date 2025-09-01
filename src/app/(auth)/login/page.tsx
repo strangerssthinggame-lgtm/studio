@@ -61,7 +61,7 @@ export default function LoginPage() {
               Connect, play, and find your vibe.
             </p>
           </div>
-          <Card className="shadow-lg bg-card/80 backdrop-blur-lg">
+          <Card className="shadow-lg glassy">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-headline">Login</CardTitle>
               <CardDescription>
@@ -100,28 +100,28 @@ export default function LoginPage() {
       </div>
       <div className="hidden bg-muted lg:flex items-center justify-center relative overflow-hidden">
         <Image
-          src="https://picsum.photos/1200/1800"
+          src="https://picsum.photos/id/119/1200/1800"
           alt="Abstract art representing connection"
-          data-ai-hint="abstract connection"
+          data-ai-hint="abstract clean white"
           width={1200}
           height={1800}
           className="h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-rose-500/10 to-orange-500/10"></div>
-        <div className="absolute bottom-10 left-10 right-10 p-6 bg-black/50 backdrop-blur-md rounded-xl text-white">
+        <div className="absolute inset-0 bg-background/20"></div>
+        <div className="absolute bottom-10 left-10 right-10 p-6 glassy rounded-xl text-foreground">
             <h2 className="text-3xl font-headline font-bold">Meaningful Connections, Made Fun.</h2>
             <p className="mt-2 text-lg">Bondly is more than just a chat app. It's a space for genuine interaction through playful, structured games.</p>
             <div className="mt-4 flex space-x-6">
                 <div className="flex items-center space-x-2">
-                    <Heart className="text-accent"/>
+                    <Heart className="text-primary"/>
                     <span>Date, Friends, Spicy</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                    <MessageSquare className="text-accent"/>
+                    <MessageSquare className="text-primary"/>
                     <span>Q&A and Truth or Dare</span>
                 </div>
                  <div className="flex items-center space-x-2">
-                    <Users className="text-accent"/>
+                    <Users className="text-primary"/>
                     <span>Find Your People</span>
                 </div>
             </div>

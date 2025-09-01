@@ -52,7 +52,7 @@ export default function ProfilePage() {
         </Button>
       </div>
 
-      <div className="relative bg-card p-6 rounded-b-xl shadow-lg">
+      <div className="relative glassy p-6 rounded-b-xl shadow-lg">
         <div className="flex flex-col md:flex-row items-start">
           <div className="relative -mt-20 md:-mt-24">
             <Avatar className="h-32 w-32 md:h-40 md:w-40 border-4 border-background shadow-md">
@@ -112,7 +112,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-             <Card>
+             <Card className="glassy">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-headline"><Clock/> My Availability</CardTitle>
                     <CardDescription>When you're usually active.</CardDescription>
@@ -123,7 +123,7 @@ export default function ProfilePage() {
                     </Badge>
                 </CardContent>
             </Card>
-             <Card>
+             <Card className="glassy">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-headline"><User/> My Interests</CardTitle>
                     <CardDescription>The things that make me, me.</CardDescription>
@@ -145,7 +145,7 @@ export default function ProfilePage() {
 
 
         <div className="mt-8">
-            <Card>
+            <Card className="glassy">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-headline"><FileImage/> My Gallery</CardTitle>
                     <CardDescription>A glimpse into my world. Add or remove photos.</CardDescription>
@@ -170,7 +170,7 @@ export default function ProfilePage() {
         </div>
         
          <div className="mt-8">
-            <Card>
+            <Card className="glassy">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-headline"><ShoppingBag/> Order History</CardTitle>
                     <CardDescription>Your past purchases from the Bondly store.</CardDescription>
