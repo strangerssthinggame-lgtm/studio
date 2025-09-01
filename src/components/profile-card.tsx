@@ -1,6 +1,6 @@
 
 "use client"
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
@@ -25,18 +25,79 @@ type ProfileCardProps = {
   user: UserProfile;
   onSwipe: (user: UserProfile, direction: 'left' | 'right') => void;
   style?: React.CSSProperties;
+  isTopCard: boolean;
 };
 
-export function ProfileCard({ user, onSwipe, style }: ProfileCardProps) {
+export function ProfileCard({ user, onSwipe, style, isTopCard }: ProfileCardProps) {
     const [isSwiped, setIsSwiped] = useState(false);
     const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
     const [showMatchDialog, setShowMatchDialog] = useState(false);
+    
+    // Drag state
+    const cardRef = useRef<HTMLDivElement>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [startX, setStartX] = useState(0);
+    const [position, setPosition] = useState({ x: 0, y: 0, rotation: 0 });
+
+
+    const handleDragStart = (clientX: number) => {
+        if (!isTopCard) return;
+        setIsDragging(true);
+        setStartX(clientX);
+        if (cardRef.current) {
+            cardRef.current.style.transition = 'none'; // Disable transition while dragging
+        }
+    };
+
+    const handleDragMove = (clientX: number) => {
+        if (!isDragging || !isTopCard) return;
+        const deltaX = clientX - startX;
+        const rotation = deltaX / 20; // Adjust rotation sensitivity
+        setPosition({ x: deltaX, y: 0, rotation });
+    };
+
+    const handleDragEnd = () => {
+        if (!isDragging || !isTopCard) return;
+        setIsDragging(false);
+
+        if (cardRef.current) {
+            cardRef.current.style.transition = 'all 0.3s ease-in-out';
+        }
+
+        const swipeThreshold = 100; // Min distance for a swipe to register
+
+        if (position.x > swipeThreshold) {
+            handleSwipe('right');
+        } else if (position.x < -swipeThreshold) {
+            handleSwipe('left');
+        } else {
+            // Return to center if not swiped far enough
+            setPosition({ x: 0, y: 0, rotation: 0 });
+        }
+    };
+    
+     // Mouse event handlers
+    const onMouseDown = (e: React.MouseEvent) => handleDragStart(e.clientX);
+    const onMouseMove = (e: React.MouseEvent) => handleDragMove(e.clientX);
+    const onMouseUp = () => handleDragEnd();
+    const onMouseLeave = () => handleDragEnd();
+
+    // Touch event handlers
+    const onTouchStart = (e: React.TouchEvent) => handleDragStart(e.touches[0].clientX);
+    const onTouchMove = (e: React.TouchEvent) => handleDragMove(e.touches[0].clientX);
+    const onTouchEnd = () => handleDragEnd();
+
 
     const handleSwipe = (direction: 'left' | 'right') => {
         if (isSwiped) return; // Prevent multiple swipes
         
-        setSwipeDirection(direction);
         setIsSwiped(true);
+        setSwipeDirection(direction);
+        setPosition({
+            x: direction === 'right' ? 500 : -500,
+            y: 0,
+            rotation: direction === 'right' ? 30 : -30,
+        });
 
         setTimeout(() => {
             onSwipe(user, direction);
@@ -54,12 +115,24 @@ export function ProfileCard({ user, onSwipe, style }: ProfileCardProps) {
   return (
     <>
         <Card
-        style={style}
+        ref={cardRef}
+        style={{ 
+            ...style, 
+            transform: `translate(${position.x}px, ${position.y}px) rotate(${position.rotation}deg) scale(${(style as any).transform.match(/scale\(([^)]+)\)/)?.[1] || 1})`,
+            touchAction: 'none' // Important for touch events
+        }}
         className={cn(
-            "absolute w-full h-full transition-all duration-300 ease-in-out transform shadow-2xl rounded-2xl overflow-hidden cursor-grab active:cursor-grabbing",
-            isSwiped && swipeDirection === 'left' && '-rotate-[25deg] -translate-x-[120%] opacity-0',
-            isSwiped && swipeDirection === 'right' && 'rotate-[25deg] translate-x-[120%] opacity-0',
+            "absolute w-full h-full shadow-2xl rounded-2xl overflow-hidden",
+             isTopCard ? "cursor-grab active:cursor-grabbing" : "cursor-default",
+             isSwiped && "transition-all duration-300 ease-in-out", // Only apply transition on final swipe
         )}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseLeave}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
         >
             <div className="relative h-full w-full">
             <Image
@@ -67,7 +140,7 @@ export function ProfileCard({ user, onSwipe, style }: ProfileCardProps) {
                 alt={`Profile of ${user.name}`}
                 data-ai-hint="profile banner"
                 fill
-                className="object-cover"
+                className="object-cover pointer-events-none" // prevent image drag
                 priority
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
@@ -89,7 +162,7 @@ export function ProfileCard({ user, onSwipe, style }: ProfileCardProps) {
                 <Button onClick={() => handleSwipe('left')} variant="destructive" size="icon" className="w-16 h-16 rounded-full shadow-lg bg-white/90 hover:bg-white text-destructive backdrop-blur-sm transition-transform hover:scale-105">
                     <X className="w-8 h-8"/>
                 </Button>
-                 <Link href={`/chat/${user.id}`}>
+                 <Link href={`/chat/${user.id}`} onClick={(e) => e.stopPropagation()}>
                     <Button variant="outline" size="icon" className="w-12 h-12 rounded-full shadow-lg bg-white/80 hover:bg-white text-primary backdrop-blur-sm transition-transform hover:scale-105">
                         <Zap className="w-6 h-6"/>
                     </Button>

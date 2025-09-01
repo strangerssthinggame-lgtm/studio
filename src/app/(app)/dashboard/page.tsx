@@ -248,14 +248,14 @@ export default function DashboardPage() {
                     key={user.id}
                     user={user}
                     onSwipe={handleSwipe}
+                    isTopCard={index === userQueue.length - 1}
                     style={{ 
                         zIndex: userQueue.length - index,
-                        transform: `scale(${1 - (index * 0.05)}) translateY(${index * -10}px)`,
-                        opacity: index > 2 ? 0 : 1,
+                        transform: `scale(${1 - ((userQueue.length - 1 - index) * 0.05)}) translateY(${(userQueue.length - 1 - index) * -10}px)`,
+                        opacity: (userQueue.length - 1 - index) > 2 ? 0 : 1,
                     }}
                   />
-                )).reverse()
-            }
+                ))}
             {userQueue.length <= 1 && (
                  <div className="absolute inset-0 flex items-center justify-center text-center text-muted-foreground p-4 bg-muted rounded-lg -z-10">
                     <div>
