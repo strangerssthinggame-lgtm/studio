@@ -53,22 +53,26 @@ export default function StorePage() {
 
           {products.map((product) => (
             <Card key={product.id} className="flex flex-col overflow-hidden group">
-              <CardHeader className="p-0">
-                <div className="relative aspect-video overflow-hidden">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    data-ai-hint={product.aiHint}
-                  />
-                  <Badge className="absolute top-3 right-3">{product.category}</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6 flex-1 flex flex-col">
-                <CardTitle className="font-headline text-xl mb-2">{product.name}</CardTitle>
-                <CardDescription className="flex-1">{product.description}</CardDescription>
-              </CardContent>
+                <Link href={`/store/${product.id}`} className="block">
+                  <CardHeader className="p-0">
+                    <div className="relative aspect-video overflow-hidden">
+                      <Image
+                        src={product.image}
+                        alt={product.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        data-ai-hint={product.aiHint}
+                      />
+                      <Badge className="absolute top-3 right-3">{product.category}</Badge>
+                    </div>
+                  </CardHeader>
+                </Link>
+                <CardContent className="p-6 flex-1 flex flex-col">
+                  <Link href={`/store/${product.id}`} className="block">
+                    <CardTitle className="font-headline text-xl mb-2 hover:text-primary transition-colors">{product.name}</CardTitle>
+                  </Link>
+                  <CardDescription className="flex-1">{product.description}</CardDescription>
+                </CardContent>
               <CardFooter className="p-6 pt-0 flex justify-between items-center">
                   <p className="text-2xl font-bold text-primary">{product.price}</p>
                   <Button onClick={() => handleAddToCart(product)}>
