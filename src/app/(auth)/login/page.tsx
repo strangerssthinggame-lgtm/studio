@@ -44,17 +44,7 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     try {
-      const result = await signInWithPopup(auth, googleAuthProvider);
-      const idToken = await result.user.getIdToken();
-
-      // Send the token to your backend to create a session cookie
-      await fetch('/auth/callback', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ idToken }),
-      });
+      await signInWithPopup(auth, googleAuthProvider);
       router.push('/dashboard');
     } catch (error) {
       console.error('Error during Google sign-in:', error);
