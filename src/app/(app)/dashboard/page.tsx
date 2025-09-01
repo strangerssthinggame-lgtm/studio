@@ -20,11 +20,15 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Slider } from '@/components/ui/slider';
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { userProfiles } from '@/lib/user-profile-data';
 import type { UserProfile } from '@/lib/user-profile-data';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/use-auth';
+import { firestore } from '@/lib/firebase';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [filters, setFilters] = useState({
     vibe: 'date',
     region: '',
@@ -32,22 +36,63 @@ export default function DashboardPage() {
     gender: 'all',
   });
   
+  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [userQueue, setUserQueue] = useState<UserProfile[]>([]);
   const [history, setHistory] = useState<UserProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (!user) return;
+      setIsLoading(true);
+      try {
+        const usersRef = collection(firestore, 'users');
+        // Query all users except the current one
+        const q = query(usersRef, where('uid', '!=', user.uid));
+        const querySnapshot = await getDocs(q);
+        const usersData = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            // Map Firestore data to UserProfile, providing sensible defaults
+            return {
+                id: doc.id,
+                name: data.displayName || 'Anonymous',
+                age: data.age || 25, // Default age
+                gender: data.gender || 'unknown', // Default gender
+                username: data.username || `@${data.displayName?.toLowerCase() || 'user'}`,
+                location: data.location || 'Unknown Location',
+                bio: data.bio || 'No bio yet. Tap to learn more!',
+                avatar: data.photoURL || `https://picsum.photos/seed/${doc.id}/400/400`,
+                banner: `https://picsum.photos/seed/${doc.id}-banner/800/600`,
+                vibes: data.vibes || ['Friend'], // Default vibe
+                interests: data.interests || ['Music', 'Movies'], // Default interests
+                gallery: data.gallery || [],
+                availability: data.availability || 'Not specified',
+            } as UserProfile;
+        });
+        setAllUsers(usersData);
+      } catch (error) {
+          console.error("Error fetching users:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchUsers();
+  }, [user]);
 
   const filteredUsers = useMemo(() => {
-    return userProfiles.filter(user => {
+    if (isLoading) return [];
+    return allUsers.filter(u => {
       const [minAge, maxAge] = filters.ageRange;
-      const regionMatch = filters.region === '' || user.location.toLowerCase().includes(filters.region.toLowerCase());
-      const ageMatch = user.age >= minAge && user.age <= maxAge;
-      const genderMatch = filters.gender === 'all' || user.gender.toLowerCase() === filters.gender;
+      const regionMatch = filters.region === '' || u.location.toLowerCase().includes(filters.region.toLowerCase());
+      const ageMatch = u.age >= minAge && u.age <= maxAge;
+      const genderMatch = filters.gender === 'all' || u.gender.toLowerCase() === filters.gender;
       
-      const userVibes = user.vibes.map(v => v.toLowerCase());
+      const userVibes = u.vibes.map(v => v.toLowerCase());
       const vibeMatch = userVibes.includes(filters.vibe);
       
       return regionMatch && ageMatch && genderMatch && vibeMatch;
     });
-  }, [filters]);
+  }, [filters, allUsers, isLoading]);
 
   const handleSwipe = useCallback((swipedUser: UserProfile, direction: 'left' | 'right') => {
     setUserQueue(currentQueue => currentQueue.slice(0, currentQueue.length - 1));
@@ -69,7 +114,7 @@ export default function DashboardPage() {
       history.length > 0 && setHistory([]);
   }, [filteredUsers, history.length])
 
-  // Apply filters on initial load
+  // Apply filters whenever the source data or filter settings change
   useEffect(() => {
     applyFilters();
   }, [applyFilters]);
@@ -185,7 +230,11 @@ export default function DashboardPage() {
       </div>
       <div className="flex flex-1 items-center justify-center -mx-4">
         <div className="relative w-full max-w-sm h-[60vh] md:h-[70vh]">
-          {userQueue.length > 0 ? (
+          {isLoading ? (
+            <Card className="absolute w-full h-full rounded-2xl overflow-hidden">
+                <Skeleton className="w-full h-full"/>
+            </Card>
+          ) : userQueue.length > 0 ? (
              <div className="relative w-full h-full">
               {userQueue.map((user, index) => (
                   <ProfileCard
@@ -211,7 +260,7 @@ export default function DashboardPage() {
                 </Button>
             </div>
           )}
-           {userQueue.length <= 1 && (
+           {userQueue.length <= 1 && !isLoading && (
              <div className="absolute inset-0 flex items-center justify-center text-center text-muted-foreground p-4 bg-muted rounded-lg -z-10">
                 <div>
                     <p className="text-lg font-semibold">That's everyone for now!</p>
