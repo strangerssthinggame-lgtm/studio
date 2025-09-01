@@ -107,7 +107,7 @@ export default function LoginPage() {
           height={1800}
           className="h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-rose-500/50 to-orange-500/50"></div>
         <div className="absolute bottom-10 left-10 right-10 p-6 bg-black/50 backdrop-blur-md rounded-xl text-white">
             <h2 className="text-3xl font-headline font-bold">Meaningful Connections, Made Fun.</h2>
             <p className="mt-2 text-lg">Bondly is more than just a chat app. It's a space for genuine interaction through playful, structured games.</p>
