@@ -14,6 +14,7 @@ import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 function ProductDetailPageContent() {
     const params = useParams();
@@ -27,6 +28,13 @@ function ProductDetailPageContent() {
     if (!product) {
         notFound();
     }
+    
+    // Create a mock array of images for the carousel
+    const productImages = [
+        product.image,
+        product.image.replace(/seed\/([^\/]+)/, 'seed/gallery-$1'),
+        product.image.replace(/seed\/([^\/]+)/, 'seed/detail-$1'),
+    ];
 
     const handleAddToCart = () => {
         addToCart(product);
@@ -39,29 +47,39 @@ function ProductDetailPageContent() {
     const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 3);
 
     return (
-        <div className="flex flex-col gap-8">
-            <Button variant="ghost" onClick={() => router.back()} className="self-start gap-2">
+        <div className="flex flex-col gap-12">
+            <Button variant="ghost" onClick={() => router.back()} className="self-start gap-2 text-muted-foreground">
                 <ArrowLeft />
                 Back to Store
             </Button>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <Card className="overflow-hidden">
-                    <div className="relative aspect-square">
-                        <Image
-                            src={product.image}
-                            alt={product.name}
-                            fill
-                            className="object-cover"
-                            data-ai-hint={product.aiHint}
-                        />
-                    </div>
-                </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <Carousel className="w-full">
+                    <CarouselContent>
+                        {productImages.map((src, index) => (
+                            <CarouselItem key={index}>
+                                <Card className="overflow-hidden">
+                                    <div className="relative aspect-square">
+                                        <Image
+                                            src={src}
+                                            alt={`${product.name} - view ${index + 1}`}
+                                            fill
+                                            className="object-cover"
+                                            data-ai-hint={product.aiHint}
+                                        />
+                                    </div>
+                                </Card>
+                            </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="left-4" />
+                    <CarouselNext className="right-4"/>
+                </Carousel>
                 <div className="flex flex-col gap-6">
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-3">
                         <Badge variant="secondary" className="w-fit">{product.category}</Badge>
-                        <h1 className="text-4xl font-headline font-bold">{product.name}</h1>
-                        <p className="text-3xl font-bold text-primary">{product.price}</p>
+                        <h1 className="text-4xl lg:text-5xl font-headline font-bold">{product.name}</h1>
+                        <p className="text-4xl font-bold text-primary">{product.price}</p>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -71,20 +89,20 @@ function ProductDetailPageContent() {
                         <span className="text-muted-foreground text-sm">(123 reviews)</span>
                     </div>
                     
-                    <p className="text-muted-foreground text-lg">{product.description}</p>
+                    <p className="text-muted-foreground text-lg leading-relaxed">{product.description}</p>
                     
-                    <Button onClick={handleAddToCart} size="lg" className="h-12 text-lg">
+                    <Button onClick={handleAddToCart} size="lg" className="h-14 text-lg mt-4">
                         <ShoppingCart className="mr-2" />
                         Add to Cart
                     </Button>
                 </div>
             </div>
             
-            <Separator />
+            <Separator className="my-8"/>
 
             <div>
-                <h2 className="text-2xl font-headline font-bold mb-4">You Might Also Like</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <h2 className="text-3xl font-headline font-bold mb-8">You Might Also Like</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {relatedProducts.map((relatedProduct) => (
                          <Card key={relatedProduct.id} className="flex flex-col overflow-hidden group">
                             <Link href={`/store/${relatedProduct.id}`}>
@@ -102,13 +120,13 @@ function ProductDetailPageContent() {
                             </Link>
                             <CardContent className="p-6 flex-1 flex flex-col">
                                 <Link href={`/store/${relatedProduct.id}`}>
-                                    <CardTitle className="font-headline text-lg mb-2 hover:text-primary">{relatedProduct.name}</CardTitle>
+                                    <CardTitle className="font-headline text-xl mb-2 hover:text-primary">{relatedProduct.name}</CardTitle>
                                 </Link>
-                                <CardDescription className="flex-1">{relatedProduct.description.substring(0, 80)}...</CardDescription>
+                                <CardDescription className="flex-1 text-base">{relatedProduct.description.substring(0, 80)}...</CardDescription>
                             </CardContent>
                             <CardFooter className="p-6 pt-0 flex justify-between items-center">
-                                <p className="text-xl font-bold text-primary">{relatedProduct.price}</p>
-                                <Button variant="outline" size="sm" onClick={() => router.push(`/store/${relatedProduct.id}`)}>
+                                <p className="text-2xl font-bold text-primary">{relatedProduct.price}</p>
+                                <Button variant="outline" size="lg" onClick={() => router.push(`/store/${relatedProduct.id}`)}>
                                     <Eye className="mr-2"/>
                                     View
                                 </Button>
