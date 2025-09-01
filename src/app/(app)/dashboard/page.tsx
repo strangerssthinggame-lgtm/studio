@@ -28,7 +28,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [filters, setFilters] = useState({
     vibe: 'date',
     region: '',
@@ -43,7 +43,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchUsers = async () => {
-      if (!user) return;
+      if (!user) {
+        // Wait until the user object is loaded.
+        if (!authLoading) {
+            setIsLoading(false);
+        }
+        return;
+      }
       setIsLoading(true);
       try {
         const usersRef = collection(firestore, 'users');
@@ -58,7 +64,7 @@ export default function DashboardPage() {
                 name: data.displayName || 'Anonymous',
                 age: data.age || 25, // Default age
                 gender: data.gender || 'unknown', // Default gender
-                username: data.username || `@${data.displayName?.toLowerCase() || 'user'}`,
+                username: data.username || `@${data.displayName?.toLowerCase().replace(/\s/g, '') || 'user'}`,
                 location: data.location || 'Unknown Location',
                 bio: data.bio || 'No bio yet. Tap to learn more!',
                 avatar: data.photoURL || `https://picsum.photos/seed/${doc.id}/400/400`,
@@ -77,7 +83,7 @@ export default function DashboardPage() {
       }
     };
     fetchUsers();
-  }, [user]);
+  }, [user, authLoading]);
 
   const filteredUsers = useMemo(() => {
     if (isLoading) return [];
@@ -87,7 +93,7 @@ export default function DashboardPage() {
       const ageMatch = u.age >= minAge && u.age <= maxAge;
       const genderMatch = filters.gender === 'all' || u.gender.toLowerCase() === filters.gender;
       
-      const userVibes = u.vibes.map(v => v.toLowerCase());
+      const userVibes = Array.isArray(u.vibes) ? u.vibes.map(v => v.toLowerCase()) : [];
       const vibeMatch = userVibes.includes(filters.vibe);
       
       return regionMatch && ageMatch && genderMatch && vibeMatch;
