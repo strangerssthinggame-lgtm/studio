@@ -102,7 +102,7 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr] bg-gradient-to-br from-rose-500/20 via-red-500/20 to-orange-500/20">
+    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr] bg-gradient-to-br from-rose-500/10 via-red-500/10 to-orange-500/10">
       <div className="hidden border-r bg-black/10 backdrop-blur-lg md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
