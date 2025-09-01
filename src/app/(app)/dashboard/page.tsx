@@ -27,6 +27,7 @@ import { firestore } from '@/lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
+import { userProfiles } from '@/lib/user-profile-data';
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
@@ -37,54 +38,10 @@ export default function DashboardPage() {
     gender: 'all',
   });
   
-  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
+  const [allUsers, setAllUsers] = useState<UserProfile[]>(userProfiles);
   const [userQueue, setUserQueue] = useState<UserProfile[]>([]);
   const [history, setHistory] = useState<UserProfile[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchUsers = async () => {
-      if (!user) {
-        // Wait until the user object is loaded.
-        if (!authLoading) {
-            setIsLoading(false);
-        }
-        return;
-      }
-      setIsLoading(true);
-      try {
-        const usersRef = collection(firestore, 'users');
-        // Query all users except the current one
-        const q = query(usersRef, where('uid', '!=', user.uid));
-        const querySnapshot = await getDocs(q);
-        const usersData = querySnapshot.docs.map(doc => {
-            const data = doc.data();
-            // Map Firestore data to UserProfile, providing sensible defaults
-            return {
-                id: doc.id,
-                name: data.displayName || 'Anonymous',
-                age: data.age || 25, // Default age
-                gender: data.gender || 'unknown', // Default gender
-                username: data.username || `@${data.displayName?.toLowerCase().replace(/\s/g, '') || 'user'}`,
-                location: data.location || 'Unknown Location',
-                bio: data.bio || 'No bio yet. Tap to learn more!',
-                avatar: data.photoURL || `https://picsum.photos/seed/${doc.id}/400/400`,
-                banner: `https://picsum.photos/seed/${doc.id}-banner/800/600`,
-                vibes: data.vibes || ['Friend'], // Default vibe
-                interests: data.interests || ['Music', 'Movies'], // Default interests
-                gallery: data.gallery || [],
-                availability: data.availability || 'Not specified',
-            } as UserProfile;
-        });
-        setAllUsers(usersData);
-      } catch (error) {
-          console.error("Error fetching users:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchUsers();
-  }, [user, authLoading]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const filteredUsers = useMemo(() => {
     if (isLoading) return [];
