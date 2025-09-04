@@ -68,6 +68,7 @@
   "overrides": {
     "@babel/runtime": "7.26.10",
     "tmp": "0.2.4",
-    "glob": "^9.0.0"
+    "glob": "^9.0.0",
+    "brace-expansion": "^4.0.1"
   }
 }
