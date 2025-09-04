@@ -24,9 +24,8 @@ import type { UserProfile } from '@/lib/user-profile-data';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { firestore } from '@/lib/firebase';
-import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
-import { userProfiles } from '@/lib/user-profile-data';
 import { Card } from '@/components/ui/card';
 
 export default function DashboardPage() {
@@ -38,22 +37,59 @@ export default function DashboardPage() {
     gender: 'all',
   });
   
-  const [allUsers, setAllUsers] = useState<UserProfile[]>(userProfiles);
+  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [userQueue, setUserQueue] = useState<UserProfile[]>([]);
   const [history, setHistory] = useState<UserProfile[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Animation state lifted to the parent
   const [animationState, setAnimationState] = useState({ x: 0, y: 0, rotation: 0, isDragging: false });
   const cardBeingDragged = useRef<string | null>(null);
 
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (!user) return; // Don't fetch if user is not logged in
+
+      setIsLoading(true);
+      try {
+        const usersCollection = collection(firestore, 'users');
+        // Query all users except the current user
+        const q = query(usersCollection, where('uid', '!=', user.uid));
+        const querySnapshot = await getDocs(q);
+        const usersData = querySnapshot.docs.map(doc => ({
+            ...doc.data(),
+            id: doc.id,
+            // Provide sensible defaults if fields are missing
+            age: doc.data().age || 25, 
+            gender: doc.data().gender || 'not specified',
+            vibes: doc.data().vibes || ['Friend'],
+            interests: doc.data().interests || [],
+            gallery: doc.data().gallery || [],
+            availability: doc.data().availability || 'Not specified',
+            banner: doc.data().banner || 'https://picsum.photos/800/600'
+        })) as UserProfile[];
+        setAllUsers(usersData);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (!authLoading) {
+      fetchUsers();
+    }
+  }, [user, authLoading]);
+
+
   const filteredUsers = useMemo(() => {
     if (isLoading) return [];
     return allUsers.filter(u => {
+      if (!u || !u.id) return false;
       const [minAge, maxAge] = filters.ageRange;
-      const regionMatch = filters.region === '' || u.location.toLowerCase().includes(filters.region.toLowerCase());
+      const regionMatch = filters.region === '' || (u.location && u.location.toLowerCase().includes(filters.region.toLowerCase()));
       const ageMatch = u.age >= minAge && u.age <= maxAge;
-      const genderMatch = filters.gender === 'all' || u.gender.toLowerCase() === filters.gender;
+      const genderMatch = filters.gender === 'all' || (u.gender && u.gender.toLowerCase() === filters.gender);
       
       const userVibes = Array.isArray(u.vibes) ? u.vibes.map(v => v.toLowerCase()) : [];
       const vibeMatch = userVibes.includes(filters.vibe);
@@ -84,8 +120,10 @@ export default function DashboardPage() {
   }, [filteredUsers, history.length]);
 
   useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
+    if(!isLoading) {
+        applyFilters();
+    }
+  }, [applyFilters, isLoading]);
 
   const topCard = userQueue[userQueue.length - 1];
 
@@ -199,8 +237,8 @@ export default function DashboardPage() {
       </div>
       <div className="flex flex-1 items-center justify-center -mx-4">
         <div className="relative w-full max-w-sm h-[60vh] md:h-[70vh]">
-          {isLoading ? (
-            <Card className="absolute w-full h-full rounded-2xl overflow-hidden">
+          {isLoading || authLoading ? (
+            <Card className="absolute w-full h-full rounded-2xl overflow-hidden glassy">
                 <Skeleton className="w-full h-full"/>
             </Card>
           ) : userQueue.length > 0 ? (
@@ -239,7 +277,7 @@ export default function DashboardPage() {
               })}
             </div>
           ) : (
-            <div className="text-center text-muted-foreground p-4 bg-muted rounded-lg">
+            <div className="text-center text-muted-foreground p-4 bg-muted/50 glassy rounded-lg">
                 <p className="text-lg font-semibold">No More Profiles</p>
                 <p>You've seen everyone who matches your criteria. Try expanding your filters!</p>
                 <Button onClick={resetDeck} variant="link" className="mt-4">
@@ -253,3 +291,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

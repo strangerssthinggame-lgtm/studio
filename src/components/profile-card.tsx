@@ -1,4 +1,5 @@
 
+
 "use client"
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
@@ -42,7 +43,6 @@ export function ProfileCard({ user, onSwipe, style, isTopCard, animationState, s
     const [isSwiped, setIsSwiped] = useState(false);
     const [showMatchDialog, setShowMatchDialog] = useState(false);
     
-    // Drag state is now passed via props for the top card
     const cardRef = useRef<HTMLDivElement>(null);
     const startX = useRef(0);
 
@@ -210,3 +210,5 @@ export function ProfileCard({ user, onSwipe, style, isTopCard, animationState, s
     </>
   );
 }
+
+    
