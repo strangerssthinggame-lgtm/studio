@@ -4,3 +4,4 @@ config();
 
 import '@/ai/flows/suggest-prompt.ts';
 import '@/ai/flows/generate-question-flow.ts';
+import '@/ai/flows/handle-swipe-flow.ts';

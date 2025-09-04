@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import type { UserProfile } from '@/lib/user-profile-data';
+import { handleSwipe } from '@/ai/flows/handle-swipe-flow';
+import { useAuth } from '@/hooks/use-auth';
 
 type AnimationState = {
   x: number;
@@ -40,6 +42,7 @@ type ProfileCardProps = {
 };
 
 export function ProfileCard({ user, onSwipe, style, isTopCard, animationState, setAnimationState }: ProfileCardProps) {
+    const { user: currentUser } = useAuth();
     const [isSwiped, setIsSwiped] = useState(false);
     const [showMatchDialog, setShowMatchDialog] = useState(false);
     
@@ -85,8 +88,8 @@ export function ProfileCard({ user, onSwipe, style, isTopCard, animationState, s
     const onTouchEnd = () => handleDragEnd();
 
 
-    const handleSwipeAction = (direction: 'left' | 'right') => {
-        if (isSwiped || !setAnimationState) return;
+    const handleSwipeAction = async (direction: 'left' | 'right') => {
+        if (isSwiped || !setAnimationState || !currentUser) return;
         
         setIsSwiped(true);
         setAnimationState({
@@ -96,12 +99,24 @@ export function ProfileCard({ user, onSwipe, style, isTopCard, animationState, s
             isDragging: false
         });
 
-        setTimeout(() => {
-            onSwipe(user, direction);
-            if (direction === 'right') {
+        try {
+            const result = await handleSwipe({
+                swiperId: currentUser.uid,
+                swipedId: user.id,
+                direction,
+            });
+
+            if (result.isMatch) {
                 setShowMatchDialog(true);
             }
-        }, 300);
+        } catch (error) {
+            console.error("Error handling swipe:", error);
+            // Optionally, revert the animation if the backend call fails
+        } finally {
+            setTimeout(() => {
+                onSwipe(user, direction);
+            }, 300);
+        }
     };
     
     const onDialogClose = () => {
