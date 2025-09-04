@@ -103,7 +103,7 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr] bg-background">
-      <div className="hidden border-r bg-black/5 backdrop-blur-lg md:block">
+      <div className="hidden border-r bg-card/70 backdrop-blur-lg md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold font-headline">
@@ -165,7 +165,7 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
       <div className="flex flex-col">
-        <header className="flex h-14 items-center gap-4 border-b bg-black/5 backdrop-blur-lg px-4 lg:h-[60px] lg:px-6">
+        <header className="flex h-14 items-center gap-4 border-b bg-card/70 backdrop-blur-lg px-4 lg:h-[60px] lg:px-6">
           <Sheet>
             <SheetTrigger asChild>
               <Button
@@ -179,7 +179,7 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="flex flex-col bg-black/50 backdrop-blur-lg">
+            <SheetContent side="left" className="flex flex-col bg-card/70 backdrop-blur-lg">
               <nav className="grid gap-2 text-lg font-medium">
                 <Link
                   href="#"
