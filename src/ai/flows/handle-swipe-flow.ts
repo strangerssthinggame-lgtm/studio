@@ -15,14 +15,14 @@ import { firestore } from '@/lib/firebase';
 import { collection, addDoc, query, where, getDocs, serverTimestamp, setDoc, doc } from 'firebase/firestore';
 
 
-export const HandleSwipeInputSchema = z.object({
+const HandleSwipeInputSchema = z.object({
   swiperId: z.string().describe("The ID of the user performing the swipe."),
   swipedId: z.string().describe("The ID of the user being swiped on."),
   direction: z.enum(['left', 'right']).describe("The direction of the swipe."),
 });
 export type HandleSwipeInput = z.infer<typeof HandleSwipeInputSchema>;
 
-export const HandleSwipeOutputSchema = z.object({
+const HandleSwipeOutputSchema = z.object({
     isMatch: z.boolean().describe("Whether the swipe resulted in a match."),
     matchId: z.string().optional().describe("The ID of the match document if a match occurred."),
 });
