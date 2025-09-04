@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can only read, update, or delete their own document.
+    // Any authenticated user can create a user document (for new sign-ups).
+    match /users/{userId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null;
+    }
+    
+    // Swipes can be created by any authenticated user.
+    // Reading swipes is restricted to prevent users from seeing who liked them pre-emptively.
+    // This would typically be handled by a backend function/flow.
+    match /swipes/{swipeId} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if false; 
+    }
+
+    // Matches can only be read by the users involved in the match.
+    // Creation is handled by the backend handleSwipe flow.
+    match /matches/{matchId} {
+      allow read: if request.auth != null && request.auth.uid in resource.data.userIds;
+      allow create, update, delete: if false;
+    }
+
+    // Chat messages can only be read by users involved in the chat.
+    // Users can write to a chat if they are part of it.
+    // Creation is handled by the backend handleSwipe flow when a match occurs.
+     match /chats/{chatId} {
+      allow read, write: if request.auth != null && request.auth.uid in resource.data.userIds;
+    }
+  }
+}
