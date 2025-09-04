@@ -1,44 +1,63 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
+import { firestore } from '@/lib/firebase';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Camera, Edit, MapPin, User, FileImage, PlusCircle, X, Save, Sparkles, Clock } from 'lucide-react';
+import { Camera, Edit, MapPin, User, FileImage, PlusCircle, X, Save, Sparkles, Clock, RotateCw } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import type { UserProfile } from '@/lib/user-profile-data';
 
-const userProfile = {
-  name: 'Alex',
-  username: '@alex_codes',
-  location: 'San Francisco, CA',
-  bio: 'Just a human vibing. Developer by day, dreamer by night. I believe in connecting with people on a deeper level. Let\'s talk about anything from the latest tech trends to the mysteries of the universe.',
-  avatar: 'https://picsum.photos/100',
-  banner: 'https://picsum.photos/1600/400',
-  vibe: 'Date', // Changed from 'vibes' array to single 'vibe'
-  interests: ['Photography', 'Hiking', 'Indie Music', 'Sci-Fi Movies', 'Coffee Enthusiast', 'Yoga'],
-  gallery: [
-    { id: 1, src: 'https://picsum.photos/seed/gallery1/400/400', hint: 'mountain landscape' },
-    { id: 2, src: 'https://picsum.photos/seed/gallery2/400/400', hint: 'city skyline' },
-    { id: 3, src: 'https://picsum.photos/seed/gallery3/400/400', hint: 'abstract art' },
-    { id: 4, src: 'https://picsum.photos/seed/gallery4/400/400', hint: 'portrait smiling' },
-  ],
-  availability: 'Evenings & Weekends',
-};
 
 const allVibes = ['Friend', 'Date', 'Casual', 'Spicy', 'Serious'];
 
 export default function EditProfilePage() {
-  const [profile, setProfile] = useState(userProfile);
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
+  
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [newInterest, setNewInterest] = useState('');
 
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user) {
+        const userDocRef = doc(firestore, 'users', user.uid);
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+          setProfile(docSnap.data() as UserProfile);
+        } else {
+          // Handle case where profile doesn't exist for some reason
+          console.error("No such document!");
+          // Maybe redirect or show an error
+        }
+      }
+      setIsLoading(false);
+    };
+
+    if (!authLoading) {
+      fetchUserProfile();
+    }
+  }, [user, authLoading]);
+
+
   const handleInterestAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && newInterest.trim()) {
+    if (e.key === 'Enter' && newInterest.trim() && profile) {
       e.preventDefault();
       if (!profile.interests.includes(newInterest.trim())) {
         setProfile({
@@ -51,15 +70,63 @@ export default function EditProfilePage() {
   };
 
   const handleInterestRemove = (interestToRemove: string) => {
-    setProfile({
-      ...profile,
-      interests: profile.interests.filter(interest => interest !== interestToRemove),
-    });
+    if (profile) {
+        setProfile({
+        ...profile,
+        interests: profile.interests.filter(interest => interest !== interestToRemove),
+        });
+    }
   };
   
   const handleVibeSelect = (vibe: string) => {
-      setProfile(prev => ({ ...prev, vibe: vibe }));
+      if (profile) {
+        setProfile(prev => prev ? ({ ...prev, vibes: prev.vibes.includes(vibe) ? prev.vibes.filter(v => v !== vibe) : [...prev.vibes, vibe] }) : null);
+      }
   }
+
+  const handleSaveChanges = async () => {
+    if (!user || !profile) {
+        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to save.' });
+        return;
+    }
+    setIsSaving(true);
+    try {
+        const userDocRef = doc(firestore, 'users', user.uid);
+        // Using updateDoc to only change fields. Use setDoc with merge if you want to create if not exists.
+        await updateDoc(userDocRef, {
+            ...profile
+        });
+        toast({ title: 'Success!', description: 'Your profile has been saved successfully.' });
+        router.push('/profile');
+    } catch (error) {
+        console.error("Error saving profile: ", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to save profile.' });
+    } finally {
+        setIsSaving(false);
+    }
+  }
+
+  const handleInputChange = (field: keyof UserProfile, value: string) => {
+    if (profile) {
+        setProfile(prev => prev ? ({ ...prev, [field]: value }) : null)
+    }
+  }
+
+  if (isLoading || authLoading) {
+      return (
+          <div className="w-full max-w-4xl mx-auto space-y-6">
+                <Skeleton className="h-10 w-48" />
+                <Skeleton className="h-64 w-full" />
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-48 w-full" />
+          </div>
+      )
+  }
+  
+  if (!profile) {
+      return <div>Could not load profile. Please try again.</div>
+  }
+
 
   return (
     <div className="w-full max-w-4xl mx-auto">
@@ -67,11 +134,11 @@ export default function EditProfilePage() {
         <h1 className="text-3xl font-headline font-bold">Edit Profile</h1>
         <div className="flex gap-2">
             <Link href="/profile">
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline" disabled={isSaving}>Cancel</Button>
             </Link>
-            <Button>
-                <Save className="mr-2 h-4 w-4"/>
-                Save Changes
+            <Button onClick={handleSaveChanges} disabled={isSaving}>
+                {isSaving ? <RotateCw className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4"/>}
+                {isSaving ? 'Saving...' : 'Save Changes'}
             </Button>
         </div>
       </div>
@@ -85,20 +152,20 @@ export default function EditProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label htmlFor="name">Name</Label>
-                    <Input id="name" value={profile.name} onChange={(e) => setProfile({...profile, name: e.target.value})} />
+                    <Input id="name" value={profile.name} onChange={(e) => handleInputChange('name', e.target.value)} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="username">Username</Label>
-                    <Input id="username" value={profile.username} onChange={(e) => setProfile({...profile, username: e.target.value})} />
+                    <Input id="username" value={profile.username} onChange={(e) => handleInputChange('username', e.target.value)} />
                 </div>
             </div>
             <div className="space-y-2">
                 <Label htmlFor="location">Location</Label>
-                <Input id="location" value={profile.location} onChange={(e) => setProfile({...profile, location: e.target.value})} />
+                <Input id="location" value={profile.location} onChange={(e) => handleInputChange('location', e.target.value)} />
             </div>
             <div className="space-y-2">
                 <Label htmlFor="bio">About Me</Label>
-                <Textarea id="bio" value={profile.bio} onChange={(e) => setProfile({...profile, bio: e.target.value})} rows={5} />
+                <Textarea id="bio" value={profile.bio} onChange={(e) => handleInputChange('bio', e.target.value)} rows={5} />
             </div>
         </CardContent>
       </Card>
@@ -111,7 +178,7 @@ export default function EditProfilePage() {
             </CardHeader>
             <CardContent>
                 <Label htmlFor="availability">Availability</Label>
-                <Input id="availability" value={profile.availability} onChange={(e) => setProfile({...profile, availability: e.target.value})} placeholder="e.g., Evenings & Weekends" />
+                <Input id="availability" value={profile.availability} onChange={(e) => handleInputChange('availability', e.target.value)} placeholder="e.g., Evenings & Weekends" />
             </CardContent>
         </Card>
       </div>
@@ -119,14 +186,14 @@ export default function EditProfilePage() {
        <div className="mt-8">
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 font-headline"><Sparkles/> My Vibe</CardTitle>
-                    <CardDescription>Select the tag that best describes the connection you're looking for.</CardDescription>
+                    <CardTitle className="flex items-center gap-2 font-headline"><Sparkles/> My Vibes</CardTitle>
+                    <CardDescription>Select tags that best describe the connection you're looking for. Select all that apply.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-wrap gap-2">
                         {allVibes.map((vibe) => (
                             <button key={vibe} onClick={() => handleVibeSelect(vibe)}>
-                                <Badge variant={profile.vibe === vibe ? 'default' : 'secondary'} className="text-base px-4 py-2 cursor-pointer">
+                                <Badge variant={profile.vibes.includes(vibe) ? 'default' : 'secondary'} className="text-base px-4 py-2 cursor-pointer">
                                     {vibe}
                                 </Badge>
                             </button>

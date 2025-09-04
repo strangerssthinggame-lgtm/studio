@@ -1,4 +1,5 @@
 
+'use client';
 
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -8,34 +9,65 @@ import { Badge } from '@/components/ui/badge';
 import { Camera, Edit, MapPin, User, FileImage, PlusCircle, Sparkles, Clock, ShoppingBag, Eye } from 'lucide-react';
 import Link from 'next/link';
 import OrderHistory from '@/components/order-history';
-
-const userProfile = {
-  id: 'current_user_id', // A placeholder ID for the current user
-  name: 'Alex',
-  username: '@alex_codes',
-  location: 'San Francisco, CA',
-  bio: 'Just a human vibing. Developer by day, dreamer by night. I believe in connecting with people on a deeper level. Let\'s talk about anything from the latest tech trends to the mysteries of the universe.',
-  avatar: 'https://picsum.photos/100',
-  banner: 'https://picsum.photos/1600/400',
-  vibes: ['Friend', 'Date', 'Casual'],
-  interests: ['Photography', 'Hiking', 'Indie Music', 'Sci-Fi Movies', 'Coffee Enthusiast', 'Yoga'],
-  gallery: [
-    { id: 1, src: 'https://picsum.photos/seed/gallery1/400/400', hint: 'mountain landscape' },
-    { id: 2, src: 'https://picsum.photos/seed/gallery2/400/400', hint: 'city skyline' },
-    { id: 3, src: 'https://picsum.photos/seed/gallery3/400/400', hint: 'abstract art' },
-    { id: 4, src: 'https://picsum.photos/seed/gallery4/400/400', hint: 'portrait smiling' },
-    { id: 5, src: 'https://picsum.photos/seed/gallery5/400/400', hint: 'pet dog' },
-    { id: 6, src: 'https://picsum.photos/seed/gallery6/400/400', hint: 'food plate' },
-  ],
-  availability: 'Evenings & Weekends',
-};
+import { useAuth } from '@/hooks/use-auth';
+import { useEffect, useState } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { firestore } from '@/lib/firebase';
+import type { UserProfile } from '@/lib/user-profile-data';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProfilePage() {
+    const { user, loading: authLoading } = useAuth();
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            if (user) {
+                const userDocRef = doc(firestore, 'users', user.uid);
+                const docSnap = await getDoc(userDocRef);
+                if (docSnap.exists()) {
+                    setUserProfile(docSnap.data() as UserProfile);
+                }
+            }
+            setIsLoading(false);
+        };
+
+        if (!authLoading) {
+            fetchUserProfile();
+        }
+    }, [user, authLoading]);
+
+    if (isLoading || authLoading) {
+        return (
+            <div className="w-full max-w-4xl mx-auto">
+                <Skeleton className="h-48 md:h-64 w-full rounded-t-xl" />
+                <div className="relative glassy p-6 rounded-b-xl shadow-lg">
+                    <div className="flex flex-col md:flex-row items-start">
+                        <div className="relative -mt-20 md:-mt-24">
+                           <Skeleton className="h-32 w-32 md:h-40 md:w-40 rounded-full border-4 border-background shadow-md" />
+                        </div>
+                        <div className="mt-4 md:mt-0 md:ml-6 flex-1 space-y-4">
+                           <Skeleton className="h-10 w-1/2" />
+                           <Skeleton className="h-6 w-1/3" />
+                           <Skeleton className="h-6 w-1/4" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    
+    if (!userProfile) {
+        return <p>User profile not found.</p>;
+    }
+
+
   return (
     <div className="w-full max-w-4xl mx-auto">
       <div className="relative h-48 md:h-64 w-full rounded-t-xl overflow-hidden">
         <Image
-          src={userProfile.banner}
+          src={userProfile.banner || 'https://picsum.photos/1600/400'}
           alt="Profile banner"
           fill
           objectFit="cover"
