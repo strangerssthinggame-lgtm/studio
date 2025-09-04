@@ -27,7 +27,22 @@ export default function ProfilePage() {
                 const userDocRef = doc(firestore, 'users', user.uid);
                 const docSnap = await getDoc(userDocRef);
                 if (docSnap.exists()) {
-                    setUserProfile(docSnap.data() as UserProfile);
+                    const data = docSnap.data();
+                    setUserProfile({
+                        id: user.uid,
+                        name: data.displayName || 'New User',
+                        username: data.username || `@${data.displayName?.toLowerCase() || 'newuser'}`,
+                        age: data.age || 18,
+                        gender: data.gender || 'not specified',
+                        location: data.location || 'Not specified',
+                        bio: data.bio || 'No bio yet.',
+                        avatar: data.photoURL || `https://picsum.photos/seed/${user.uid}/400/400`,
+                        banner: data.banner || `https://picsum.photos/seed/${user.uid}-banner/800/600`,
+                        vibes: data.vibes || [],
+                        interests: data.interests || [],
+                        gallery: data.gallery || [],
+                        availability: data.availability || 'Not specified'
+                    });
                 }
             }
             setIsLoading(false);
@@ -59,7 +74,7 @@ export default function ProfilePage() {
     }
     
     if (!userProfile) {
-        return <p>User profile not found.</p>;
+        return <p>User profile not found. Please try logging out and in again.</p>;
     }
 
 
@@ -111,8 +126,8 @@ export default function ProfilePage() {
                   {userProfile.location}
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Link href={`/users/${userProfile.id}`}>
+              <div className="flex gap-2 mt-4 md:mt-0">
+                <Link href={`/users/${user?.uid}`}>
                   <Button variant="secondary">
                     <Eye className="mr-2 h-4 w-4" /> Preview
                   </Button>

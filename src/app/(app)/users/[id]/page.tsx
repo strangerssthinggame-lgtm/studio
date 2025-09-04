@@ -8,54 +8,89 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Heart, MessageSquare, MapPin, User, FileImage, Clock, Edit, Eye } from 'lucide-react';
 import Link from 'next/link';
-import { userProfiles } from '@/lib/user-profile-data';
+import { userProfiles as mockUserProfiles } from '@/lib/user-profile-data'; // Use mock for fallbacks
 import { notFound, useRouter } from 'next/navigation';
-
-// Mock current user ID
-const currentUserId = 'current_user_id';
-
-const currentUserProfile = {
-  id: 'current_user_id',
-  name: 'Alex',
-  username: '@alex_codes',
-  location: 'San Francisco, CA',
-  bio: 'Just a human vibing. Developer by day, dreamer by night. I believe in connecting with people on a deeper level. Let\'s talk about anything from the latest tech trends to the mysteries of the universe.',
-  avatar: 'https://picsum.photos/100',
-  banner: 'https://picsum.photos/1600/400',
-  vibes: ['Friend', 'Date', 'Casual'],
-  interests: ['Photography', 'Hiking', 'Indie Music', 'Sci-Fi Movies', 'Coffee Enthusiast', 'Yoga'],
-  gallery: [
-    { id: 1, src: 'https://picsum.photos/seed/gallery1/400/400', hint: 'mountain landscape' },
-    { id: 2, src: 'https://picsum.photos/seed/gallery2/400/400', hint: 'city skyline' },
-    { id: 3, src: 'https://picsum.photos/seed/gallery3/400/400', hint: 'abstract art' },
-    { id: 4, src: 'https://picsum.photos/seed/gallery4/400/400', hint: 'portrait smiling' },
-    { id: 5, src: 'https://picsum.photos/seed/gallery5/400/400', hint: 'pet dog' },
-    { id: 6, src: 'https://picsum.photos/seed/gallery6/400/400', hint: 'food plate' },
-  ],
-  availability: 'Evenings & Weekends',
-};
-
+import { useEffect, useState } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { firestore } from '@/lib/firebase';
+import { useAuth } from '@/hooks/use-auth';
+import type { UserProfile } from '@/lib/user-profile-data';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function UserProfilePage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const { user: currentUser } = useAuth();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const isOwnProfile = params.id === currentUserId;
-  
-  // Use the mock current user's data if it's their own profile preview
-  const userProfileData = isOwnProfile ? currentUserProfile : userProfiles.find(p => p.id === params.id);
+  const isOwnProfile = currentUser?.uid === params.id;
 
-  if (!userProfileData) {
-    notFound();
-  }
-  
-  const userProfile = {
-      ...userProfileData,
-      // If it's a preview of own profile, don't show the real user's profile data
-      name: isOwnProfile ? currentUserProfile.name : userProfileData.name,
-  }
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+        if (!params.id) return;
+        setIsLoading(true);
+        const userDocRef = doc(firestore, 'users', params.id);
+        const docSnap = await getDoc(userDocRef);
+
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            setUserProfile({
+                id: params.id,
+                name: data.displayName || 'New User',
+                username: data.username || `@${data.displayName?.toLowerCase() || 'newuser'}`,
+                age: data.age || 18,
+                gender: data.gender || 'not specified',
+                location: data.location || 'Not specified',
+                bio: data.bio || 'No bio yet.',
+                avatar: data.photoURL || `https://picsum.photos/seed/${params.id}/400/400`,
+                banner: data.banner || `https://picsum.photos/seed/${params.id}-banner/800/600`,
+                vibes: data.vibes || [],
+                interests: data.interests || [],
+                gallery: data.gallery || [],
+                availability: data.availability || 'Not specified'
+            });
+        } else {
+             // Fallback to mock data if user not found in Firestore
+            const mockUser = mockUserProfiles.find(p => p.id === params.id);
+            if (mockUser) {
+                setUserProfile(mockUser);
+            } else {
+                setUserProfile(null);
+            }
+        }
+        setIsLoading(false);
+    };
+
+    fetchUserProfile();
+  }, [params.id]);
+
 
   const handleEditRedirect = () => {
     router.push('/profile/edit');
+  }
+
+  if (isLoading) {
+    return (
+        <div className="w-full max-w-4xl mx-auto">
+            <Skeleton className="h-48 md:h-64 w-full rounded-t-xl" />
+            <div className="relative glassy p-6 rounded-b-xl shadow-lg">
+                <div className="flex flex-col md:flex-row items-start">
+                    <div className="relative -mt-20 md:-mt-24">
+                       <Skeleton className="h-32 w-32 md:h-40 md:w-40 rounded-full border-4 border-background shadow-md" />
+                    </div>
+                    <div className="mt-4 md:mt-0 md:ml-6 flex-1 space-y-4">
+                       <Skeleton className="h-10 w-1/2" />
+                       <Skeleton className="h-6 w-1/3" />
+                       <Skeleton className="h-6 w-1/4" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+  }
+
+  if (!userProfile) {
+    return notFound();
   }
 
   return (
