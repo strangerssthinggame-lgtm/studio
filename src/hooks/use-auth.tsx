@@ -9,16 +9,19 @@ import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isNewUser: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  isNewUser: false,
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isNewUser, setIsNewUser] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -27,19 +30,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const docSnap = await getDoc(userRef);
 
         if (!docSnap.exists()) {
-           // Create a new user document if it doesn't exist
+           // This is a new user
+           setIsNewUser(true);
            await setDoc(userRef, {
             uid: user.uid,
-            displayName: user.displayName,
+            displayName: user.displayName || 'New User',
+            name: user.displayName || 'New User',
+            username: `@${user.displayName?.toLowerCase().replace(/\s/g, '') || 'newuser'}`,
             email: user.email,
-            photoURL: user.photoURL,
+            photoURL: user.photoURL || `https://picsum.photos/seed/${user.uid}/400/400`,
+            avatar: user.photoURL || `https://picsum.photos/seed/${user.uid}/400/400`,
+            banner: `https://picsum.photos/seed/${user.uid}-banner/800/600`,
             createdAt: serverTimestamp(),
             lastSeen: serverTimestamp(),
+            bio: '',
+            location: '',
+            interests: [],
+            vibes: [],
+            gallery: [],
+            availability: 'Not specified',
+            profileComplete: false,
           });
+        } else {
+            // Existing user, check if profile is complete
+            setIsNewUser(docSnap.data().profileComplete === false);
         }
         setUser(user);
       } else {
         setUser(null);
+        setIsNewUser(false);
       }
       setLoading(false);
     });
@@ -48,7 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, isNewUser }}>
       {children}
     </AuthContext.Provider>
   );

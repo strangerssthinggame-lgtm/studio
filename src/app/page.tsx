@@ -8,17 +8,21 @@ import { useAuth } from '@/hooks/use-auth';
 
 export default function RootPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, isNewUser } = useAuth();
 
   useEffect(() => {
     if (!loading) {
       if (user) {
-        router.replace('/dashboard');
+        if (isNewUser) {
+          router.replace('/profile/edit');
+        } else {
+          router.replace('/profile');
+        }
       } else {
-        router.replace('/onboarding');
+        router.replace('/login');
       }
     }
-  }, [router, user, loading]);
+  }, [router, user, loading, isNewUser]);
 
   return (
     <div className="flex h-screen w-screen items-center justify-center">

@@ -14,6 +14,7 @@ export type UserProfile = {
   interests: string[];
   gallery: { id: number; src: string; hint: string }[];
   availability: string;
+  profileComplete?: boolean;
 };
 
 export const userProfiles: UserProfile[] = [
@@ -38,6 +39,7 @@ export const userProfiles: UserProfile[] = [
         { id: 6, src: 'https://picsum.photos/seed/sophia-gallery6/400/400', hint: 'sculpture' },
     ],
     availability: 'Evenings & Weekends',
+    profileComplete: true,
   },
   {
     id: '2',
@@ -60,6 +62,7 @@ export const userProfiles: UserProfile[] = [
         { id: 6, src: 'https://picsum.photos/seed/liam-gallery6/400/400', hint: 'drone' },
     ],
     availability: 'Weekends',
+    profileComplete: true,
   },
   {
     id: '3',
@@ -82,6 +85,7 @@ export const userProfiles: UserProfile[] = [
         { id: 6, src: 'https://picsum.photos/seed/chloe-gallery6/400/400', hint: 'microphone' },
     ],
     availability: 'Afternoons',
+    profileComplete: true,
   },
    {
     id: '4',
@@ -104,6 +108,7 @@ export const userProfiles: UserProfile[] = [
         { id: 6, src: 'https://picsum.photos/seed/mason-gallery6/400/400', hint: 'chef kitchen' },
     ],
     availability: 'Mornings',
+    profileComplete: true,
   },
   {
     id: '5',
@@ -126,6 +131,7 @@ export const userProfiles: UserProfile[] = [
       { id: 6, src: 'https://picsum.photos/seed/olivia-gallery6/400/400', hint: 'reading glasses' },
     ],
     availability: 'Anytime',
+    profileComplete: true,
   },
   {
     id: '6',
@@ -148,6 +154,7 @@ export const userProfiles: UserProfile[] = [
       { id: 6, src: 'https://picsum.photos/seed/ethan-gallery6/400/400', hint: 'sound board' },
     ],
     availability: 'Weeknights',
+    profileComplete: true,
   },
   {
     id: '7',
@@ -170,6 +177,7 @@ export const userProfiles: UserProfile[] = [
       { id: 6, src: 'https://picsum.photos/seed/ava-gallery6/400/400', hint: 'kayaking' },
     ],
     availability: 'Varies',
+    profileComplete: true,
   },
   {
     id: '8',
@@ -192,5 +200,6 @@ export const userProfiles: UserProfile[] = [
       { id: 6, src: 'https://picsum.photos/seed/noah-gallery6/400/400', hint: 'open book' },
     ],
     availability: 'Weekends',
+    profileComplete: true,
   },
 ];

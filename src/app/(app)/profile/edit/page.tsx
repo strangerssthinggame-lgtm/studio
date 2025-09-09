@@ -94,7 +94,8 @@ export default function EditProfilePage() {
         const userDocRef = doc(firestore, 'users', user.uid);
         // Using updateDoc to only change fields. Use setDoc with merge if you want to create if not exists.
         await updateDoc(userDocRef, {
-            ...profile
+            ...profile,
+            profileComplete: true, // Mark profile as complete
         });
         toast({ title: 'Success!', description: 'Your profile has been saved successfully.' });
         router.push('/profile');
