@@ -83,10 +83,16 @@ export default function ProfilePage() {
                     id: Date.now(),
                     src: downloadURL,
                     hint: 'custom upload',
-                    path: filePath
+                    path: filePath // Path is needed for deletion, but not stored in Firestore
                 };
+                 const newImageForFirestore = { // This is what gets stored
+                    id: newImage.id,
+                    src: newImage.src,
+                    hint: newImage.hint
+                 }
+
                 const updatedGallery = [...userProfile.gallery, newImage];
-                await updateUserProfile(user.uid, { gallery: updatedGallery });
+                await updateUserProfile(user.uid, { gallery: arrayUnion(newImageForFirestore) });
                 setUserProfile(prev => prev ? { ...prev, gallery: updatedGallery } : null);
                 toast({ title: "Photo Added!", description: "Your new photo has been added to your gallery." });
             } else { // avatar or banner

@@ -85,8 +85,14 @@ export async function deleteProfileImage(userId: string, image: GalleryImage): P
     await deleteObject(storageRef);
 
     // 2. Remove the image object from the 'gallery' array in Firestore
+    // We create an object without the 'path' to ensure it matches what's in Firestore.
+    const imageToRemoveFromFirestore = {
+        id: image.id,
+        src: image.src,
+        hint: image.hint,
+    };
     const userDocRef = doc(firestore, 'users', userId);
     await updateDoc(userDocRef, {
-        gallery: arrayRemove(image)
+        gallery: arrayRemove(imageToRemoveFromFirestore)
     });
 }
