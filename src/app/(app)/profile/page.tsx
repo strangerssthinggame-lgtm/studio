@@ -79,7 +79,8 @@ export default function ProfilePage() {
             const filePath = `users/${user.uid}/${imageType}s/${uniqueFileName}`;
             const storageRef = ref(storage, filePath);
 
-            const snapshot = await uploadBytes(storageRef, file);
+            const metadata = { contentType: file.type };
+            const snapshot = await uploadBytes(storageRef, file, metadata);
             const downloadURL = await getDownloadURL(snapshot.ref);
 
             const userDocRef = doc(firestore, 'users', user.uid);
