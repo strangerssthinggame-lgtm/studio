@@ -98,15 +98,15 @@ export default function ProfilePage() {
                 };
                 const updatedGallery = [...userProfile.gallery, newImage];
                 await updateDoc(userDocRef, { gallery: updatedGallery });
-                setUserProfile({ ...userProfile, gallery: updatedGallery });
+                setUserProfile(prev => prev ? { ...prev, gallery: updatedGallery } : null);
                 toast({ title: "Photo Added!", description: "Your new photo has been added to your gallery." });
             } else if (imageType === 'avatar') {
                 await updateDoc(userDocRef, { avatar: downloadURL, photoURL: downloadURL });
-                setUserProfile({ ...userProfile, avatar: downloadURL });
+                setUserProfile(prev => prev ? { ...prev, avatar: downloadURL } : null);
                 toast({ title: "Profile Picture Updated!", description: "Your new picture is now live." });
             } else if (imageType === 'banner') {
                 await updateDoc(userDocRef, { banner: downloadURL });
-                setUserProfile({ ...userProfile, banner: downloadURL });
+                setUserProfile(prev => prev ? { ...prev, banner: downloadURL } : null);
                 toast({ title: "Banner Updated!", description: "Your new banner is now live." });
             }
 
@@ -130,7 +130,7 @@ export default function ProfilePage() {
             const userDocRef = doc(firestore, 'users', user.uid);
             await updateDoc(userDocRef, { gallery: updatedGallery });
 
-            setUserProfile({ ...userProfile, gallery: updatedGallery });
+            setUserProfile(prev => prev ? { ...prev, gallery: updatedGallery } : null);
 
             toast({ title: "Photo Removed", description: "The photo has been removed from your gallery." });
           } catch (error) {
