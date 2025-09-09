@@ -1,8 +1,9 @@
+
 // src/services/user-service.ts
 'use server';
 
 import { firestore, storage } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { UserProfile, GalleryImage } from '@/lib/user-profile-data';
 
@@ -133,6 +134,6 @@ export async function deleteProfileImage(userId: string, imageId: number): Promi
     // 2. Remove the image object from the 'gallery' array in Firestore
     // Using the exact object fetched from Firestore ensures arrayRemove works.
     await updateDoc(userDocRef, {
-        gallery: [imageToDelete]
+        gallery: arrayRemove(imageToDelete)
     });
 }
