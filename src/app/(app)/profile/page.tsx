@@ -178,7 +178,7 @@ export default function ProfilePage() {
                 <span className="sr-only">Edit banner</span>
               </div>
             </Button>
-            <input id="banner-upload" type="file" className="sr-only" accept="image/*" onChange={(e) => handleImageUpload(e, 'banner')} disabled={isPageLoging} />
+            <input id="banner-upload" type="file" className="sr-only" accept="image/*" onChange={(e) => handleImageUpload(e, 'banner')} disabled={isPageLoading} />
         </label>
       </div>
 
@@ -323,5 +323,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
