@@ -1,9 +1,17 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Rules for users collection
     match /users/{userId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
+      // Read & delete only by the authenticated owner
+      allow read, delete: if request.auth != null && request.auth.uid == userId;
+
+      // Create only by the authenticated owner
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // Update only by the authenticated owner
+      allow update: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
