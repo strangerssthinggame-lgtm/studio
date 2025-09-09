@@ -1,0 +1,15 @@
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /users/{userId}/{allPaths=**} {
+      // Allow public read access for all profile images.
+      // This is necessary for other users to see profile pictures, banners, and galleries.
+      allow read;
+      
+      // Only allow write operations (uploads, updates, deletes) if the user is authenticated
+      // and is the owner of the files.
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
