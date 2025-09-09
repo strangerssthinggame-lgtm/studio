@@ -2,7 +2,7 @@
 'use server';
 
 import { firestore, storage } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, arrayRemove, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { UserProfile, GalleryImage } from '@/lib/user-profile-data';
 
@@ -27,7 +27,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
  * Uploads an image to Firebase Storage for a specific user.
  * @param userId - The ID of the user.
  * @param file - The image file to upload.
- * @param type - The type of image ('avatar', 'banner', 'gallery').
+ * @param type - The type of image ('avatar', 'banner').
  * @returns An object containing the download URL and the storage path of the uploaded file.
  */
 export async function uploadProfileImage(userId: string, formData: FormData): Promise<{ downloadURL: string; filePath: string }> {
@@ -78,17 +78,10 @@ export async function addGalleryImage(userId: string, formData: FormData): Promi
         path: filePath,
     };
     
-    const newImageForFirestore = {
-        id: newImage.id,
-        src: newImage.src,
-        hint: newImage.hint,
-        path: newImage.path, // We need to store the path for deletion
-    };
-
     // 3. Update Firestore
     const userDocRef = doc(firestore, 'users', userId);
     await updateDoc(userDocRef, {
-        gallery: arrayUnion(newImageForFirestore)
+        gallery: arrayUnion(newImage)
     });
     
     return newImage;
@@ -111,20 +104,35 @@ export async function updateUserProfile(userId: string, data: Record<string, any
 /**
  * Deletes an image from Firebase Storage and removes it from the user's gallery in Firestore.
  * @param userId - The ID of the user.
- * @param image - The gallery image object to delete.
+ * @param imageId - The ID of the gallery image to delete.
  */
-export async function deleteProfileImage(userId: string, image: GalleryImage): Promise<void> {
-     if (!userId || !image || !image.path) {
-        throw new Error("Invalid arguments for image deletion. Path is required.");
+export async function deleteProfileImage(userId: string, imageId: number): Promise<void> {
+     if (!userId || !imageId) {
+        throw new Error("Invalid arguments for image deletion. User ID and Image ID are required.");
+    }
+
+    const userDocRef = doc(firestore, 'users', userId);
+    const userDoc = await getDoc(userDocRef);
+
+    if (!userDoc.exists()) {
+        throw new Error("User not found.");
+    }
+
+    const userData = userDoc.data() as UserProfile;
+    const imageToDelete = userData.gallery.find(img => img.id === imageId);
+
+    if (!imageToDelete) {
+        console.warn(`Image with ID ${imageId} not found in user's gallery.`);
+        return; // Or throw an error if this should be a critical failure
     }
     
     // 1. Delete the file from Firebase Storage
-    const storageRef = ref(storage, image.path);
+    const storageRef = ref(storage, imageToDelete.path);
     await deleteObject(storageRef);
 
     // 2. Remove the image object from the 'gallery' array in Firestore
-    const userDocRef = doc(firestore, 'users', userId);
+    // Using the exact object fetched from Firestore ensures arrayRemove works.
     await updateDoc(userDocRef, {
-        gallery: arrayRemove(image)
+        gallery: [imageToDelete]
     });
 }
