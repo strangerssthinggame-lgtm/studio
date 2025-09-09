@@ -72,13 +72,15 @@ export default function ProfilePage() {
             toast({ title: "Uploading...", description: "Your photo is being uploaded. Please wait." });
 
             try {
+                 const buffer = await file.arrayBuffer();
+                
                 if (imageType === 'gallery') {
-                    const newImage = await addGalleryImage(user.uid, file);
+                    const newImage = await addGalleryImage(user.uid, buffer, file.type, file.name);
                     setUserProfile(prev => prev ? { ...prev, gallery: [...prev.gallery, newImage] } : null);
                     toast({ title: "Photo Added!", description: "Your new photo has been added to your gallery." });
                 
                 } else {
-                    const { downloadURL } = await uploadProfileImage(user.uid, file, imageType);
+                    const { downloadURL } = await uploadProfileImage(user.uid, buffer, file.type, file.name, imageType);
                     
                     const fieldToUpdate = imageType === 'avatar' ? 'avatar' : 'banner';
                     const firestoreField = imageType === 'avatar' ? 'photoURL' : 'banner';
@@ -89,7 +91,8 @@ export default function ProfilePage() {
                 }
             } catch (error) {
                 console.error("Error handling image upload: ", error);
-                toast({ variant: 'destructive', title: "Upload Failed", description: "There was an error uploading your photo. Please try again." });
+                const errorMessage = error instanceof Error ? error.message : "There was an error uploading your photo. Please try again.";
+                toast({ variant: 'destructive', title: "Upload Failed", description: errorMessage });
             } finally {
                 e.target.value = '';
             }
@@ -175,7 +178,7 @@ export default function ProfilePage() {
                 <span className="sr-only">Edit banner</span>
               </div>
             </Button>
-            <input id="banner-upload" type="file" className="sr-only" accept="image/*" onChange={(e) => handleImageUpload(e, 'banner')} disabled={isPageLoading} />
+            <input id="banner-upload" type="file" className="sr-only" accept="image/*" onChange={(e) => handleImageUpload(e, 'banner')} disabled={isPageLoging} />
         </label>
       </div>
 
@@ -320,7 +323,5 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
 
     
