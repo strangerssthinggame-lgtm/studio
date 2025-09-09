@@ -11,13 +11,13 @@ import Link from 'next/link';
 import OrderHistory from '@/components/order-history';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState, ChangeEvent } from 'react';
-import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import type { UserProfile, GalleryImage } from '@/lib/user-profile-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { uploadProfileImage, updateUserProfile, deleteProfileImage } from '@/services/user-service';
+import { uploadProfileImage, updateUserProfile, deleteProfileImage, addGalleryImage } from '@/services/user-service';
 
 
 export default function ProfilePage() {
@@ -68,33 +68,22 @@ export default function ProfilePage() {
     const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>, imageType: 'gallery' | 'avatar' | 'banner') => {
         if (e.target.files && e.target.files[0] && userProfile && user) {
             const file = e.target.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
             toast({ title: "Uploading...", description: "Your photo is being uploaded. Please wait." });
 
             try {
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('type', imageType);
-
-                const { downloadURL, filePath } = await uploadProfileImage(user.uid, formData);
-
                 if (imageType === 'gallery') {
-                    const newImage: GalleryImage = {
-                        id: Date.now(),
-                        src: downloadURL,
-                        hint: 'custom upload',
-                        path: filePath 
-                    };
-                    
-                    const newImageForFirestore = {
-                        id: newImage.id,
-                        src: newImage.src,
-                        hint: newImage.hint
-                    };
-
-                    await updateUserProfile(user.uid, { gallery: arrayUnion(newImageForFirestore) });
+                    // Use the new dedicated server action for gallery images
+                    const newImage = await addGalleryImage(user.uid, formData);
                     setUserProfile(prev => prev ? { ...prev, gallery: [...prev.gallery, newImage] } : null);
                     toast({ title: "Photo Added!", description: "Your new photo has been added to your gallery." });
-                } else {
+                
+                } else { // Handle 'avatar' and 'banner'
+                    formData.append('type', imageType);
+                    const { downloadURL } = await uploadProfileImage(user.uid, formData);
+                    
                     const fieldToUpdate = imageType === 'avatar' ? 'avatar' : 'banner';
                     const firestoreField = imageType === 'avatar' ? 'photoURL' : 'banner';
 
@@ -103,13 +92,14 @@ export default function ProfilePage() {
                     toast({ title: `${imageType.charAt(0).toUpperCase() + imageType.slice(1)} Updated!`, description: "Your new image is now live." });
                 }
             } catch (error) {
-                console.error("Error uploading image: ", error);
-                toast({ variant: 'destructive', title: "Upload Failed", description: "There was an error uploading your photo." });
+                console.error("Error handling image upload: ", error);
+                toast({ variant: 'destructive', title: "Upload Failed", description: "There was an error uploading your photo. Please try again." });
             } finally {
                 e.target.value = ''; // Reset file input
             }
         }
     };
+
 
     const handleImageRemove = async (image: GalleryImage) => {
         if (userProfile && user) {
@@ -324,5 +314,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

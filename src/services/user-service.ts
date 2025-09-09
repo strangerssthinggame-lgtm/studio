@@ -1,4 +1,3 @@
-
 // src/services/user-service.ts
 'use server';
 
@@ -33,7 +32,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
  */
 export async function uploadProfileImage(userId: string, formData: FormData): Promise<{ downloadURL: string; filePath: string }> {
     const file = formData.get('file') as File;
-    const type = formData.get('type') as 'avatar' | 'banner' | 'gallery';
+    const type = formData.get('type') as 'avatar' | 'banner'; // Gallery handled by addGalleryImage
 
     if (!file || !userId || !type) {
         throw new Error("Invalid arguments for image upload.");
@@ -41,13 +40,7 @@ export async function uploadProfileImage(userId: string, formData: FormData): Pr
     
     const timestamp = Date.now();
     const fileName = `${timestamp}_${file.name}`;
-    let filePath = `users/${userId}/`;
-
-    if (type === 'gallery') {
-        filePath += `gallery/${fileName}`;
-    } else {
-        filePath += `${type}s/${fileName}`; // e.g., 'avatars' or 'banners'
-    }
+    let filePath = `users/${userId}/${type}s/${fileName}`;
 
     const storageRef = ref(storage, filePath);
     const snapshot = await uploadBytes(storageRef, file);
@@ -56,11 +49,56 @@ export async function uploadProfileImage(userId: string, formData: FormData): Pr
     return { downloadURL, filePath };
 }
 
+/**
+ * Uploads a gallery image and updates the user's Firestore document in one operation.
+ * @param userId The ID of the user.
+ * @param formData The form data containing the file.
+ * @returns The new gallery image object that was added.
+ */
+export async function addGalleryImage(userId: string, formData: FormData): Promise<GalleryImage> {
+    const file = formData.get('file') as File;
+    if (!file || !userId) {
+        throw new Error("Invalid arguments for gallery image upload.");
+    }
+
+    const timestamp = Date.now();
+    const fileName = `${timestamp}_${file.name}`;
+    const filePath = `users/${userId}/gallery/${fileName}`;
+
+    // 1. Upload to Storage
+    const storageRef = ref(storage, filePath);
+    const snapshot = await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+
+    // 2. Prepare Firestore object
+    const newImage: GalleryImage = {
+        id: timestamp,
+        src: downloadURL,
+        hint: 'custom upload',
+        path: filePath,
+    };
+    
+    const newImageForFirestore = {
+        id: newImage.id,
+        src: newImage.src,
+        hint: newImage.hint,
+        path: newImage.path, // We need to store the path for deletion
+    };
+
+    // 3. Update Firestore
+    const userDocRef = doc(firestore, 'users', userId);
+    await updateDoc(userDocRef, {
+        gallery: arrayUnion(newImageForFirestore)
+    });
+    
+    return newImage;
+}
+
 
 /**
  * Updates a user's profile data in Firestore.
  * @param userId - The ID of the user to update.
- * @param data - An object containing the fields to update. Can handle arrayUnion.
+ * @param data - An object containing the fields to update.
  */
 export async function updateUserProfile(userId: string, data: Record<string, any>): Promise<void> {
     if (!userId) {
@@ -77,7 +115,7 @@ export async function updateUserProfile(userId: string, data: Record<string, any
  */
 export async function deleteProfileImage(userId: string, image: GalleryImage): Promise<void> {
      if (!userId || !image || !image.path) {
-        throw new Error("Invalid arguments for image deletion.");
+        throw new Error("Invalid arguments for image deletion. Path is required.");
     }
     
     // 1. Delete the file from Firebase Storage
@@ -85,16 +123,8 @@ export async function deleteProfileImage(userId: string, image: GalleryImage): P
     await deleteObject(storageRef);
 
     // 2. Remove the image object from the 'gallery' array in Firestore
-    // We create an object without the 'path' to ensure it matches what's in Firestore.
-    const imageToRemoveFromFirestore = {
-        id: image.id,
-        src: image.src,
-        hint: image.hint,
-    };
     const userDocRef = doc(firestore, 'users', userId);
     await updateDoc(userDocRef, {
-        gallery: arrayRemove(imageToRemoveFromFirestore)
+        gallery: arrayRemove(image)
     });
 }
-
-    
