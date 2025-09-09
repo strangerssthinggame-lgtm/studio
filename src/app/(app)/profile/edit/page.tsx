@@ -125,6 +125,7 @@ export default function EditProfilePage() {
         ...profile,
         gallery: [...profile.gallery, newImage],
       });
+      toast({ title: "Photo Added", description: "Your new photo has been added to the gallery. Don't forget to save your changes!" });
     }
   };
 
@@ -134,6 +135,7 @@ export default function EditProfilePage() {
         ...profile,
         gallery: profile.gallery.filter((photo) => photo.id !== photoId),
       });
+       toast({ title: "Photo Removed", description: "The photo has been removed from your gallery." });
     }
   };
 
