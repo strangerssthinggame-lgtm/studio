@@ -103,7 +103,6 @@ export default function ProfilePage() {
     const handleImageRemove = async (photo: GalleryImage) => {
         if (!userProfile || !user) return;
 
-        // Optimistically update the UI for a better user experience
         const originalGallery = userProfile.gallery;
         const updatedGallery = originalGallery.filter((p) => p.id !== photo.id);
         setUserProfile(prev => prev ? { ...prev, gallery: updatedGallery } : null);
@@ -114,14 +113,14 @@ export default function ProfilePage() {
             toast({ title: "Photo Removed", description: "The photo has been successfully removed." });
         } catch (error) {
             console.error("Error removing image: ", error);
-            // Revert UI change on failure
             setUserProfile(prev => prev ? { ...prev, gallery: originalGallery } : null);
             toast({ variant: 'destructive', title: "Deletion Failed", description: "There was an error removing your photo." });
         }
     };
 
+    const isPageLoading = isLoading || authLoading;
 
-    if (isLoading || authLoading) {
+    if (isPageLoading) {
         return (
             <div className="w-full max-w-4xl mx-auto">
                 <Skeleton className="h-48 md:h-64 w-full rounded-t-xl" />
@@ -130,10 +129,18 @@ export default function ProfilePage() {
                         <div className="relative -mt-20 md:-mt-24">
                            <Skeleton className="h-32 w-32 md:h-40 md:w-40 rounded-full border-4 border-background shadow-md" />
                         </div>
-                        <div className="mt-4 md:mt-0 md:ml-6 flex-1 space-y-4">
-                           <Skeleton className="h-10 w-1/2" />
-                           <Skeleton className="h-6 w-1/3" />
-                           <Skeleton className="h-6 w-1/4" />
+                        <div className="mt-4 md:mt-0 md:ml-6 flex-1">
+                           <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+                               <div className='space-y-2'>
+                                   <Skeleton className="h-10 w-48" />
+                                   <Skeleton className="h-6 w-32" />
+                                   <Skeleton className="h-5 w-24" />
+                               </div>
+                               <div className="flex gap-2">
+                                   <Skeleton className="h-10 w-28" />
+                                   <Skeleton className="h-10 w-32" />
+                               </div>
+                           </div>
                         </div>
                     </div>
                 </div>
@@ -164,13 +171,14 @@ export default function ProfilePage() {
               size="icon"
               className="h-full w-full as-child"
               asChild
+              disabled={isPageLoading}
             >
               <div>
                 <Camera className="h-4 w-4" />
                 <span className="sr-only">Edit banner</span>
               </div>
             </Button>
-            <input id="banner-upload" type="file" className="sr-only" accept="image/*" onChange={(e) => handleImageUpload(e, 'banner')} />
+            <input id="banner-upload" type="file" className="sr-only" accept="image/*" onChange={(e) => handleImageUpload(e, 'banner')} disabled={isPageLoading} />
         </label>
       </div>
 
@@ -187,13 +195,14 @@ export default function ProfilePage() {
                   size="icon"
                   className="h-full w-full rounded-full"
                   asChild
+                  disabled={isPageLoading}
                 >
                   <div>
                     <Camera className="h-4 w-4" />
                     <span className="sr-only">Edit avatar</span>
                   </div>
                 </Button>
-                 <input id="avatar-upload" type="file" className="sr-only" accept="image/*" onChange={(e) => handleImageUpload(e, 'avatar')} />
+                 <input id="avatar-upload" type="file" className="sr-only" accept="image/*" onChange={(e) => handleImageUpload(e, 'avatar')} disabled={isPageLoading} />
             </label>
           </div>
 
@@ -209,12 +218,12 @@ export default function ProfilePage() {
               </div>
               <div className="flex gap-2 mt-4 md:mt-0">
                 <Link href={`/users/${user?.uid}`}>
-                  <Button variant="secondary">
+                  <Button variant="secondary" disabled={isPageLoading}>
                     <Eye className="mr-2 h-4 w-4" /> Preview
                   </Button>
                 </Link>
                 <Link href="/profile/edit">
-                  <Button variant="outline">
+                  <Button variant="outline" disabled={isPageLoading}>
                     <Edit className="mr-2 h-4 w-4" /> Edit Profile
                   </Button>
                 </Link>
@@ -281,7 +290,7 @@ export default function ProfilePage() {
                             <div key={photo.id} className="aspect-square relative rounded-lg overflow-hidden group">
                                 <Image src={photo.src} alt={`Gallery photo ${photo.id}`} fill className="object-cover" data-ai-hint={photo.hint} />
                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <Button variant="destructive" size="icon" onClick={() => handleImageRemove(photo)}>
+                                    <Button variant="destructive" size="icon" onClick={() => handleImageRemove(photo)} disabled={isPageLoading}>
                                         <X className="h-4 w-4"/>
                                     </Button>
                                  </div>
@@ -290,7 +299,7 @@ export default function ProfilePage() {
                          <label className="cursor-pointer aspect-square rounded-lg border-2 border-dashed border-muted-foreground/50 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors">
                             <PlusCircle className="h-8 w-8"/>
                             <span className="mt-2 text-sm">Add Photo</span>
-                            <input type="file" className="sr-only" onChange={(e) => handleImageUpload(e, 'gallery')} accept="image/*" />
+                            <input type="file" className="sr-only" onChange={(e) => handleImageUpload(e, 'gallery')} accept="image/*" disabled={isPageLoading} />
                         </label>
                     </div>
                 </CardContent>
@@ -314,3 +323,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
