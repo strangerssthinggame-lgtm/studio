@@ -59,7 +59,13 @@ export default function LoginPage() {
       await signInWithPopup(auth, googleAuthProvider);
       // The redirection logic is now handled by the RootPage and useAuth hook
     } catch (error: any) {
-      if (error.code === 'auth/popup-closed-by-user') {
+      if (error.code === 'auth/popup-blocked') {
+         toast({
+          title: 'Popup Blocked',
+          description: 'Your browser blocked the sign-in window. Please allow popups for this site and try again.',
+          variant: 'destructive',
+        });
+      } else if (error.code === 'auth/popup-closed-by-user') {
         toast({
           title: 'Login Canceled',
           description: 'You closed the sign-in window before completing the login process.',
@@ -99,7 +105,7 @@ export default function LoginPage() {
                   <GoogleIcon />
                   Continue with Google
                 </Button>
-                <Button variant="outline">
+                <Button variant="outline" disabled>
                   <AppleIcon />
                   Continue with Apple
                 </Button>
@@ -114,10 +120,10 @@ export default function LoginPage() {
                   </span>
                 </div>
               </div>
-              <Button variant="default" className="w-full" onClick={handleSocialSignIn}>
+              <Button variant="default" className="w-full" disabled>
                 Sign Up with Email
               </Button>
-               <Button variant="secondary" className="w-full" onClick={handleSocialSignIn}>
+               <Button variant="secondary" className="w-full" disabled>
                 Log In with Email
               </Button>
             </CardContent>
