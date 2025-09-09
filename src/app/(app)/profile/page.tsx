@@ -10,14 +10,14 @@ import { Camera, Edit, MapPin, User, FileImage, PlusCircle, Sparkles, Clock, Sho
 import Link from 'next/link';
 import OrderHistory from '@/components/order-history';
 import { useAuth } from '@/hooks/use-auth';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ChangeEvent } from 'react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { firestore, storage } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import type { UserProfile } from '@/lib/user-profile-data';
+import { firestore } from '@/lib/firebase';
+import type { UserProfile, GalleryImage } from '@/lib/user-profile-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { uploadProfileImage, updateUserProfile, deleteProfileImage } from '@/services/user-service';
 
 
 export default function ProfilePage() {
@@ -48,7 +48,7 @@ export default function ProfilePage() {
                     gender: data.gender || 'not specified',
                     location: data.location || 'Not specified',
                     bio: data.bio || 'No bio yet. Click "Edit Profile" to add one!',
-                    avatar: data.avatar || `https://picsum.photos/seed/${user.uid}/400/400`,
+                    avatar: data.photoURL || `https://picsum.photos/seed/${user.uid}/400/400`,
                     banner: data.banner || `https://picsum.photos/seed/${user.uid}-banner/800/600`,
                     vibes: data.vibes || [],
                     interests: data.interests || [],
@@ -65,78 +65,64 @@ export default function ProfilePage() {
         fetchUserProfile();
     }, [user, authLoading, router]);
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, imageType: 'gallery' | 'avatar' | 'banner') => {
+    const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>, imageType: 'gallery' | 'avatar' | 'banner') => {
         if (e.target.files && e.target.files[0] && userProfile && user) {
           const file = e.target.files[0];
-          const imageId = Date.now();
-          
-          let storagePath: string;
-          if (imageType === 'avatar') {
-            storagePath = `users/${user.uid}/avatars/avatar_${imageId}`;
-          } else if (imageType === 'banner') {
-            storagePath = `users/${user.uid}/banners/banner_${imageId}`;
-          } else {
-            storagePath = `users/${user.uid}/gallery/${imageId}_${file.name}`;
-          }
-          
-          const storageRef = ref(storage, storagePath);
           
           toast({ title: "Uploading...", description: "Your photo is being uploaded. Please wait." });
 
           try {
-            const snapshot = await uploadBytes(storageRef, file);
-            const downloadURL = await getDownloadURL(snapshot.ref);
-
-            const userDocRef = doc(firestore, 'users', user.uid);
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', imageType);
+            
+            const { downloadURL, filePath } = await uploadProfileImage(user.uid, formData);
 
             if (imageType === 'gallery') {
-                 const newImage = {
-                    id: imageId,
+                 const newImage: GalleryImage = {
+                    id: Date.now(),
                     src: downloadURL,
                     hint: 'custom upload',
-                    path: snapshot.ref.fullPath
+                    path: filePath
                 };
                 const updatedGallery = [...userProfile.gallery, newImage];
-                await updateDoc(userDocRef, { gallery: updatedGallery });
+                await updateUserProfile(user.uid, { gallery: updatedGallery });
                 setUserProfile(prev => prev ? { ...prev, gallery: updatedGallery } : null);
                 toast({ title: "Photo Added!", description: "Your new photo has been added to your gallery." });
-            } else if (imageType === 'avatar') {
-                await updateDoc(userDocRef, { avatar: downloadURL, photoURL: downloadURL });
-                setUserProfile(prev => prev ? { ...prev, avatar: downloadURL } : null);
-                toast({ title: "Profile Picture Updated!", description: "Your new picture is now live." });
-            } else if (imageType === 'banner') {
-                await updateDoc(userDocRef, { banner: downloadURL });
-                setUserProfile(prev => prev ? { ...prev, banner: downloadURL } : null);
-                toast({ title: "Banner Updated!", description: "Your new banner is now live." });
+            } else { // avatar or banner
+                const fieldToUpdate = imageType === 'avatar' ? 'avatar' : 'banner';
+                await updateUserProfile(user.uid, { [fieldToUpdate]: downloadURL });
+                setUserProfile(prev => prev ? { ...prev, [fieldToUpdate]: downloadURL } : null);
+                toast({ title: `${imageType.charAt(0).toUpperCase() + imageType.slice(1)} Updated!`, description: "Your new image is now live." });
             }
 
           } catch(error) {
              console.error("Error uploading image: ", error);
              toast({ variant: 'destructive', title: "Upload Failed", description: "There was an error uploading your photo." });
+          } finally {
+            // Reset the file input
+            e.target.value = '';
           }
         }
     };
 
-    const handleImageRemove = async (photoId: number, photoPath: string) => {
+    const handleImageRemove = async (image: GalleryImage) => {
         if (userProfile && user) {
-          const updatedGallery = userProfile.gallery.filter((photo) => photo.id !== photoId);
-          
-          try {
-            // Delete from storage
-            const imageRef = ref(storage, photoPath);
-            await deleteObject(imageRef);
-            
-            // Delete from firestore
-            const userDocRef = doc(firestore, 'users', user.uid);
-            await updateDoc(userDocRef, { gallery: updatedGallery });
+            toast({ title: "Removing photo...", description: "Please wait." });
+            try {
+                // Optimistically update the UI
+                const updatedGallery = userProfile.gallery.filter((photo) => photo.id !== image.id);
+                setUserProfile(prev => prev ? { ...prev, gallery: updatedGallery } : null);
+                
+                await deleteProfileImage(user.uid, image);
 
-            setUserProfile(prev => prev ? { ...prev, gallery: updatedGallery } : null);
-
-            toast({ title: "Photo Removed", description: "The photo has been removed from your gallery." });
-          } catch (error) {
-             console.error("Error removing image: ", error);
-             toast({ variant: 'destructive', title: "Deletion Failed", description: "There was an error removing your photo." });
-          }
+                toast({ title: "Photo Removed", description: "The photo has been removed from your gallery." });
+            } catch (error) {
+                console.error("Error removing image: ", error);
+                // Revert UI change on failure
+                setUserProfile(prev => prev ? { ...prev, gallery: userProfile.gallery } : null);
+                toast({ variant: 'destructive', title: "Deletion Failed", description: "There was an error removing your photo." });
+            }
         }
     };
 
@@ -303,7 +289,7 @@ export default function ProfilePage() {
                             <div key={photo.id} className="aspect-square relative rounded-lg overflow-hidden group">
                                 <Image src={photo.src} alt={`Gallery photo ${photo.id}`} fill objectFit="cover" data-ai-hint={photo.hint} />
                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <Button variant="destructive" size="icon" onClick={() => handleImageRemove(photo.id, photo.path)}>
+                                    <Button variant="destructive" size="icon" onClick={() => handleImageRemove(photo)}>
                                         <X className="h-4 w-4"/>
                                     </Button>
                                  </div>
@@ -336,5 +322,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

@@ -1,5 +1,12 @@
 
 
+export type GalleryImage = { 
+  id: number; 
+  src: string; 
+  hint: string; 
+  path: string; 
+};
+
 export type UserProfile = {
   id: string;
   name: string;
@@ -12,7 +19,7 @@ export type UserProfile = {
   banner: string;
   vibes: string[];
   interests: string[];
-  gallery: { id: number; src: string; hint: string; path: string; }[];
+  gallery: GalleryImage[];
   availability: string;
   profileComplete?: boolean;
 };
