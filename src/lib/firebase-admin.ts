@@ -2,24 +2,21 @@
 import * as admin from 'firebase-admin';
 
 // The service account is now expected to be in a single environment variable.
-const serviceAccount = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
-  ? JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
-  : undefined;
+const serviceAccountKey = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
 
-let adminApp: admin.app.App;
-
-if (admin.apps.length > 0) {
-  adminApp = admin.apps[0]!;
-} else {
-  if (!serviceAccount) {
-    throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set. Cannot initialize Firebase Admin SDK.');
+if (!admin.apps.length) {
+  if (!serviceAccountKey) {
+    console.warn('GOOGLE_APPLICATION_CREDENTIALS_JSON is not set. Firebase Admin SDK might not be initialized.');
+  } else {
+    try {
+      admin.initializeApp({
+        credential: admin.credential.cert(JSON.parse(serviceAccountKey)),
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      });
+    } catch (error: any) {
+        console.error("Firebase Admin initialization error: ", error.message);
+    }
   }
-  adminApp = admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  });
 }
 
-export function getAdminApp() {
-  return adminApp;
-}
+export const adminApp = admin.apps.length > 0 ? admin.apps[0] : null;
