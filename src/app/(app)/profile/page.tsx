@@ -11,13 +11,14 @@ import Link from 'next/link';
 import OrderHistory from '@/components/order-history';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState, ChangeEvent } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { firestore } from '@/lib/firebase';
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { firestore, storage } from '@/lib/firebase';
 import type { UserProfile, GalleryImage } from '@/lib/user-profile-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { uploadProfileImage, deleteProfileImage } from '@/services/user-service';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { revalidatePath } from 'next/cache';
 
 export default function ProfilePage() {
     const { user, loading: authLoading } = useAuth();
@@ -73,23 +74,34 @@ export default function ProfilePage() {
         const toastId = toast({ title: "Uploading...", description: "Your photo is being uploaded. Please wait." }).id;
 
         try {
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            const newUrl = await uploadProfileImage(user.uid, imageType, formData);
+            const timestamp = Date.now();
+            const uniqueFileName = `${timestamp}_${file.name}`;
+            const filePath = `users/${user.uid}/${imageType}s/${uniqueFileName}`;
+            const storageRef = ref(storage, filePath);
 
-            // Optimistically update the UI
-            setUserProfile(prev => {
-                if (!prev) return null;
-                if (imageType === 'gallery') {
-                    // This part is tricky without returning the full object. We'll rely on re-fetching or a more complex state update.
-                    // For now, let's just update a field to trigger a re-render from the main useEffect if needed, or rely on revalidation.
-                     const newImage = { id: Date.now(), src: newUrl, hint: 'custom upload', path: '' }; // Path will be missing here
-                     return { ...prev, gallery: [...prev.gallery, newImage] };
-                }
-                const fieldToUpdate = imageType === 'avatar' ? 'avatar' : 'banner';
-                return { ...prev, [fieldToUpdate]: newUrl };
-            });
+            const snapshot = await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(snapshot.ref);
+
+            const userDocRef = doc(firestore, 'users', user.uid);
+
+            if (imageType === 'gallery') {
+                const newImage: GalleryImage = {
+                    id: Date.now(),
+                    src: downloadURL,
+                    hint: 'custom upload',
+                    path: filePath,
+                };
+                await updateDoc(userDocRef, {
+                    gallery: arrayUnion(newImage)
+                });
+                setUserProfile(prev => prev ? { ...prev, gallery: [...prev.gallery, newImage] } : null);
+
+            } else {
+                const fieldToUpdate = imageType === 'avatar' ? 'photoURL' : 'banner';
+                const secondField = imageType === 'avatar' ? 'avatar' : 'banner';
+                await updateDoc(userDocRef, { [fieldToUpdate]: downloadURL, [secondField]: downloadURL });
+                 setUserProfile(prev => prev ? { ...prev, [secondField]: downloadURL } : null);
+            }
 
             toast.update(toastId, { title: "Success!", description: "Your profile has been updated." });
 
@@ -104,7 +116,10 @@ export default function ProfilePage() {
 
 
     const handleImageRemove = async (photo: GalleryImage) => {
-        if (!userProfile || !user) return;
+        if (!userProfile || !user || !photo.path) {
+            toast({ variant: 'destructive', title: "Error", description: "Cannot remove this photo. Path is missing." });
+            return;
+        };
 
         const originalGallery = userProfile.gallery;
         // Optimistically update the UI
@@ -112,7 +127,15 @@ export default function ProfilePage() {
 
         toast({ title: "Removing photo...", description: "Please wait." });
         try {
-            await deleteProfileImage(user.uid, photo);
+            const imageRef = ref(storage, photo.path);
+            await deleteObject(imageRef);
+
+            const userDocRef = doc(firestore, 'users', user.uid);
+            // We use arrayRemove with the specific object to ensure the correct one is removed.
+            await updateDoc(userDocRef, {
+                gallery: arrayRemove(photo)
+            });
+
             toast({ title: "Photo Removed", description: "The photo has been successfully removed." });
         } catch (error) {
             // Revert the UI if the deletion fails
