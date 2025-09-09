@@ -10,6 +10,8 @@ import { signInWithPopup } from 'firebase/auth';
 import { auth, googleAuthProvider } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
+import { useEffect } from 'react';
 
 
 const GoogleIcon = () => (
@@ -43,11 +45,19 @@ const AppleIcon = () => (
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user, loading } = useAuth();
+  
+  // This effect will redirect the user if they are already logged in.
+  useEffect(() => {
+    if (!loading && user) {
+        router.replace('/profile');
+    }
+  }, [user, loading, router])
 
   const handleSocialSignIn = async () => {
     try {
       await signInWithPopup(auth, googleAuthProvider);
-      router.push('/profile');
+      // The redirection logic is now handled by the RootPage and useAuth hook
     } catch (error: any) {
       if (error.code === 'auth/popup-closed-by-user') {
         toast({

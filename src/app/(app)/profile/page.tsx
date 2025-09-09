@@ -15,43 +15,51 @@ import { doc, getDoc } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import type { UserProfile } from '@/lib/user-profile-data';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
     const { user, loading: authLoading } = useAuth();
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const router = useRouter();
 
     useEffect(() => {
         const fetchUserProfile = async () => {
-            if (user) {
-                const userDocRef = doc(firestore, 'users', user.uid);
-                const docSnap = await getDoc(userDocRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    setUserProfile({
-                        id: user.uid,
-                        name: data.displayName || 'New User',
-                        username: data.username || `@${data.displayName?.toLowerCase() || 'newuser'}`,
-                        age: data.age || 18,
-                        gender: data.gender || 'not specified',
-                        location: data.location || 'Not specified',
-                        bio: data.bio || 'No bio yet.',
-                        avatar: data.photoURL || `https://picsum.photos/seed/${user.uid}/400/400`,
-                        banner: data.banner || `https://picsum.photos/seed/${user.uid}-banner/800/600`,
-                        vibes: data.vibes || [],
-                        interests: data.interests || [],
-                        gallery: data.gallery || [],
-                        availability: data.availability || 'Not specified'
-                    });
-                }
+            if (authLoading) return;
+            if (!user) {
+                router.replace('/login');
+                return;
+            };
+
+            setIsLoading(true);
+            const userDocRef = doc(firestore, 'users', user.uid);
+            const docSnap = await getDoc(userDocRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                setUserProfile({
+                    id: user.uid,
+                    name: data.name || 'New User',
+                    username: data.username || `@newuser`,
+                    age: data.age || 18,
+                    gender: data.gender || 'not specified',
+                    location: data.location || 'Not specified',
+                    bio: data.bio || 'No bio yet. Click "Edit Profile" to add one!',
+                    avatar: data.avatar || `https://picsum.photos/seed/${user.uid}/400/400`,
+                    banner: data.banner || `https://picsum.photos/seed/${user.uid}-banner/800/600`,
+                    vibes: data.vibes || [],
+                    interests: data.interests || [],
+                    gallery: data.gallery || [],
+                    availability: data.availability || 'Not specified',
+                    profileComplete: data.profileComplete || false,
+                });
+            } else {
+                 router.replace('/profile/edit');
             }
             setIsLoading(false);
         };
 
-        if (!authLoading) {
-            fetchUserProfile();
-        }
-    }, [user, authLoading]);
+        fetchUserProfile();
+    }, [user, authLoading, router]);
 
     if (isLoading || authLoading) {
         return (
@@ -74,7 +82,7 @@ export default function ProfilePage() {
     }
     
     if (!userProfile) {
-        return <p>User profile not found. Please try logging out and in again.</p>;
+        return null; // Or a message indicating profile is being created
     }
 
 

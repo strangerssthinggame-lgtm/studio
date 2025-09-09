@@ -32,28 +32,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!docSnap.exists()) {
            // This is a new user
            setIsNewUser(true);
-           await setDoc(userRef, {
-            uid: user.uid,
-            displayName: user.displayName || 'New User',
-            name: user.displayName || 'New User',
-            username: `@${user.displayName?.toLowerCase().replace(/\s/g, '') || 'newuser'}`,
-            email: user.email,
-            photoURL: user.photoURL || `https://picsum.photos/seed/${user.uid}/400/400`,
-            avatar: user.photoURL || `https://picsum.photos/seed/${user.uid}/400/400`,
-            banner: `https://picsum.photos/seed/${user.uid}-banner/800/600`,
-            createdAt: serverTimestamp(),
-            lastSeen: serverTimestamp(),
-            bio: '',
-            location: '',
-            interests: [],
-            vibes: [],
-            gallery: [],
-            availability: 'Not specified',
-            profileComplete: false,
-          });
+           try {
+             await setDoc(userRef, {
+              uid: user.uid,
+              displayName: user.displayName || 'New User',
+              name: user.displayName || 'New User',
+              username: `@${user.displayName?.toLowerCase().replace(/\s/g, '') || `user${user.uid.substring(0,5)}`}`,
+              email: user.email,
+              photoURL: user.photoURL || `https://picsum.photos/seed/${user.uid}/400/400`,
+              avatar: user.photoURL || `https://picsum.photos/seed/${user.uid}/400/400`,
+              banner: `https://picsum.photos/seed/${user.uid}-banner/800/600`,
+              createdAt: serverTimestamp(),
+              lastSeen: serverTimestamp(),
+              bio: '',
+              location: '',
+              interests: [],
+              vibes: [],
+              gallery: [],
+              availability: 'Not specified',
+              profileComplete: false, // Explicitly set to false for new users
+            });
+           } catch (error) {
+            console.error("Error creating user document: ", error)
+           }
         } else {
             // Existing user, check if profile is complete
-            setIsNewUser(docSnap.data().profileComplete === false);
+            const profileData = docSnap.data();
+            setIsNewUser(profileData.profileComplete === false);
         }
         setUser(user);
       } else {
