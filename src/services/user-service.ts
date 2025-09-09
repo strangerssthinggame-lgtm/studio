@@ -105,35 +105,28 @@ export async function updateUserProfile(userId: string, data: Record<string, any
 /**
  * Deletes an image from Firebase Storage and removes it from the user's gallery in Firestore.
  * @param userId - The ID of the user.
- * @param imageId - The ID of the gallery image to delete.
+ * @param image - The gallery image object to delete.
  */
-export async function deleteProfileImage(userId: string, imageId: number): Promise<void> {
-     if (!userId || !imageId) {
-        throw new Error("Invalid arguments for image deletion. User ID and Image ID are required.");
+export async function deleteProfileImage(userId: string, image: GalleryImage): Promise<void> {
+     if (!userId || !image || !image.path) {
+        throw new Error("Invalid arguments for image deletion. User ID and the full image object are required.");
     }
 
-    const userDocRef = doc(firestore, 'users', userId);
-    const userDoc = await getDoc(userDocRef);
+    try {
+        // 1. Delete the file from Firebase Storage
+        const storageRef = ref(storage, image.path);
+        await deleteObject(storageRef);
 
-    if (!userDoc.exists()) {
-        throw new Error("User not found.");
+        // 2. Remove the image object from the 'gallery' array in Firestore
+        const userDocRef = doc(firestore, 'users', userId);
+        await updateDoc(userDocRef, {
+            gallery: arrayRemove(image)
+        });
+    } catch (error) {
+        console.error("Error in deleteProfileImage service:", error);
+        // This will propagate the error back to the client component to be caught
+        throw new Error("Failed to delete image on the server.");
     }
-
-    const userData = userDoc.data() as UserProfile;
-    const imageToDelete = userData.gallery.find(img => img.id === imageId);
-
-    if (!imageToDelete) {
-        console.warn(`Image with ID ${imageId} not found in user's gallery.`);
-        return; // Or throw an error if this should be a critical failure
-    }
-    
-    // 1. Delete the file from Firebase Storage
-    const storageRef = ref(storage, imageToDelete.path);
-    await deleteObject(storageRef);
-
-    // 2. Remove the image object from the 'gallery' array in Firestore
-    // Using the exact object fetched from Firestore ensures arrayRemove works.
-    await updateDoc(userDocRef, {
-        gallery: arrayRemove(imageToDelete)
-    });
 }
+
+    

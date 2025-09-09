@@ -101,15 +101,15 @@ export default function ProfilePage() {
     };
 
 
-    const handleImageRemove = async (imageId: number) => {
+    const handleImageRemove = async (photo: GalleryImage) => {
         if (userProfile && user) {
             toast({ title: "Removing photo...", description: "Please wait." });
             try {
                 // Optimistically update the UI
-                const updatedGallery = userProfile.gallery.filter((photo) => photo.id !== imageId);
+                const updatedGallery = userProfile.gallery.filter((p) => p.id !== photo.id);
                 setUserProfile(prev => prev ? { ...prev, gallery: updatedGallery } : null);
                 
-                await deleteProfileImage(user.uid, imageId);
+                await deleteProfileImage(user.uid, photo);
 
                 toast({ title: "Photo Removed", description: "The photo has been removed from your gallery." });
             } catch (error) {
@@ -281,7 +281,7 @@ export default function ProfilePage() {
                             <div key={photo.id} className="aspect-square relative rounded-lg overflow-hidden group">
                                 <Image src={photo.src} alt={`Gallery photo ${photo.id}`} fill objectFit="cover" data-ai-hint={photo.hint} />
                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <Button variant="destructive" size="icon" onClick={() => handleImageRemove(photo.id)}>
+                                    <Button variant="destructive" size="icon" onClick={() => handleImageRemove(photo)}>
                                         <X className="h-4 w-4"/>
                                     </Button>
                                  </div>
@@ -314,3 +314,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
