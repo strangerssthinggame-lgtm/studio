@@ -3,10 +3,10 @@
 
 import { firestore, storage } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { ref, deleteObject, getDownloadURL } from "firebase/storage";
-import { getAdminApp } from '@/lib/firebase-admin';
-import { getStorage as getAdminStorage } from 'firebase-admin/storage';
+import { ref, deleteObject, getDownloadURL, uploadBytes } from "firebase/storage";
 import type { UserProfile, GalleryImage } from '@/lib/user-profile-data';
+import { revalidatePath } from 'next/cache';
+
 
 /**
  * Fetches a user's profile from Firestore.
@@ -38,6 +38,7 @@ export async function updateUserProfile(userId: string, data: Partial<UserProfil
     await updateDoc(userDocRef, data);
 }
 
+
 /**
  * Deletes an image from Firebase Storage and removes it from the user's gallery in Firestore.
  * @param userId - The ID of the user.
@@ -45,57 +46,81 @@ export async function updateUserProfile(userId: string, data: Partial<UserProfil
  */
 export async function deleteProfileImage(userId: string, image: GalleryImage): Promise<void> {
     if (!userId || !image || !image.path) {
-        console.error("Invalid arguments for image deletion.", { userId, image });
         throw new Error("Invalid arguments for image deletion. User ID and the full image object with path are required.");
     }
 
     const userDocRef = doc(firestore, 'users', userId);
+    const imageRef = ref(storage, image.path);
 
     try {
-        // 1. Delete the file from Firebase Storage first.
-        const storageRef = ref(storage, image.path);
-        await deleteObject(storageRef);
+        // 1. Delete the file from Firebase Storage.
+        await deleteObject(imageRef);
 
-        // 2. Remove the image from the Firestore gallery array.
-        // This uses arrayRemove to atomically remove the matching object.
+        // 2. Remove the image reference from the Firestore gallery array.
         await updateDoc(userDocRef, {
             gallery: arrayRemove(image)
         });
 
+        // 3. Revalidate the profile path to ensure the UI updates.
+        revalidatePath('/profile');
+        revalidatePath(`/users/${userId}`);
+
     } catch (error) {
         console.error("Error in deleteProfileImage service:", error);
-        // If storage deletion fails, we don't proceed to Firestore update.
-        // If Firestore update fails, the file is already gone, but the link remains.
-        // This is a trade-off, but for this app, removing the file is the most important part.
         throw new Error("Failed to delete image on the server. Please try again.");
     }
 }
 
 /**
- * Adds the metadata of a newly uploaded gallery image to the user's Firestore document.
+ * Uploads an image for a user's profile (avatar, banner, or gallery)
+ * and updates the corresponding Firestore document.
  * @param userId The ID of the user.
- * @param filePath The full path of the uploaded file in Firebase Storage.
- * @returns The new gallery image object that was added.
+ * @param imageType The type of image being uploaded.
+ * @param formData The FormData containing the file.
+ * @returns The new public URL of the uploaded image.
  */
-export async function addGalleryImageReference(userId: string, filePath: string): Promise<GalleryImage> {
-    if (!userId || !filePath) {
-        throw new Error('User ID and file path are required.');
+export async function uploadProfileImage(userId: string, imageType: 'avatar' | 'banner' | 'gallery', formData: FormData): Promise<string> {
+    const file = formData.get('file') as File;
+    if (!file) {
+        throw new Error('No file provided in FormData.');
     }
 
+    const timestamp = Date.now();
+    const uniqueFileName = `${timestamp}_${file.name}`;
+    const filePath = `users/${userId}/${imageType}s/${uniqueFileName}`;
     const storageRef = ref(storage, filePath);
-    const downloadURL = await getDownloadURL(storageRef);
 
-    const newImage: GalleryImage = {
-        id: Date.now(),
-        src: downloadURL,
-        hint: 'custom upload',
-        path: filePath,
-    };
-
-    const userDocRef = doc(firestore, 'users', userId);
-    await updateDoc(userDocRef, {
-        gallery: arrayUnion(newImage)
+    // Upload the file buffer to Firebase Storage
+    const fileBuffer = await file.arrayBuffer();
+    const snapshot = await uploadBytes(storageRef, fileBuffer, {
+        contentType: file.type,
     });
     
-    return newImage;
+    // Get the public download URL
+    const downloadURL = await getDownloadURL(snapshot.ref);
+
+    const userDocRef = doc(firestore, 'users', userId);
+
+    // Update the user's Firestore document
+    if (imageType === 'gallery') {
+        const newImage: GalleryImage = {
+            id: Date.now(),
+            src: downloadURL,
+            hint: 'custom upload',
+            path: filePath,
+        };
+        await updateDoc(userDocRef, {
+            gallery: arrayUnion(newImage)
+        });
+    } else {
+        const fieldToUpdate = imageType === 'avatar' ? 'photoURL' : 'banner';
+        const secondField = imageType === 'avatar' ? 'avatar' : 'banner';
+        await updateDoc(userDocRef, { [fieldToUpdate]: downloadURL, [secondField]: downloadURL });
+    }
+    
+    // Revalidate the profile path to ensure the UI updates with the new image.
+    revalidatePath('/profile');
+    revalidatePath(`/users/${userId}`);
+
+    return downloadURL;
 }
