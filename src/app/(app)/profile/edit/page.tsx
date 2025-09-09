@@ -112,6 +112,30 @@ export default function EditProfilePage() {
         setProfile(prev => prev ? ({ ...prev, [field]: value }) : null)
     }
   }
+  
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0] && profile) {
+      const file = e.target.files[0];
+      const newImage = {
+        id: Date.now(), // Use timestamp for a unique ID
+        src: URL.createObjectURL(file), // Create a temporary local URL for preview
+        hint: 'custom upload',
+      };
+      setProfile({
+        ...profile,
+        gallery: [...profile.gallery, newImage],
+      });
+    }
+  };
+
+  const handleImageRemove = (photoId: number) => {
+    if (profile) {
+      setProfile({
+        ...profile,
+        gallery: profile.gallery.filter((photo) => photo.id !== photoId),
+      });
+    }
+  };
 
   if (isLoading || authLoading) {
       return (
@@ -216,14 +240,14 @@ export default function EditProfilePage() {
                             <div key={photo.id} className="aspect-square relative rounded-lg overflow-hidden group">
                                 <Image src={photo.src} alt={`Gallery photo ${photo.id}`} fill objectFit="cover" data-ai-hint={photo.hint} />
                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <Button variant="destructive" size="icon"><X className="h-4 w-4"/></Button>
+                                    <Button variant="destructive" size="icon" onClick={() => handleImageRemove(photo.id)}><X className="h-4 w-4"/></Button>
                                  </div>
                             </div>
                         ))}
                          <label className="cursor-pointer aspect-square rounded-lg border-2 border-dashed border-muted-foreground/50 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors">
                             <PlusCircle className="h-8 w-8"/>
                             <span className="mt-2 text-sm">Add Photo</span>
-                            <input type="file" className="sr-only" />
+                            <input type="file" className="sr-only" onChange={handleImageUpload} accept="image/*" />
                         </label>
                     </div>
                 </CardContent>
