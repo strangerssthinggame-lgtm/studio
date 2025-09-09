@@ -11,7 +11,7 @@ import Link from 'next/link';
 import OrderHistory from '@/components/order-history';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState, ChangeEvent } from 'react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import type { UserProfile, GalleryImage } from '@/lib/user-profile-data';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -79,25 +79,28 @@ export default function ProfilePage() {
             const { downloadURL, filePath } = await uploadProfileImage(user.uid, formData);
 
             if (imageType === 'gallery') {
-                 const newImage: GalleryImage = {
+                 const newImageForState: GalleryImage = {
                     id: Date.now(),
                     src: downloadURL,
                     hint: 'custom upload',
-                    path: filePath // Path is needed for deletion, but not stored in Firestore
+                    path: filePath 
                 };
-                 const newImageForFirestore = { // This is what gets stored
-                    id: newImage.id,
-                    src: newImage.src,
-                    hint: newImage.hint
+                 const newImageForFirestore = { 
+                    id: newImageForState.id,
+                    src: newImageForState.src,
+                    hint: newImageForState.hint
                  }
 
-                const updatedGallery = [...userProfile.gallery, newImage];
                 await updateUserProfile(user.uid, { gallery: arrayUnion(newImageForFirestore) });
-                setUserProfile(prev => prev ? { ...prev, gallery: updatedGallery } : null);
+
+                setUserProfile(prev => prev ? { ...prev, gallery: [...prev.gallery, newImageForState] } : null);
                 toast({ title: "Photo Added!", description: "Your new photo has been added to your gallery." });
-            } else { // avatar or banner
+
+            } else { 
                 const fieldToUpdate = imageType === 'avatar' ? 'avatar' : 'banner';
-                await updateUserProfile(user.uid, { [fieldToUpdate]: downloadURL });
+                const firestoreField = imageType === 'avatar' ? 'photoURL' : 'banner';
+
+                await updateUserProfile(user.uid, { [firestoreField]: downloadURL });
                 setUserProfile(prev => prev ? { ...prev, [fieldToUpdate]: downloadURL } : null);
                 toast({ title: `${imageType.charAt(0).toUpperCase() + imageType.slice(1)} Updated!`, description: "Your new image is now live." });
             }
@@ -106,7 +109,6 @@ export default function ProfilePage() {
              console.error("Error uploading image: ", error);
              toast({ variant: 'destructive', title: "Upload Failed", description: "There was an error uploading your photo." });
           } finally {
-            // Reset the file input
             e.target.value = '';
           }
         }
@@ -274,9 +276,6 @@ export default function ProfilePage() {
                                 {interest}
                             </Badge>
                         ))}
-                         <Button variant="ghost" size="sm" className="text-primary hover:text-primary">
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add Interest
-                        </Button>
                     </div>
                 </CardContent>
             </Card>
