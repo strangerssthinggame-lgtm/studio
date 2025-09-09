@@ -12,7 +12,8 @@ import OrderHistory from '@/components/order-history';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState, ChangeEvent } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
-import { firestore } from '@/lib/firebase';
+import { firestore, storage } from '@/lib/firebase';
+import { ref, getDownloadURL } from 'firebase/storage';
 import type { UserProfile, GalleryImage } from '@/lib/user-profile-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
@@ -295,7 +296,7 @@ export default function ProfilePage() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-headline"><User/> My Interests</CardTitle>
                     <CardDescription>The things that make me, me.</CardDescription>
-                </Header>
+                </CardHeader>
                 <CardContent>
                     <div className="flex flex-wrap gap-2">
                         {userProfile.interests.map((interest) => (
@@ -354,3 +355,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
