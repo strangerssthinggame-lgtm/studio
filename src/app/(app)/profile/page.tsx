@@ -153,8 +153,9 @@ export default function ProfilePage() {
           src={userProfile.banner || 'https://picsum.photos/1600/400'}
           alt="Profile banner"
           fill
-          objectFit="cover"
+          className="object-cover"
           data-ai-hint="profile banner"
+          priority
         />
         <div className="absolute inset-0 bg-black/30" />
         <label htmlFor="banner-upload" className="absolute top-4 right-4 h-8 w-8 cursor-pointer">
@@ -278,7 +279,7 @@ export default function ProfilePage() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                         {userProfile.gallery.map((photo) => (
                             <div key={photo.id} className="aspect-square relative rounded-lg overflow-hidden group">
-                                <Image src={photo.src} alt={`Gallery photo ${photo.id}`} fill objectFit="cover" data-ai-hint={photo.hint} />
+                                <Image src={photo.src} alt={`Gallery photo ${photo.id}`} fill className="object-cover" data-ai-hint={photo.hint} />
                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                     <Button variant="destructive" size="icon" onClick={() => handleImageRemove(photo)}>
                                         <X className="h-4 w-4"/>

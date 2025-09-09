@@ -100,8 +100,9 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
           src={userProfile.banner}
           alt="Profile banner"
           fill
-          objectFit="cover"
+          className="object-cover"
           data-ai-hint="profile banner"
+          priority
         />
         <div className="absolute inset-0 bg-black/30" />
       </div>
@@ -203,7 +204,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                         {userProfile.gallery.map((photo) => (
                             <div key={photo.id} className="aspect-square relative rounded-lg overflow-hidden group">
-                                <Image src={photo.src} alt={`Gallery photo ${photo.id}`} fill objectFit="cover" data-ai-hint={photo.hint} />
+                                <Image src={photo.src} alt={`Gallery photo ${photo.id}`} fill className="object-cover" data-ai-hint={photo.hint} />
                             </div>
                         ))}
                     </div>

@@ -1,5 +1,4 @@
 
-
 "use client"
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
@@ -225,5 +224,3 @@ export function ProfileCard({ user, onSwipe, style, isTopCard, animationState, s
     </>
   );
 }
-
-    
