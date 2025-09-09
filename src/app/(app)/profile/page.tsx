@@ -17,18 +17,7 @@ import type { UserProfile, GalleryImage } from '@/lib/user-profile-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { uploadProfileImage, updateUserProfile, deleteProfileImage, addGalleryImage } from '@/services/user-service';
-
-// Helper function to convert a File to a Base64 string
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
-  });
-};
-
+import { updateUserProfile, deleteProfileImage, addGalleryImageReference } from '@/services/user-service';
 
 export default function ProfilePage() {
     const { user, loading: authLoading } = useAuth();
@@ -74,39 +63,69 @@ export default function ProfilePage() {
 
         fetchUserProfile();
     }, [user, authLoading, router]);
-
+    
     const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>, imageType: 'gallery' | 'avatar' | 'banner') => {
-        if (e.target.files && e.target.files[0] && userProfile && user) {
-            const file = e.target.files[0];
-            
-            toast({ title: "Uploading...", description: "Your photo is being uploaded. Please wait." });
+        if (!e.target.files || e.target.files.length === 0 || !user) {
+            return;
+        }
 
-            try {
-                const base64String = await fileToBase64(file);
-                
-                if (imageType === 'gallery') {
-                    const newImage = await addGalleryImage(user.uid, base64String, file.name);
-                    setUserProfile(prev => prev ? { ...prev, gallery: [...prev.gallery, newImage] } : null);
-                    toast({ title: "Photo Added!", description: "Your new photo has been added to your gallery." });
-                
-                } else {
-                    const { downloadURL } = await uploadProfileImage(user.uid, base64String, file.name, imageType);
-                    
-                    const fieldToUpdate = imageType === 'avatar' ? 'avatar' : 'banner';
-                    const firestoreField = imageType === 'avatar' ? 'photoURL' : 'banner';
+        const file = e.target.files[0];
+        const toastId = toast({ title: "Uploading...", description: "Your photo is being prepared." }).id;
 
-                    await updateUserProfile(user.uid, { [firestoreField]: downloadURL });
-                    setUserProfile(prev => prev ? { ...prev, [fieldToUpdate]: downloadURL } : null);
-                    toast({ title: `${imageType.charAt(0).toUpperCase() + imageType.slice(1)} Updated!`, description: "Your new image is now live." });
-                }
-            } catch (error) {
-                console.error("Error handling image upload: ", error);
-                const errorMessage = error instanceof Error ? error.message : "There was an error uploading your photo. Please try again.";
-                toast({ variant: 'destructive', title: "Upload Failed", description: errorMessage });
-            } finally {
-                // Clear the file input so the same file can be selected again
-                e.target.value = '';
+        try {
+            // 1. Get a signed URL from our server
+            const response = await fetch('/api/upload-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fileName: file.name, fileType: file.type, userId: user.uid, imageType }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to get signed URL.');
             }
+
+            const { url, filePath } = await response.json();
+            
+            toast.update(toastId, { title: "Uploading...", description: "Please wait." });
+
+
+            // 2. Upload the file directly to Google Cloud Storage
+            const uploadResponse = await fetch(url, {
+                method: 'PUT',
+                body: file,
+                headers: { 'Content-Type': file.type },
+            });
+
+            if (!uploadResponse.ok) {
+                throw new Error('Upload to GCS failed.');
+            }
+            
+            toast.update(toastId, { title: "Processing...", description: "Finalizing your upload." });
+
+
+            // 3. Update Firestore with the new image reference
+            if (imageType === 'gallery') {
+                const newImage = await addGalleryImageReference(user.uid, filePath);
+                setUserProfile(prev => prev ? { ...prev, gallery: [...prev.gallery, newImage] } : null);
+            } else {
+                // For avatar/banner, we need to get the public URL and update the user profile
+                const storageRef = ref(storage, filePath);
+                const downloadURL = await getDownloadURL(storageRef);
+                const fieldToUpdate = imageType === 'avatar' ? 'avatar' : 'banner';
+                const firestoreField = imageType === 'avatar' ? 'photoURL' : 'banner';
+                
+                await updateUserProfile(user.uid, { [firestoreField]: downloadURL });
+                setUserProfile(prev => prev ? { ...prev, [fieldToUpdate]: downloadURL } : null);
+            }
+
+            toast.update(toastId, { title: "Success!", description: "Your profile has been updated." });
+
+        } catch (error) {
+            console.error("Error during image upload: ", error);
+            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            toast.update(toastId, { variant: 'destructive', title: "Upload Failed", description: errorMessage });
+        } finally {
+            e.target.value = ''; // Clear file input
         }
     };
 
@@ -115,17 +134,18 @@ export default function ProfilePage() {
         if (!userProfile || !user) return;
 
         const originalGallery = userProfile.gallery;
-        const updatedGallery = originalGallery.filter((p) => p.id !== photo.id);
-        setUserProfile(prev => prev ? { ...prev, gallery: updatedGallery } : null);
+        // Optimistically update the UI
+        setUserProfile(prev => prev ? { ...prev, gallery: prev.gallery.filter((p) => p.id !== photo.id) } : null);
 
         toast({ title: "Removing photo...", description: "Please wait." });
         try {
             await deleteProfileImage(user.uid, photo);
             toast({ title: "Photo Removed", description: "The photo has been successfully removed." });
         } catch (error) {
-            console.error("Error removing image: ", error);
+            // Revert the UI if the deletion fails
             setUserProfile(prev => prev ? { ...prev, gallery: originalGallery } : null);
-            toast({ variant: 'destructive', title: "Deletion Failed", description: "There was an error removing your photo." });
+            console.error("Error removing image: ", error);
+            toast({ variant: 'destructive', title: "Deletion Failed", description: "Could not remove your photo. Please try again." });
         }
     };
 
@@ -275,7 +295,7 @@ export default function ProfilePage() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-headline"><User/> My Interests</CardTitle>
                     <CardDescription>The things that make me, me.</CardDescription>
-                </CardHeader>
+                </Header>
                 <CardContent>
                     <div className="flex flex-wrap gap-2">
                         {userProfile.interests.map((interest) => (
