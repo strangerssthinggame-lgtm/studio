@@ -25,31 +25,39 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
 }
 
 /**
- * Uploads an image to Firebase Storage for a specific user.
+ * Uploads an image to Firebase Storage for a specific user using a Base64 data URI.
  * @param userId - The ID of the user.
- * @param buffer - The image file as an ArrayBuffer.
- * @param contentType - The MIME type of the file.
+ * @param base64 - The image file as a Base64 data URI string.
  * @param fileName - The original name of the file.
  * @param type - The type of image ('avatar', 'banner').
  * @returns An object containing the download URL and the storage path of the uploaded file.
  */
 export async function uploadProfileImage(
     userId: string,
-    buffer: ArrayBuffer,
-    contentType: string,
+    base64: string,
     fileName: string,
     type: 'avatar' | 'banner'
 ): Promise<{ downloadURL: string; filePath: string }> {
-    if (!buffer || !userId || !type) {
+    if (!base64 || !userId || !type) {
         throw new Error("Invalid arguments for image upload.");
     }
+    
+    // Extract content type and base64 data from the data URI
+    const match = base64.match(/^data:(image\/[a-zA-Z+]+);base64,(.*)$/);
+    if (!match) {
+        throw new Error('Invalid Base64 string format.');
+    }
+    const contentType = match[1];
+    const base64Data = match[2];
+    
+    // Convert base64 to a Buffer
+    const buffer = Buffer.from(base64Data, 'base64');
     
     const timestamp = Date.now();
     const uniqueFileName = `${timestamp}_${fileName}`;
     const filePath = `users/${userId}/${type}s/${uniqueFileName}`;
     const storageRef = ref(storage, filePath);
     
-    // uploadBytes can accept ArrayBuffer directly
     const snapshot = await uploadBytes(storageRef, buffer, { contentType });
     const downloadURL = await getDownloadURL(snapshot.ref);
 
@@ -58,23 +66,30 @@ export async function uploadProfileImage(
 
 
 /**
- * Uploads a gallery image and updates the user's Firestore document in one operation.
+ * Uploads a gallery image from a Base64 string and updates the user's Firestore document.
  * @param userId The ID of the user.
- * @param buffer The file object as an ArrayBuffer.
- * @param contentType The MIME type of the file.
+ * @param base64 The image file as a Base64 data URI string.
  * @param fileName The original name of the file.
  * @returns The new gallery image object that was added.
  */
 export async function addGalleryImage(
     userId: string,
-    buffer: ArrayBuffer,
-    contentType: string,
+    base64: string,
     fileName: string,
 ): Promise<GalleryImage> {
-    if (!buffer || !userId) {
+    if (!base64 || !userId) {
         throw new Error("Invalid arguments for gallery image upload.");
     }
 
+    const match = base64.match(/^data:(image\/[a-zA-Z+]+);base64,(.*)$/);
+    if (!match) {
+        throw new Error('Invalid Base64 string format.');
+    }
+    const contentType = match[1];
+    const base64Data = match[2];
+    
+    const buffer = Buffer.from(base64Data, 'base64');
+    
     const timestamp = Date.now();
     const uniqueFileName = `${timestamp}_${fileName}`;
     const filePath = `users/${userId}/gallery/${uniqueFileName}`;

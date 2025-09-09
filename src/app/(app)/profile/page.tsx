@@ -19,6 +19,16 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { uploadProfileImage, updateUserProfile, deleteProfileImage, addGalleryImage } from '@/services/user-service';
 
+// Helper function to convert a File to a Base64 string
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+};
+
 
 export default function ProfilePage() {
     const { user, loading: authLoading } = useAuth();
@@ -42,15 +52,15 @@ export default function ProfilePage() {
                 const data = docSnap.data();
                 setUserProfile({
                     id: user.uid,
-                    name: data.name || 'New User',
-                    username: data.username || `@newuser`,
+                    name: data.name || 'Ajay',
+                    username: data.username || `@ajay`,
                     age: data.age || 18,
                     gender: data.gender || 'not specified',
                     location: data.location || 'Not specified',
                     bio: data.bio || 'No bio yet. Click "Edit Profile" to add one!',
                     avatar: data.photoURL || `https://picsum.photos/seed/${user.uid}/400/400`,
                     banner: data.banner || `https://picsum.photos/seed/${user.uid}-banner/800/600`,
-                    vibes: data.vibes || [],
+                    vibes: data.vibes || ['Date'],
                     interests: data.interests || [],
                     gallery: data.gallery || [],
                     availability: data.availability || 'Not specified',
@@ -72,15 +82,15 @@ export default function ProfilePage() {
             toast({ title: "Uploading...", description: "Your photo is being uploaded. Please wait." });
 
             try {
-                 const buffer = await file.arrayBuffer();
+                const base64String = await fileToBase64(file);
                 
                 if (imageType === 'gallery') {
-                    const newImage = await addGalleryImage(user.uid, buffer, file.type, file.name);
+                    const newImage = await addGalleryImage(user.uid, base64String, file.name);
                     setUserProfile(prev => prev ? { ...prev, gallery: [...prev.gallery, newImage] } : null);
                     toast({ title: "Photo Added!", description: "Your new photo has been added to your gallery." });
                 
                 } else {
-                    const { downloadURL } = await uploadProfileImage(user.uid, buffer, file.type, file.name, imageType);
+                    const { downloadURL } = await uploadProfileImage(user.uid, base64String, file.name, imageType);
                     
                     const fieldToUpdate = imageType === 'avatar' ? 'avatar' : 'banner';
                     const firestoreField = imageType === 'avatar' ? 'photoURL' : 'banner';
@@ -94,6 +104,7 @@ export default function ProfilePage() {
                 const errorMessage = error instanceof Error ? error.message : "There was an error uploading your photo. Please try again.";
                 toast({ variant: 'destructive', title: "Upload Failed", description: errorMessage });
             } finally {
+                // Clear the file input so the same file can be selected again
                 e.target.value = '';
             }
         }
@@ -323,3 +334,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
