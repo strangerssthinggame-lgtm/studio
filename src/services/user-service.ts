@@ -171,5 +171,3 @@ export async function deleteProfileImage(userId: string, image: GalleryImage): P
         throw new Error("Failed to delete image on the server. Please try again.");
     }
 }
-
-    
