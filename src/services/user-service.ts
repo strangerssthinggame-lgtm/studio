@@ -31,10 +31,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
  * @param type - The type of image ('avatar', 'banner').
  * @returns An object containing the download URL and the storage path of the uploaded file.
  */
-export async function uploadProfileImage(userId: string, formData: FormData): Promise<{ downloadURL: string; filePath: string }> {
-    const file = formData.get('file') as File;
-    const type = formData.get('type') as 'avatar' | 'banner'; // Gallery handled by addGalleryImage
-
+export async function uploadProfileImage(userId: string, file: File, type: 'avatar' | 'banner'): Promise<{ downloadURL: string; filePath: string }> {
     if (!file || !userId || !type) {
         throw new Error("Invalid arguments for image upload.");
     }
@@ -53,11 +50,10 @@ export async function uploadProfileImage(userId: string, formData: FormData): Pr
 /**
  * Uploads a gallery image and updates the user's Firestore document in one operation.
  * @param userId The ID of the user.
- * @param formData The form data containing the file.
+ * @param file The file object to upload.
  * @returns The new gallery image object that was added.
  */
-export async function addGalleryImage(userId: string, formData: FormData): Promise<GalleryImage> {
-    const file = formData.get('file') as File;
+export async function addGalleryImage(userId: string, file: File): Promise<GalleryImage> {
     if (!file || !userId) {
         throw new Error("Invalid arguments for gallery image upload.");
     }
@@ -143,3 +139,5 @@ export async function deleteProfileImage(userId: string, image: GalleryImage): P
         throw new Error("Failed to delete image on the server. Please try again.");
     }
 }
+
+    

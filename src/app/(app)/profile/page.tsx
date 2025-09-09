@@ -68,20 +68,17 @@ export default function ProfilePage() {
     const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>, imageType: 'gallery' | 'avatar' | 'banner') => {
         if (e.target.files && e.target.files[0] && userProfile && user) {
             const file = e.target.files[0];
-            const formData = new FormData();
-            formData.append('file', file);
-
+            
             toast({ title: "Uploading...", description: "Your photo is being uploaded. Please wait." });
 
             try {
                 if (imageType === 'gallery') {
-                    const newImage = await addGalleryImage(user.uid, formData);
+                    const newImage = await addGalleryImage(user.uid, file);
                     setUserProfile(prev => prev ? { ...prev, gallery: [...prev.gallery, newImage] } : null);
                     toast({ title: "Photo Added!", description: "Your new photo has been added to your gallery." });
                 
                 } else {
-                    formData.append('type', imageType);
-                    const { downloadURL } = await uploadProfileImage(user.uid, formData);
+                    const { downloadURL } = await uploadProfileImage(user.uid, file, imageType);
                     
                     const fieldToUpdate = imageType === 'avatar' ? 'avatar' : 'banner';
                     const firestoreField = imageType === 'avatar' ? 'photoURL' : 'banner';
@@ -323,5 +320,7 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
 
     
