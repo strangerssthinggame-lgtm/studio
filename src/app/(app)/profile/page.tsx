@@ -65,11 +65,21 @@ export default function ProfilePage() {
         fetchUserProfile();
     }, [user, authLoading, router]);
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, imageType: 'gallery' | 'avatar' | 'banner') => {
         if (e.target.files && e.target.files[0] && userProfile && user) {
           const file = e.target.files[0];
           const imageId = Date.now();
-          const storageRef = ref(storage, `users/${user.uid}/gallery/${imageId}_${file.name}`);
+          
+          let storagePath: string;
+          if (imageType === 'avatar') {
+            storagePath = `users/${user.uid}/avatars/avatar_${imageId}`;
+          } else if (imageType === 'banner') {
+            storagePath = `users/${user.uid}/banners/banner_${imageId}`;
+          } else {
+            storagePath = `users/${user.uid}/gallery/${imageId}_${file.name}`;
+          }
+          
+          const storageRef = ref(storage, storagePath);
           
           toast({ title: "Uploading...", description: "Your photo is being uploaded. Please wait." });
 
@@ -77,21 +87,29 @@ export default function ProfilePage() {
             const snapshot = await uploadBytes(storageRef, file);
             const downloadURL = await getDownloadURL(snapshot.ref);
 
-            const newImage = {
-              id: imageId,
-              src: downloadURL,
-              hint: 'custom upload',
-              path: snapshot.ref.fullPath // Save the path for deletion
-            };
-            
-            const updatedGallery = [...userProfile.gallery, newImage];
-            
             const userDocRef = doc(firestore, 'users', user.uid);
-            await updateDoc(userDocRef, { gallery: updatedGallery });
 
-            setUserProfile({ ...userProfile, gallery: updatedGallery });
+            if (imageType === 'gallery') {
+                 const newImage = {
+                    id: imageId,
+                    src: downloadURL,
+                    hint: 'custom upload',
+                    path: snapshot.ref.fullPath
+                };
+                const updatedGallery = [...userProfile.gallery, newImage];
+                await updateDoc(userDocRef, { gallery: updatedGallery });
+                setUserProfile({ ...userProfile, gallery: updatedGallery });
+                toast({ title: "Photo Added!", description: "Your new photo has been added to your gallery." });
+            } else if (imageType === 'avatar') {
+                await updateDoc(userDocRef, { avatar: downloadURL, photoURL: downloadURL });
+                setUserProfile({ ...userProfile, avatar: downloadURL });
+                toast({ title: "Profile Picture Updated!", description: "Your new picture is now live." });
+            } else if (imageType === 'banner') {
+                await updateDoc(userDocRef, { banner: downloadURL });
+                setUserProfile({ ...userProfile, banner: downloadURL });
+                toast({ title: "Banner Updated!", description: "Your new banner is now live." });
+            }
 
-            toast({ title: "Photo Added!", description: "Your new photo has been added to your gallery." });
           } catch(error) {
              console.error("Error uploading image: ", error);
              toast({ variant: 'destructive', title: "Upload Failed", description: "There was an error uploading your photo." });
@@ -159,14 +177,20 @@ export default function ProfilePage() {
           data-ai-hint="profile banner"
         />
         <div className="absolute inset-0 bg-black/30" />
-        <Button
-          variant="secondary"
-          size="icon"
-          className="absolute top-4 right-4 h-8 w-8"
-        >
-          <Camera className="h-4 w-4" />
-          <span className="sr-only">Edit banner</span>
-        </Button>
+        <label htmlFor="banner-upload" className="absolute top-4 right-4 h-8 w-8 cursor-pointer">
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-full w-full as-child"
+              asChild
+            >
+              <div>
+                <Camera className="h-4 w-4" />
+                <span className="sr-only">Edit banner</span>
+              </div>
+            </Button>
+            <input id="banner-upload" type="file" className="sr-only" accept="image/*" onChange={(e) => handleImageUpload(e, 'banner')} />
+        </label>
       </div>
 
       <div className="relative glassy p-6 rounded-b-xl shadow-lg">
@@ -176,14 +200,20 @@ export default function ProfilePage() {
               <AvatarImage src={userProfile.avatar} alt={userProfile.name} data-ai-hint="profile photo" />
               <AvatarFallback>{userProfile.name.charAt(0)}</AvatarFallback>
             </Avatar>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="absolute bottom-2 right-2 h-8 w-8 rounded-full"
-            >
-              <Camera className="h-4 w-4" />
-              <span className="sr-only">Edit avatar</span>
-            </Button>
+             <label htmlFor="avatar-upload" className="absolute bottom-2 right-2 h-8 w-8 rounded-full cursor-pointer">
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="h-full w-full rounded-full"
+                  asChild
+                >
+                  <div>
+                    <Camera className="h-4 w-4" />
+                    <span className="sr-only">Edit avatar</span>
+                  </div>
+                </Button>
+                 <input id="avatar-upload" type="file" className="sr-only" accept="image/*" onChange={(e) => handleImageUpload(e, 'avatar')} />
+            </label>
           </div>
 
           <div className="mt-4 md:mt-0 md:ml-6 flex-1">
@@ -282,7 +312,7 @@ export default function ProfilePage() {
                          <label className="cursor-pointer aspect-square rounded-lg border-2 border-dashed border-muted-foreground/50 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors">
                             <PlusCircle className="h-8 w-8"/>
                             <span className="mt-2 text-sm">Add Photo</span>
-                            <input type="file" className="sr-only" onChange={handleImageUpload} accept="image/*" />
+                            <input type="file" className="sr-only" onChange={(e) => handleImageUpload(e, 'gallery')} accept="image/*" />
                         </label>
                     </div>
                 </CardContent>
