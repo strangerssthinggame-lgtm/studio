@@ -62,7 +62,7 @@ export default function DashboardPage() {
             // Provide sensible defaults if fields are missing
             age: doc.data().age || 25, 
             gender: doc.data().gender || 'not specified',
-            vibes: doc.data().vibes || ['Friend'],
+            vibes: doc.data().vibes || [],
             interests: doc.data().interests || [],
             gallery: doc.data().gallery || [],
             availability: doc.data().availability || 'Not specified',
