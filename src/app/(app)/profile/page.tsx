@@ -6,22 +6,26 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Camera, Edit, MapPin, User, FileImage, PlusCircle, Sparkles, Clock, ShoppingBag, Eye } from 'lucide-react';
+import { Camera, Edit, MapPin, User, FileImage, PlusCircle, Sparkles, Clock, ShoppingBag, Eye, X } from 'lucide-react';
 import Link from 'next/link';
 import OrderHistory from '@/components/order-history';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { firestore } from '@/lib/firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { firestore, storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { UserProfile } from '@/lib/user-profile-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
+
 
 export default function ProfilePage() {
     const { user, loading: authLoading } = useAuth();
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
+    const { toast } = useToast();
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -60,6 +64,64 @@ export default function ProfilePage() {
 
         fetchUserProfile();
     }, [user, authLoading, router]);
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0] && userProfile && user) {
+          const file = e.target.files[0];
+          const imageId = Date.now();
+          const storageRef = ref(storage, `users/${user.uid}/gallery/${imageId}_${file.name}`);
+          
+          toast({ title: "Uploading...", description: "Your photo is being uploaded. Please wait." });
+
+          try {
+            const snapshot = await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(snapshot.ref);
+
+            const newImage = {
+              id: imageId,
+              src: downloadURL,
+              hint: 'custom upload',
+              path: snapshot.ref.fullPath // Save the path for deletion
+            };
+            
+            const updatedGallery = [...userProfile.gallery, newImage];
+            
+            const userDocRef = doc(firestore, 'users', user.uid);
+            await updateDoc(userDocRef, { gallery: updatedGallery });
+
+            setUserProfile({ ...userProfile, gallery: updatedGallery });
+
+            toast({ title: "Photo Added!", description: "Your new photo has been added to your gallery." });
+          } catch(error) {
+             console.error("Error uploading image: ", error);
+             toast({ variant: 'destructive', title: "Upload Failed", description: "There was an error uploading your photo." });
+          }
+        }
+    };
+
+    const handleImageRemove = async (photoId: number, photoPath: string) => {
+        if (userProfile && user) {
+          const updatedGallery = userProfile.gallery.filter((photo) => photo.id !== photoId);
+          
+          try {
+            // Delete from storage
+            const imageRef = ref(storage, photoPath);
+            await deleteObject(imageRef);
+            
+            // Delete from firestore
+            const userDocRef = doc(firestore, 'users', user.uid);
+            await updateDoc(userDocRef, { gallery: updatedGallery });
+
+            setUserProfile({ ...userProfile, gallery: updatedGallery });
+
+            toast({ title: "Photo Removed", description: "The photo has been removed from your gallery." });
+          } catch (error) {
+             console.error("Error removing image: ", error);
+             toast({ variant: 'destructive', title: "Deletion Failed", description: "There was an error removing your photo." });
+          }
+        }
+    };
+
 
     if (isLoading || authLoading) {
         return (
@@ -211,14 +273,17 @@ export default function ProfilePage() {
                             <div key={photo.id} className="aspect-square relative rounded-lg overflow-hidden group">
                                 <Image src={photo.src} alt={`Gallery photo ${photo.id}`} fill objectFit="cover" data-ai-hint={photo.hint} />
                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <Button variant="destructive" size="sm">Remove</Button>
+                                    <Button variant="destructive" size="icon" onClick={() => handleImageRemove(photo.id, photo.path)}>
+                                        <X className="h-4 w-4"/>
+                                    </Button>
                                  </div>
                             </div>
                         ))}
-                         <button className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/50 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors">
+                         <label className="cursor-pointer aspect-square rounded-lg border-2 border-dashed border-muted-foreground/50 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors">
                             <PlusCircle className="h-8 w-8"/>
                             <span className="mt-2 text-sm">Add Photo</span>
-                        </button>
+                            <input type="file" className="sr-only" onChange={handleImageUpload} accept="image/*" />
+                        </label>
                     </div>
                 </CardContent>
             </Card>

@@ -5,8 +5,9 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { firestore } from '@/lib/firebase';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { firestore, storage } from '@/lib/firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -113,29 +114,45 @@ export default function EditProfilePage() {
     }
   }
   
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0] && profile) {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0] && profile && user) {
       const file = e.target.files[0];
-      const newImage = {
-        id: Date.now(), // Use timestamp for a unique ID
-        src: URL.createObjectURL(file), // Create a temporary local URL for preview
-        hint: 'custom upload',
-      };
-      setProfile({
-        ...profile,
-        gallery: [...profile.gallery, newImage],
-      });
-      toast({ title: "Photo Added", description: "Your new photo has been added to the gallery. Don't forget to save your changes!" });
+      const imageId = Date.now();
+      const storageRef = ref(storage, `users/${user.uid}/gallery/${imageId}_${file.name}`);
+      
+      toast({ title: "Uploading...", description: "Your photo is being uploaded." });
+
+      try {
+        const snapshot = await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+
+        const newImage = {
+          id: imageId,
+          src: downloadURL,
+          hint: 'custom upload',
+          path: snapshot.ref.fullPath // Important for deletion
+        };
+
+        setProfile(prevProfile => prevProfile ? {
+          ...prevProfile,
+          gallery: [...prevProfile.gallery, newImage],
+        } : null);
+
+        toast({ title: "Photo Added", description: "Your new photo has been added to the gallery. Don't forget to save your changes!" });
+      } catch (error) {
+        console.error("Error uploading image: ", error);
+        toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload your photo.' });
+      }
     }
   };
 
   const handleImageRemove = (photoId: number) => {
     if (profile) {
-      setProfile({
-        ...profile,
-        gallery: profile.gallery.filter((photo) => photo.id !== photoId),
-      });
-       toast({ title: "Photo Removed", description: "The photo has been removed from your gallery." });
+      setProfile(prevProfile => prevProfile ? {
+        ...prevProfile,
+        gallery: prevProfile.gallery.filter((photo) => photo.id !== photoId),
+      } : null);
+       toast({ title: "Photo Removed", description: "The photo has been removed from your gallery. Save changes to make it permanent." });
     }
   };
 
@@ -234,7 +251,7 @@ export default function EditProfilePage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-headline"><FileImage/> My Gallery</CardTitle>
-                    <CardDescription>Manage your photo gallery.</CardDescription>
+                    <CardDescription>Manage your photo gallery. Click 'Save Changes' at the top to make your edits permanent.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
