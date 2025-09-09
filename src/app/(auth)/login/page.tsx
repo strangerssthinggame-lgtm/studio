@@ -138,6 +138,7 @@ export default function LoginPage() {
           width={1200}
           height={1800}
           className="h-full w-full object-cover"
+          priority
         />
         <div className="absolute inset-0 bg-background/20"></div>
         <div className="absolute bottom-10 left-10 right-10 p-6 glassy rounded-xl text-foreground">
