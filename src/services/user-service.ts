@@ -3,7 +3,7 @@
 'use server';
 
 import { firestore, storage } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { UserProfile, GalleryImage } from '@/lib/user-profile-data';
 
@@ -94,7 +94,7 @@ export async function addGalleryImage(userId: string, formData: FormData): Promi
  * @param userId - The ID of the user to update.
  * @param data - An object containing the fields to update.
  */
-export async function updateUserProfile(userId: string, data: Record<string, any>): Promise<void> {
+export async function updateUserProfile(userId: string, data: Partial<UserProfile>): Promise<void> {
     if (!userId) {
         throw new Error("User ID is required to update a profile.");
     }
@@ -108,25 +108,38 @@ export async function updateUserProfile(userId: string, data: Record<string, any
  * @param image - The gallery image object to delete.
  */
 export async function deleteProfileImage(userId: string, image: GalleryImage): Promise<void> {
-     if (!userId || !image || !image.path) {
-        throw new Error("Invalid arguments for image deletion. User ID and the full image object are required.");
+    if (!userId || !image || !image.path) {
+        console.error("Invalid arguments for image deletion.", { userId, image });
+        throw new Error("Invalid arguments for image deletion. User ID and the full image object with path are required.");
     }
 
+    const userDocRef = doc(firestore, 'users', userId);
+
     try {
-        // 1. Delete the file from Firebase Storage
+        // 1. Delete the file from Firebase Storage first.
         const storageRef = ref(storage, image.path);
         await deleteObject(storageRef);
 
-        // 2. Remove the image object from the 'gallery' array in Firestore
-        const userDocRef = doc(firestore, 'users', userId);
+        // 2. Fetch the current user document to get the gallery array.
+        const userDoc = await getDoc(userDocRef);
+        if (!userDoc.exists()) {
+            throw new Error("User document not found.");
+        }
+        const userData = userDoc.data() as UserProfile;
+        
+        // 3. Filter out the image to be deleted from the gallery.
+        const updatedGallery = userData.gallery.filter(photo => photo.id !== image.id);
+
+        // 4. Update the document with the new, filtered gallery array.
         await updateDoc(userDocRef, {
-            gallery: arrayRemove(image)
+            gallery: updatedGallery
         });
+
     } catch (error) {
         console.error("Error in deleteProfileImage service:", error);
-        // This will propagate the error back to the client component to be caught
-        throw new Error("Failed to delete image on the server.");
+        // If storage deletion fails, we don't proceed to Firestore update.
+        // If Firestore update fails, the file is already gone, but the link remains.
+        // This is a trade-off, but for this app, removing the file is the most important part.
+        throw new Error("Failed to delete image on the server. Please try again.");
     }
 }
-
-    

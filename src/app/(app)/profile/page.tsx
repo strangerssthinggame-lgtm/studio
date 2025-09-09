@@ -75,12 +75,11 @@ export default function ProfilePage() {
 
             try {
                 if (imageType === 'gallery') {
-                    // Use the new dedicated server action for gallery images
                     const newImage = await addGalleryImage(user.uid, formData);
                     setUserProfile(prev => prev ? { ...prev, gallery: [...prev.gallery, newImage] } : null);
                     toast({ title: "Photo Added!", description: "Your new photo has been added to your gallery." });
                 
-                } else { // Handle 'avatar' and 'banner'
+                } else {
                     formData.append('type', imageType);
                     const { downloadURL } = await uploadProfileImage(user.uid, formData);
                     
@@ -95,29 +94,29 @@ export default function ProfilePage() {
                 console.error("Error handling image upload: ", error);
                 toast({ variant: 'destructive', title: "Upload Failed", description: "There was an error uploading your photo. Please try again." });
             } finally {
-                e.target.value = ''; // Reset file input
+                e.target.value = '';
             }
         }
     };
 
 
     const handleImageRemove = async (photo: GalleryImage) => {
-        if (userProfile && user) {
-            toast({ title: "Removing photo...", description: "Please wait." });
-            try {
-                // Optimistically update the UI
-                const updatedGallery = userProfile.gallery.filter((p) => p.id !== photo.id);
-                setUserProfile(prev => prev ? { ...prev, gallery: updatedGallery } : null);
-                
-                await deleteProfileImage(user.uid, photo);
+        if (!userProfile || !user) return;
 
-                toast({ title: "Photo Removed", description: "The photo has been removed from your gallery." });
-            } catch (error) {
-                console.error("Error removing image: ", error);
-                // Revert UI change on failure
-                setUserProfile(prev => prev ? { ...prev, gallery: userProfile.gallery } : null);
-                toast({ variant: 'destructive', title: "Deletion Failed", description: "There was an error removing your photo." });
-            }
+        // Optimistically update the UI for a better user experience
+        const originalGallery = userProfile.gallery;
+        const updatedGallery = originalGallery.filter((p) => p.id !== photo.id);
+        setUserProfile(prev => prev ? { ...prev, gallery: updatedGallery } : null);
+
+        toast({ title: "Removing photo...", description: "Please wait." });
+        try {
+            await deleteProfileImage(user.uid, photo);
+            toast({ title: "Photo Removed", description: "The photo has been successfully removed." });
+        } catch (error) {
+            console.error("Error removing image: ", error);
+            // Revert UI change on failure
+            setUserProfile(prev => prev ? { ...prev, gallery: originalGallery } : null);
+            toast({ variant: 'destructive', title: "Deletion Failed", description: "There was an error removing your photo." });
         }
     };
 
@@ -314,5 +313,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
