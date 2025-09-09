@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Heart, MessageSquare, MapPin, User, FileImage, Clock, Edit, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { userProfiles as mockUserProfiles } from '@/lib/user-profile-data'; // Use mock for fallbacks
-import { notFound, useRouter } from 'next/navigation';
+import { notFound, useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
@@ -17,33 +17,35 @@ import { useAuth } from '@/hooks/use-auth';
 import type { UserProfile } from '@/lib/user-profile-data';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export default function UserProfilePage({ params }: { params: { id: string } }) {
+export default function UserProfilePage() {
   const router = useRouter();
+  const params = useParams();
   const { user: currentUser } = useAuth();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const isOwnProfile = currentUser?.uid === params.id;
+  const userId = params.id as string;
+  const isOwnProfile = currentUser?.uid === userId;
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-        if (!params.id) return;
+        if (!userId) return;
         setIsLoading(true);
-        const userDocRef = doc(firestore, 'users', params.id);
+        const userDocRef = doc(firestore, 'users', userId);
         const docSnap = await getDoc(userDocRef);
 
         if (docSnap.exists()) {
             const data = docSnap.data();
             setUserProfile({
-                id: params.id,
+                id: userId,
                 name: data.displayName || 'New User',
                 username: data.username || `@${data.displayName?.toLowerCase() || 'newuser'}`,
                 age: data.age || 18,
                 gender: data.gender || 'not specified',
                 location: data.location || 'Not specified',
                 bio: data.bio || 'No bio yet.',
-                avatar: data.photoURL || `https://picsum.photos/seed/${params.id}/400/400`,
-                banner: data.banner || `https://picsum.photos/seed/${params.id}-banner/800/600`,
+                avatar: data.photoURL || `https://picsum.photos/seed/${userId}/400/400`,
+                banner: data.banner || `https://picsum.photos/seed/${userId}-banner/800/600`,
                 vibes: data.vibes || [],
                 interests: data.interests || [],
                 gallery: data.gallery || [],
@@ -51,7 +53,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
             });
         } else {
              // Fallback to mock data if user not found in Firestore
-            const mockUser = mockUserProfiles.find(p => p.id === params.id);
+            const mockUser = mockUserProfiles.find(p => p.id === userId);
             if (mockUser) {
                 setUserProfile(mockUser);
             } else {
@@ -62,7 +64,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
     };
 
     fetchUserProfile();
-  }, [params.id]);
+  }, [userId]);
 
 
   const handleEditRedirect = () => {
