@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Heart, MessageSquare, Users } from 'lucide-react';
-import { signInWithPopup, FirebaseError } from 'firebase/auth';
+import { signInWithPopup } from 'firebase/auth';
 import { auth, googleAuthProvider } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -48,24 +48,20 @@ export default function LoginPage() {
     try {
       await signInWithPopup(auth, googleAuthProvider);
       router.push('/profile');
-    } catch (error) {
-      if (error instanceof FirebaseError) {
-        if (error.code === 'auth/popup-closed-by-user') {
-          toast({
-            title: 'Login Canceled',
-            description: 'You closed the sign-in window before completing the login process.',
-            variant: 'default',
-          });
-        } else {
-          console.error('Firebase sign-in error:', error);
-          toast({
-            title: 'Authentication Error',
-            description: 'An unexpected error occurred. Please try again.',
-            variant: 'destructive',
-          });
-        }
+    } catch (error: any) {
+      if (error.code === 'auth/popup-closed-by-user') {
+        toast({
+          title: 'Login Canceled',
+          description: 'You closed the sign-in window before completing the login process.',
+          variant: 'default',
+        });
       } else {
-        console.error('An unexpected error occurred:', error);
+        console.error('Firebase sign-in error:', error);
+        toast({
+          title: 'Authentication Error',
+          description: 'An unexpected error occurred. Please try again.',
+          variant: 'destructive',
+        });
       }
     }
   };
@@ -150,5 +146,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    
