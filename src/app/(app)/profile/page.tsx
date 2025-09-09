@@ -67,50 +67,47 @@ export default function ProfilePage() {
 
     const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>, imageType: 'gallery' | 'avatar' | 'banner') => {
         if (e.target.files && e.target.files[0] && userProfile && user) {
-          const file = e.target.files[0];
-          
-          toast({ title: "Uploading...", description: "Your photo is being uploaded. Please wait." });
+            const file = e.target.files[0];
+            toast({ title: "Uploading...", description: "Your photo is being uploaded. Please wait." });
 
-          try {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('type', imageType);
-            
-            const { downloadURL, filePath } = await uploadProfileImage(user.uid, formData);
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('type', imageType);
 
-            if (imageType === 'gallery') {
-                 const newImageForState: GalleryImage = {
-                    id: Date.now(),
-                    src: downloadURL,
-                    hint: 'custom upload',
-                    path: filePath 
-                };
-                 const newImageForFirestore = { 
-                    id: newImageForState.id,
-                    src: newImageForState.src,
-                    hint: newImageForState.hint
-                 }
+                const { downloadURL, filePath } = await uploadProfileImage(user.uid, formData);
 
-                await updateUserProfile(user.uid, { gallery: arrayUnion(newImageForFirestore) });
+                if (imageType === 'gallery') {
+                    const newImage: GalleryImage = {
+                        id: Date.now(),
+                        src: downloadURL,
+                        hint: 'custom upload',
+                        path: filePath 
+                    };
+                    
+                    const newImageForFirestore = {
+                        id: newImage.id,
+                        src: newImage.src,
+                        hint: newImage.hint
+                    };
 
-                setUserProfile(prev => prev ? { ...prev, gallery: [...prev.gallery, newImageForState] } : null);
-                toast({ title: "Photo Added!", description: "Your new photo has been added to your gallery." });
+                    await updateUserProfile(user.uid, { gallery: arrayUnion(newImageForFirestore) });
+                    setUserProfile(prev => prev ? { ...prev, gallery: [...prev.gallery, newImage] } : null);
+                    toast({ title: "Photo Added!", description: "Your new photo has been added to your gallery." });
+                } else {
+                    const fieldToUpdate = imageType === 'avatar' ? 'avatar' : 'banner';
+                    const firestoreField = imageType === 'avatar' ? 'photoURL' : 'banner';
 
-            } else { 
-                const fieldToUpdate = imageType === 'avatar' ? 'avatar' : 'banner';
-                const firestoreField = imageType === 'avatar' ? 'photoURL' : 'banner';
-
-                await updateUserProfile(user.uid, { [firestoreField]: downloadURL });
-                setUserProfile(prev => prev ? { ...prev, [fieldToUpdate]: downloadURL } : null);
-                toast({ title: `${imageType.charAt(0).toUpperCase() + imageType.slice(1)} Updated!`, description: "Your new image is now live." });
+                    await updateUserProfile(user.uid, { [firestoreField]: downloadURL });
+                    setUserProfile(prev => prev ? { ...prev, [fieldToUpdate]: downloadURL } : null);
+                    toast({ title: `${imageType.charAt(0).toUpperCase() + imageType.slice(1)} Updated!`, description: "Your new image is now live." });
+                }
+            } catch (error) {
+                console.error("Error uploading image: ", error);
+                toast({ variant: 'destructive', title: "Upload Failed", description: "There was an error uploading your photo." });
+            } finally {
+                e.target.value = ''; // Reset file input
             }
-
-          } catch(error) {
-             console.error("Error uploading image: ", error);
-             toast({ variant: 'destructive', title: "Upload Failed", description: "There was an error uploading your photo." });
-          } finally {
-            e.target.value = '';
-          }
         }
     };
 
@@ -272,7 +269,7 @@ export default function ProfilePage() {
                 <CardContent>
                     <div className="flex flex-wrap gap-2">
                         {userProfile.interests.map((interest) => (
-                            <Badge key={interest} variant="secondary" className="text-base px-3 py-1 cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors">
+                            <Badge key={interest} variant="secondary" className="text-base px-3 py-1">
                                 {interest}
                             </Badge>
                         ))}
@@ -327,3 +324,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    

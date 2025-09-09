@@ -60,9 +60,9 @@ export async function uploadProfileImage(userId: string, formData: FormData): Pr
 /**
  * Updates a user's profile data in Firestore.
  * @param userId - The ID of the user to update.
- * @param data - An object containing the fields to update.
+ * @param data - An object containing the fields to update. Can handle arrayUnion.
  */
-export async function updateUserProfile(userId: string, data: Partial<UserProfile>): Promise<void> {
+export async function updateUserProfile(userId: string, data: Record<string, any>): Promise<void> {
     if (!userId) {
         throw new Error("User ID is required to update a profile.");
     }
@@ -96,3 +96,5 @@ export async function deleteProfileImage(userId: string, image: GalleryImage): P
         gallery: arrayRemove(imageToRemoveFromFirestore)
     });
 }
+
+    
