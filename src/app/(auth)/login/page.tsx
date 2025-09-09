@@ -42,12 +42,15 @@ const AppleIcon = () => (
 export default function LoginPage() {
   const router = useRouter();
 
-  const handleGoogleSignIn = async () => {
+  const handleSocialSignIn = async () => {
     try {
+      // `signInWithPopup` handles both sign-in for existing users 
+      // and sign-up for new users.
       await signInWithPopup(auth, googleAuthProvider);
-      router.push('/dashboard');
+      router.push('/profile'); // Redirect to profile page after login/signup
     } catch (error) {
       console.error('Error during Google sign-in:', error);
+      // Optionally, show an error message to the user
     }
   };
 
@@ -63,20 +66,20 @@ export default function LoginPage() {
           </div>
           <Card className="shadow-lg glassy">
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-headline">Login</CardTitle>
+              <CardTitle className="text-2xl font-headline">Get Started</CardTitle>
               <CardDescription>
-                Sign in to start your next conversation adventure.
+                Create an account or log in to continue.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
               <div className="grid gap-2">
-                <Button variant="outline" onClick={handleGoogleSignIn}>
+                <Button variant="outline" onClick={handleSocialSignIn}>
                   <GoogleIcon />
-                  Sign in with Google
+                  Continue with Google
                 </Button>
                 <Button variant="outline">
                   <AppleIcon />
-                  Sign in with Apple
+                  Continue with Apple
                 </Button>
               </div>
               <div className="relative">
@@ -85,15 +88,16 @@ export default function LoginPage() {
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-card px-2 text-muted-foreground">
-                    Or continue to
+                    Or
                   </span>
                 </div>
               </div>
-                <Link href="/dashboard">
-                    <Button variant="default" className="w-full">
-                        Explore the App
-                    </Button>
-                </Link>
+              <Button variant="default" className="w-full" onClick={handleSocialSignIn}>
+                Sign Up with Email
+              </Button>
+               <Button variant="secondary" className="w-full" onClick={handleSocialSignIn}>
+                Log In with Email
+              </Button>
             </CardContent>
           </Card>
         </div>
