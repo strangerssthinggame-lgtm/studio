@@ -1,4 +1,3 @@
-
 // src/app/actions.ts
 "use server";
 
@@ -44,7 +43,7 @@ export async function getSuggestedPrompt(
 }
 
 export async function uploadProfileImage(userId: string, imageType: 'avatar' | 'banner' | 'gallery', formData: FormData) {
-    if (!adminApp) {
+    if (!admin.apps.length) {
         throw new Error('Firebase Admin SDK not initialized.');
     }
     const file = formData.get('file') as File;
@@ -52,18 +51,15 @@ export async function uploadProfileImage(userId: string, imageType: 'avatar' | '
         throw new Error('No file provided.');
     }
 
-    const bucket = getStorage(adminApp).bucket();
-    const firestore = getFirestore(adminApp);
+    const bucket = getStorage().bucket();
+    const firestore = getFirestore();
     
     const timestamp = Date.now();
     const uniqueFileName = `${timestamp}_${file.name}`;
     let filePath;
 
-    if (imageType === 'gallery') {
-        filePath = `users/${userId}/photos/${uniqueFileName}`;
-    } else {
-        filePath = `users/${userId}/${imageType}s/${uniqueFileName}`;
-    }
+    // A simple path for all user uploads
+    filePath = `uploads/${userId}/${uniqueFileName}`;
     
     const buffer = Buffer.from(await file.arrayBuffer());
 
@@ -75,30 +71,28 @@ export async function uploadProfileImage(userId: string, imageType: 'avatar' | '
         },
     });
 
-    const downloadURL = await fileUpload.getSignedUrl({
-        action: 'read',
-        expires: '03-09-2491', 
-    }).then(urls => urls[0]);
+    // Make the file public to get a predictable URL
+    await fileUpload.makePublic();
 
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
+    
     const userDocRef = firestore.collection('users').doc(userId);
 
     if (imageType === 'gallery') {
         await userDocRef.update({
-            photos: admin.firestore.FieldValue.arrayUnion(downloadURL)
+            photos: admin.firestore.FieldValue.arrayUnion(publicUrl)
         });
     } else {
         const fieldToUpdate = imageType === 'avatar' ? 'photoURL' : 'banner';
         const secondField = imageType === 'avatar' ? 'avatar' : 'banner';
-        await userDocRef.update({ 
-            [fieldToUpdate]: downloadURL,
-            [secondField]: downloadURL
-        });
+        await userDocRef.set({ 
+            [fieldToUpdate]: publicUrl,
+            [secondField]: publicUrl
+        }, { merge: true });
     }
 
     revalidatePath('/profile');
     revalidatePath(`/users/${userId}`);
 
-    return { success: true, url: downloadURL };
+    return { success: true, url: publicUrl };
 }
-
-    
