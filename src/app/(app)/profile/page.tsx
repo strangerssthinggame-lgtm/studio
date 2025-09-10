@@ -6,30 +6,22 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Camera, Edit, MapPin, User, FileImage, Clock, Eye, X, Upload } from 'lucide-react';
+import { Camera, Edit, MapPin, User, FileImage, Clock, Eye } from 'lucide-react';
 import Link from 'next/link';
 import OrderHistory from '@/components/order-history';
 import { useAuth } from '@/hooks/use-auth';
-import { useEffect, useState, ChangeEvent, useRef } from 'react';
-import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import { firestore, storage } from '@/lib/firebase';
+import { useEffect, useState } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { firestore } from '@/lib/firebase';
 import type { UserProfile } from '@/lib/user-profile-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-
 
 export default function ProfilePage() {
     const { user, loading: authLoading } = useAuth();
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
-    const { toast } = useToast();
-
-    const avatarInputRef = useRef<HTMLInputElement>(null);
-    const bannerInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -73,74 +65,6 @@ export default function ProfilePage() {
 
         fetchUserProfile();
     }, [user, authLoading, router]);
-    
-    const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>, imageType: 'avatar' | 'banner' | 'gallery') => {
-        if (!e.target.files || e.target.files.length === 0 || !user) {
-            return;
-        }
-
-        const file = e.target.files[0];
-        const toastId = toast({ title: "Uploading...", description: `Your ${imageType} is being updated.` }).id;
-        
-        try {
-            // Define path based on image type. Gallery images get a unique name.
-            const filePath = imageType === 'gallery' 
-                ? `users/${user.uid}/gallery/${Date.now()}-${file.name}` 
-                : `users/${user.uid}/${imageType}.${file.name.split('.').pop()}`;
-
-            const storageRef = ref(storage, filePath);
-            const uploadTask = await uploadBytes(storageRef, file);
-            const downloadURL = await getDownloadURL(uploadTask.ref);
-
-            const userDocRef = doc(firestore, 'users', user.uid);
-            
-            if (imageType === 'gallery') {
-                await updateDoc(userDocRef, { photos: arrayUnion(downloadURL) });
-                setUserProfile(prev => prev ? { ...prev, photos: [...(prev.photos || []), downloadURL] } : null);
-            } else {
-                await updateDoc(userDocRef, { [imageType]: downloadURL });
-                setUserProfile(prev => prev ? { ...prev, [imageType]: downloadURL } : null);
-            }
-
-            toast({ id: toastId, title: "Success!", description: `Your ${imageType} has been updated.` });
-        } catch (error) {
-             const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-            toast({ id: toastId, variant: 'destructive', title: "Upload Failed", description: errorMessage });
-        } finally {
-             if (e.target) e.target.value = '';
-        }
-    }
-
-
-    const handleImageRemove = async (photoUrl: string) => {
-        if (!user || !userProfile) {
-            toast({ variant: 'destructive', title: "Error", description: "Cannot remove this photo." });
-            return;
-        };
-
-        const originalPhotos = userProfile.photos;
-        // Optimistically update UI
-        setUserProfile(prev => prev ? { ...prev, photos: prev.photos.filter((p) => p !== photoUrl) } : null);
-
-        toast({ title: "Removing photo...", description: "Please wait." });
-        try {
-            // Delete from storage
-            const imageRef = ref(storage, photoUrl);
-            await deleteObject(imageRef);
-           
-            // Delete from firestore
-            const userDocRef = doc(firestore, 'users', user.uid);
-            await updateDoc(userDocRef, {
-                photos: arrayRemove(photoUrl)
-            });
-
-            toast({ title: "Photo Removed", description: "The photo has been successfully removed." });
-        } catch (error) {
-            setUserProfile(prev => prev ? { ...prev, photos: originalPhotos } : null);
-            console.error("Error removing image: ", error);
-            toast({ variant: 'destructive', title: "Deletion Failed", description: "Could not remove your photo. Please try again." });
-        }
-    };
 
     const isPageLoading = isLoading || authLoading;
 
@@ -189,9 +113,7 @@ export default function ProfilePage() {
           priority
         />
         <div className="absolute inset-0 bg-black/30" />
-        <input type="file" ref={bannerInputRef} className="sr-only" accept="image/*" onChange={(e) => handleImageUpload(e, 'banner')} />
         <Button 
-            onClick={() => bannerInputRef.current?.click()}
             variant="secondary"
             className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
         >
@@ -207,15 +129,11 @@ export default function ProfilePage() {
               <AvatarImage src={userProfile.avatar} alt={userProfile.name} data-ai-hint="profile photo" />
               <AvatarFallback>{userProfile.name.charAt(0)}</AvatarFallback>
             </Avatar>
-             <input type="file" ref={avatarInputRef} className="sr-only" accept="image/*" onChange={(e) => handleImageUpload(e, 'avatar')} />
-            <button 
-                onClick={() => avatarInputRef.current?.click()}
-                className={cn(
-                    "absolute inset-0 bg-black/50 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity",
-                )}
+            <div
+                className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
             >
                 <Camera className="w-8 h-8"/>
-            </button>
+            </div>
           </div>
 
           <div className="mt-4 md:mt-0 md:ml-6 flex-1">
@@ -294,25 +212,15 @@ export default function ProfilePage() {
             <Card className="glassy">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 font-headline"><FileImage/> My Photos</CardTitle>
-                    <CardDescription>Add or remove photos from your gallery.</CardDescription>
+                    <CardDescription>A glimpse into my world.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                         {userProfile.photos && userProfile.photos.map((photo, index) => (
                             <div key={index} className="aspect-square relative rounded-lg overflow-hidden group">
-                                <Image src={photo} alt={`Uploaded photo ${index + 1}`} fill className="object-cover" />
-                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <Button variant="destructive" size="icon" onClick={() => handleImageRemove(photo)} disabled={isPageLoading}>
-                                        <X className="h-4 w-4"/>
-                                    </Button>
-                                 </div>
+                                <Image src={photo} alt={`Gallery photo ${index + 1}`} fill className="object-cover" />
                             </div>
                         ))}
-                         <label className="cursor-pointer aspect-square rounded-lg border-2 border-dashed border-muted-foreground/50 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors">
-                            <Upload className="h-8 w-8"/>
-                            <span className="mt-2 text-sm">Upload Image</span>
-                            <input type="file" className="sr-only" onChange={(e) => handleImageUpload(e, 'gallery')} accept="image/*" disabled={isPageLoading} />
-                        </label>
                     </div>
                 </CardContent>
             </Card>
