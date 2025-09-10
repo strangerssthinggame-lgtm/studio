@@ -92,12 +92,9 @@ export default function ProfilePage() {
             const downloadURL = await getDownloadURL(uploadTask.ref);
 
             const userDocRef = doc(firestore, 'users', user.uid);
-            const fieldToUpdate = imageType === 'avatar' ? 'avatar' : 'banner';
-            const secondField = imageType === 'avatar' ? 'photoURL' : 'banner';
             
             await updateDoc(userDocRef, {
-                [fieldToUpdate]: downloadURL,
-                [secondField]: downloadURL
+                [imageType]: downloadURL,
             });
             
             setUserProfile(prev => prev ? { ...prev, [imageType]: downloadURL } : null);
@@ -132,6 +129,7 @@ export default function ProfilePage() {
             });
             
             setMyUploads(prev => [...prev, downloadURL]);
+            setUserProfile(prev => prev ? { ...prev, photos: [...(prev.photos || []), downloadURL] } : null);
 
             toast({ id: toastId, title: "Success!", description: "Your image has been uploaded." });
 
@@ -153,6 +151,8 @@ export default function ProfilePage() {
 
         const originalPhotos = myUploads;
         setMyUploads(prev => prev.filter((p) => p !== photoUrl));
+        setUserProfile(prev => prev ? { ...prev, photos: prev.photos.filter((p) => p !== photoUrl) } : null);
+
 
         toast({ title: "Removing photo...", description: "Please wait." });
         try {
@@ -323,12 +323,12 @@ export default function ProfilePage() {
         <div className="mt-8">
             <Card className="glassy">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 font-headline"><FileImage/> My Uploads</CardTitle>
-                    <CardDescription>Images you have uploaded. This is a simple test area.</CardDescription>
+                    <CardTitle className="flex items-center gap-2 font-headline"><FileImage/> My Photos</CardTitle>
+                    <CardDescription>Add or remove photos from your gallery.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        {myUploads.map((photo, index) => (
+                        {userProfile.photos.map((photo, index) => (
                             <div key={index} className="aspect-square relative rounded-lg overflow-hidden group">
                                 <Image src={photo} alt={`Uploaded photo ${index + 1}`} fill className="object-cover" />
                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -365,5 +365,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
