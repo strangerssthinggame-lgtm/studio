@@ -74,13 +74,13 @@ export default function ProfilePage() {
         const formData = new FormData();
         formData.append('file', file);
         
-        const toastId = toast({ title: "Uploading...", description: "Your photo is being uploaded. Please wait." }).id;
+        toast({ title: "Uploading...", description: "Your photo is being uploaded. Please wait." });
 
         try {
             const result = await uploadProfileImage(user.uid, imageType, formData);
 
             if (result.success) {
-                toast.update(toastId, { title: "Success!", description: "Your profile has been updated." });
+                toast({ title: "Success!", description: "Your profile has been updated." });
                  // Manually update the state to show the new image instantly
                 if(imageType === 'gallery') {
                     // Re-fetching would be ideal here, but for simplicity we'll just show a success message
@@ -96,7 +96,7 @@ export default function ProfilePage() {
         } catch (error) {
             console.error("Error during image upload: ", error);
             const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-            toast.update(toastId, { variant: 'destructive', title: "Upload Failed", description: errorMessage });
+            toast({ variant: 'destructive', title: "Upload Failed", description: errorMessage });
         } finally {
             e.target.value = ''; // Clear file input
         }
@@ -336,3 +336,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
