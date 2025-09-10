@@ -1,33 +1,47 @@
-
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId} {
-      // Allow any authenticated user to list and read user profiles
-      allow list, read: if request.auth != null;
-      // Allow a user to write only to their own document
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    match /chats/{chatId} {
-      // Allow read/write only if the user is part of the chat
-      allow read, write: if request.auth != null && request.auth.uid in resource.data.userIds;
-    }
-
-    match /chats/{chatId}/messages/{messageId} {
-      // Allow read/write only if the user is part of the parent chat
-      allow read, write: if request.auth != null && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.userIds;
-    }
     
+    // Users collection
+    match /users/{userId} {
+      // Allow any authenticated user to read user profiles and list them.
+      // This is necessary for discovery features.
+      allow list, get: if request.auth != null;
+      
+      // Allow users to create their own profile.
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // Allow users to update only their own profile.
+      allow update: if request.auth.uid == userId;
+
+      // Do not allow users to delete their profiles from the client.
+      allow delete: if false;
+    }
+
+    // Chats collection
+    match /chats/{chatId} {
+      // Allow read/create/update only if the user is a participant in the chat.
+      allow read, create, update: if request.auth.uid in resource.data.userIds;
+
+      // Messages subcollection
+      match /messages/{messageId} {
+        // Allow read/create only if the user is a participant in the parent chat.
+        allow read, create: if request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.userIds;
+      }
+    }
+
+    // Swipes collection
     match /swipes/{swipeId} {
-      // Allow users to create swipes, but not read/update/delete them.
-      // This prevents users from seeing who swiped on them directly.
+      // Allow any authenticated user to create a swipe.
       allow create: if request.auth != null;
     }
-    
+
+    // Matches collection
     match /matches/{matchId} {
-        // Allow read only if the user is part of the match
-        allow read: if request.auth != null && request.auth.uid in resource.data.userIds;
+      // Only backend functions should be creating matches.
+      allow read: if request.auth.uid in resource.data.userIds;
+      allow create, update, delete: if false;
     }
   }
 }
