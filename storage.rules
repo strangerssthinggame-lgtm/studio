@@ -1,14 +1,14 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Match any file in any user's folder
+    // Match any file inside a user-specific folder path.
     match /users/{userId}/{allPaths=**} {
-      // Allow public read access for all profile images.
-      // This is necessary so that other users can see profile pictures.
+      // Allow anyone to read files from user folders.
+      // This is necessary so that other users can see profile pictures and banners.
       allow read;
 
-      // Allow write access (upload, update, delete) only to the
-      // authenticated user who owns this directory.
+      // Only allow a user to write (upload, update, delete) files
+      // if they are authenticated and their user ID matches the folder ID.
       allow write: if request.auth != null && request.auth.uid == userId;
     }
   }
