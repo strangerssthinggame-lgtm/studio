@@ -125,7 +125,7 @@ export default function EditProfilePage() {
 
         setProfile(prevProfile => prevProfile ? {
           ...prevProfile,
-          photos: [...prevProfile.photos, downloadURL],
+          photos: [...(prevProfile.photos || []), downloadURL],
         } : null);
 
         toast({ title: "Photo Added", description: "Your new photo has been added to the gallery. Don't forget to save your changes!" });
@@ -245,7 +245,7 @@ export default function EditProfilePage() {
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        {profile.photos.map((photo, index) => (
+                        {profile.photos && profile.photos.map((photo, index) => (
                             <div key={index} className="aspect-square relative rounded-lg overflow-hidden group">
                                 <Image src={photo} alt={`Gallery photo ${index + 1}`} fill className="object-cover" />
                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -298,5 +298,3 @@ export default function EditProfilePage() {
     </div>
   );
 }
-
-    
