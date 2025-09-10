@@ -11,13 +11,13 @@ import Link from 'next/link';
 import OrderHistory from '@/components/order-history';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState, ChangeEvent, useRef } from 'react';
-import { doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
-import { firestore } from '@/lib/firebase';
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { firestore, storage } from '@/lib/firebase';
 import type { UserProfile } from '@/lib/user-profile-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { uploadProfileImage } from '@/app/actions';
 import { cn } from '@/lib/utils';
 
 
@@ -31,6 +31,7 @@ export default function ProfilePage() {
 
     const avatarInputRef = useRef<HTMLInputElement>(null);
     const bannerInputRef = useRef<HTMLInputElement>(null);
+    const galleryInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -82,23 +83,29 @@ export default function ProfilePage() {
         }
 
         const file = e.target.files[0];
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const originalToast = toast({ title: "Uploading...", description: `Your ${imageType} is being updated.` });
+        const toastId = toast({ title: "Uploading...", description: `Your ${imageType} is being updated.` }).id;
         
         try {
-            const result = await uploadProfileImage(user.uid, imageType, formData);
+            const filePath = `users/${user.uid}/${imageType}/${file.name}`;
+            const storageRef = ref(storage, filePath);
+            const uploadTask = await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(uploadTask.ref);
 
-            if (result.success && result.url) {
-                toast({ title: "Success!", description: `Your ${imageType} has been updated.` });
-                setUserProfile(prev => prev ? { ...prev, [imageType]: result.url } : null);
-            } else {
-                throw new Error(result.error || "Upload failed on the server.");
-            }
+            const userDocRef = doc(firestore, 'users', user.uid);
+            const fieldToUpdate = imageType === 'avatar' ? 'avatar' : 'banner';
+            const secondField = imageType === 'avatar' ? 'photoURL' : 'banner';
+            
+            await updateDoc(userDocRef, {
+                [fieldToUpdate]: downloadURL,
+                [secondField]: downloadURL
+            });
+            
+            setUserProfile(prev => prev ? { ...prev, [imageType]: downloadURL } : null);
+
+            toast({ id: toastId, title: "Success!", description: `Your ${imageType} has been updated.` });
         } catch (error) {
              const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-            toast({ variant: 'destructive', title: "Upload Failed", description: errorMessage });
+            toast({ id: toastId, variant: 'destructive', title: "Upload Failed", description: errorMessage });
         } finally {
              if (e.target) e.target.value = '';
         }
@@ -111,27 +118,29 @@ export default function ProfilePage() {
         }
 
         const file = e.target.files[0];
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        const originalToast = toast({ title: "Uploading...", description: "Your photo is being uploaded. Please wait." });
+        const toastId = toast({ title: "Uploading...", description: "Your photo is being uploaded. Please wait." }).id;
 
         try {
-            const result = await uploadProfileImage(user.uid, 'gallery', formData);
+            const filePath = `users/${user.uid}/gallery/${file.name}`;
+            const storageRef = ref(storage, filePath);
+            const uploadTask = await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(uploadTask.ref);
 
-            if (result.success && result.url) {
-                toast({ title: "Success!", description: "Your image has been uploaded." });
-                setMyUploads(prev => [...prev, result.url]);
-            } else {
-                 throw new Error(result.error || "Upload failed on the server.");
-            }
+            const userDocRef = doc(firestore, 'users', user.uid);
+            await updateDoc(userDocRef, {
+                photos: arrayUnion(downloadURL)
+            });
+            
+            setMyUploads(prev => [...prev, downloadURL]);
+
+            toast({ id: toastId, title: "Success!", description: "Your image has been uploaded." });
 
         } catch (error) {
             console.error("Error during image upload: ", error);
             const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-            toast({ variant: 'destructive', title: "Upload Failed", description: errorMessage });
+            toast({ id: toastId, variant: 'destructive', title: "Upload Failed", description: errorMessage });
         } finally {
-            e.target.value = ''; // Clear file input
+            if (e.target) e.target.value = ''; // Clear file input
         }
     };
 
@@ -147,6 +156,8 @@ export default function ProfilePage() {
 
         toast({ title: "Removing photo...", description: "Please wait." });
         try {
+            const imageRef = ref(storage, photoUrl);
+            await deleteObject(imageRef);
            
             const userDocRef = doc(firestore, 'users', user.uid);
             await updateDoc(userDocRef, {
@@ -354,3 +365,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
