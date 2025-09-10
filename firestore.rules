@@ -1,10 +1,25 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Allow users to read any profile, but only write to their own.
     match /users/{userId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
+      allow read;
+      allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Allow logged-in users to manage their own swipes
+    match /swipes/{swipeId} {
+      allow read, create: if request.auth != null;
+    }
+
+    // Matches can be read by the users involved in the match
+    match /matches/{matchId} {
+      allow read, create: if request.auth != null && request.auth.uid in resource.data.userIds;
+    }
+
+    // Chats can be read/written to by the users involved in the chat
+    match /chats/{chatId} {
+        allow read, write: if request.auth != null && request.auth.uid in resource.data.userIds;
     }
   }
 }
