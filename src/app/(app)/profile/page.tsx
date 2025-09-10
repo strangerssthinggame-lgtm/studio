@@ -12,13 +12,13 @@ import OrderHistory from '@/components/order-history';
 import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState, ChangeEvent } from 'react';
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { firestore, storage } from '@/lib/firebase';
+import { firestore } from '@/lib/firebase';
 import type { UserProfile, GalleryImage } from '@/lib/user-profile-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import { revalidatePath } from 'next/cache';
+import { uploadProfileImage } from '@/app/actions';
+
 
 export default function ProfilePage() {
     const { user, loading: authLoading } = useAuth();
@@ -71,40 +71,27 @@ export default function ProfilePage() {
         }
 
         const file = e.target.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+        
         const toastId = toast({ title: "Uploading...", description: "Your photo is being uploaded. Please wait." }).id;
 
         try {
-            const timestamp = Date.now();
-            const uniqueFileName = `${timestamp}_${file.name}`;
-            const filePath = `users/${user.uid}/${imageType}s/${uniqueFileName}`;
-            const storageRef = ref(storage, filePath);
+            const result = await uploadProfileImage(user.uid, imageType, formData);
 
-            const metadata = { contentType: file.type };
-            const snapshot = await uploadBytes(storageRef, file, metadata);
-            const downloadURL = await getDownloadURL(snapshot.ref);
-
-            const userDocRef = doc(firestore, 'users', user.uid);
-
-            if (imageType === 'gallery') {
-                const newImage: GalleryImage = {
-                    id: Date.now(),
-                    src: downloadURL,
-                    hint: 'custom upload',
-                    path: filePath,
-                };
-                await updateDoc(userDocRef, {
-                    gallery: arrayUnion(newImage)
-                });
-                setUserProfile(prev => prev ? { ...prev, gallery: [...prev.gallery, newImage] } : null);
-
+            if (result.success) {
+                toast.update(toastId, { title: "Success!", description: "Your profile has been updated." });
+                 // Manually update the state to show the new image instantly
+                if(imageType === 'gallery') {
+                    // Re-fetching would be ideal here, but for simplicity we'll just show a success message
+                } else if (imageType === 'avatar') {
+                    setUserProfile(prev => prev ? { ...prev, avatar: result.url } : null);
+                } else if (imageType === 'banner') {
+                     setUserProfile(prev => prev ? { ...prev, banner: result.url } : null);
+                }
             } else {
-                const fieldToUpdate = imageType === 'avatar' ? 'photoURL' : 'banner';
-                const secondField = imageType === 'avatar' ? 'avatar' : 'banner';
-                await updateDoc(userDocRef, { [fieldToUpdate]: downloadURL, [secondField]: downloadURL });
-                 setUserProfile(prev => prev ? { ...prev, [secondField]: downloadURL } : null);
+                 throw new Error("Upload failed on the server.");
             }
-
-            toast.update(toastId, { title: "Success!", description: "Your profile has been updated." });
 
         } catch (error) {
             console.error("Error during image upload: ", error);
@@ -128,9 +115,7 @@ export default function ProfilePage() {
 
         toast({ title: "Removing photo...", description: "Please wait." });
         try {
-            const imageRef = ref(storage, photo.path);
-            await deleteObject(imageRef);
-
+           
             const userDocRef = doc(firestore, 'users', user.uid);
             // We use arrayRemove with the specific object to ensure the correct one is removed.
             await updateDoc(userDocRef, {

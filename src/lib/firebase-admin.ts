@@ -6,11 +6,12 @@ const serviceAccountKey = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
 
 if (!admin.apps.length) {
   if (!serviceAccountKey) {
-    console.warn('GOOGLE_APPLICATION_CREDENTIALS_JSON is not set. Firebase Admin SDK might not be initialized.');
+    console.warn('GOOGLE_APPLICATION_CREDENTIALS_JSON is not set for Admin SDK. Server-side actions may fail.');
   } else {
     try {
+      const serviceAccount = JSON.parse(serviceAccountKey);
       admin.initializeApp({
-        credential: admin.credential.cert(JSON.parse(serviceAccountKey)),
+        credential: admin.credential.cert(serviceAccount),
         storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
       });
     } catch (error: any) {
