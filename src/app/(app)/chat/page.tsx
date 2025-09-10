@@ -1,24 +1,87 @@
 
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { Search, Bell, Users, Heart, Flame } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { chats } from "@/lib/chat-data";
+import type { Chat } from "@/lib/chat-data";
+import { useAuth } from "@/hooks/use-auth";
+import { firestore } from "@/lib/firebase";
+import { collection, query, where, getDocs, onSnapshot, orderBy, limit } from "firebase/firestore";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatDistanceToNow } from "date-fns";
 
 type FilterType = 'all' | 'friends' | 'date' | 'spicy';
+type ChatWithUserInfo = Chat & {
+    otherUserName: string;
+    otherUserAvatar: string;
+}
 
 export default function ChatListPage() {
+  const { user, loading: authLoading } = useAuth();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [searchQuery, setSearchQuery] = useState("");
+  const [chats, setChats] = useState<ChatWithUserInfo[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+
+    setLoading(true);
+
+    const chatsQuery = query(
+      collection(firestore, 'chats'),
+      where('userIds', 'array-contains', user.uid)
+    );
+
+    const unsubscribe = onSnapshot(chatsQuery, async (querySnapshot) => {
+      const chatsDataPromises = querySnapshot.docs.map(async (doc) => {
+        const chatData = doc.data() as Chat;
+        const otherUserId = chatData.userIds.find(id => id !== user.uid);
+        
+        let otherUserName = "Unknown User";
+        let otherUserAvatar = "https://picsum.photos/seed/unknown/100";
+
+        if(otherUserId) {
+            const userDoc = await getDoc(doc(firestore, 'users', otherUserId));
+            if(userDoc.exists()) {
+                otherUserName = userDoc.data().name;
+                otherUserAvatar = userDoc.data().avatar;
+            }
+        }
+        
+        return {
+            ...chatData,
+            id: doc.id,
+            otherUserName,
+            otherUserAvatar,
+        };
+      });
+      
+      const resolvedChats = await Promise.all(chatsDataPromises);
+      
+      // Sort by last message timestamp
+      resolvedChats.sort((a, b) => {
+        const timeA = a.lastMessageTimestamp?.toDate() || new Date(0);
+        const timeB = b.lastMessageTimestamp?.toDate() || new Date(0);
+        return timeB.getTime() - timeA.getTime();
+      });
+
+      setChats(resolvedChats);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
 
   const filteredChats = chats.filter(chat => {
     const filterMatch = activeFilter === 'all' || chat.vibe === activeFilter;
-    const searchMatch = chat.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const searchMatch = chat.otherUserName.toLowerCase().includes(searchQuery.toLowerCase());
     return filterMatch && searchMatch;
   });
 
@@ -28,6 +91,34 @@ export default function ChatListPage() {
       { name: 'Date', value: 'date' as FilterType, icon: Heart },
       { name: 'Spicy', value: 'spicy' as FilterType, icon: Flame },
   ]
+
+  if (loading || authLoading) {
+      return (
+          <div className="flex flex-col h-full gap-4">
+             <div className="flex items-center justify-between pb-4 border-b">
+                <Skeleton className="h-10 w-48" />
+                <Skeleton className="h-10 w-10 rounded-md" />
+            </div>
+            <Skeleton className="h-12 w-full"/>
+            <div className="flex items-center gap-2">
+                <Skeleton className="h-10 w-24" />
+                <Skeleton className="h-10 w-24" />
+                <Skeleton className="h-10 w-24" />
+            </div>
+            <div className="flex flex-col gap-4 mt-4">
+                {[...Array(3)].map((_, i) => (
+                     <div key={i} className="flex items-center gap-4 p-2">
+                        <Skeleton className="h-14 w-14 rounded-full"/>
+                        <div className="flex-1 space-y-2">
+                            <Skeleton className="h-4 w-3/4" />
+                            <Skeleton className="h-4 w-1/2" />
+                        </div>
+                     </div>
+                ))}
+            </div>
+          </div>
+      )
+  }
 
   return (
     <div className="flex flex-col h-full gap-4">
@@ -71,47 +162,42 @@ export default function ChatListPage() {
             {filteredChats.map(chat => (
                 <div key={chat.id} className={cn(
                     "flex items-center gap-4 p-4 border-b border-border hover:bg-muted/50 transition-colors duration-200",
-                    chat.unread > 0 && "bg-primary/5"
+                    // chat.unread > 0 && "bg-primary/5"
                 )}>
-                  <Link href={`/users/${chat.id}`}>
+                  <Link href={`/users/${chat.userIds.find(id => id !== user?.uid)}`}>
                     <div className="relative">
                       <Avatar className={cn(
                         "h-14 w-14 border-2 cursor-pointer transition-colors",
-                        chat.unread > 0 && chat.vibe === 'friends' && 'border-sky-500',
-                        chat.unread > 0 && chat.vibe === 'date' && 'border-rose-500',
-                        chat.unread > 0 && chat.vibe === 'spicy' && 'border-orange-500',
-                        chat.unread > 0 && 'ring-2 ring-offset-2 ring-offset-background',
-                        chat.unread > 0 && chat.vibe === 'friends' && 'ring-sky-500/50',
-                        chat.unread > 0 && chat.vibe === 'date' && 'ring-rose-500/50',
-                        chat.unread > 0 && chat.vibe === 'spicy' && 'ring-orange-500/50'
                       )}>
-                        <AvatarImage src={chat.avatar} alt={chat.name} data-ai-hint="profile avatar" />
-                        <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={chat.otherUserAvatar} alt={chat.otherUserName} data-ai-hint="profile avatar" />
+                        <AvatarFallback>{chat.otherUserName.charAt(0)}</AvatarFallback>
                       </Avatar>
-                      {chat.online && (
+                      {/* {chat.online && (
                         <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-background rounded-full" />
-                      )}
+                      )} */}
                     </div>
                   </Link>
                   <Link href={`/chat/${chat.id}`} className="flex-1">
                     <div className="grid gap-1.5">
                       <div className="flex items-baseline gap-2">
-                          <p className="text-base font-bold font-headline tracking-wide">{chat.name}</p>
-                          <p className="text-xs text-muted-foreground">{chat.time}</p>
+                          <p className="text-base font-bold font-headline tracking-wide">{chat.otherUserName}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {chat.lastMessageTimestamp ? formatDistanceToNow(chat.lastMessageTimestamp.toDate(), { addSuffix: true }) : ''}
+                          </p>
                       </div>
-                      <p className="text-sm text-muted-foreground truncate">{chat.message}</p>
+                      <p className="text-sm text-muted-foreground truncate">{chat.lastMessage}</p>
                     </div>
                   </Link>
-                  {chat.unread > 0 && (
+                  {/* {chat.unread > 0 && (
                       <div className="flex flex-col items-center justify-center gap-1">
                         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">{chat.unread}</span>
                       </div>
-                  )}
+                  )} */}
                 </div>
             ))}
              {filteredChats.length === 0 && (
                 <div className="text-center text-muted-foreground p-8">
-                    <p>No chats found matching your search.</p>
+                    <p>No chats found.</p>
                 </div>
              )}
           </div>

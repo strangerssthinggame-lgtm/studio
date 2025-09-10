@@ -4,43 +4,40 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Paperclip, Send, Smile, MoreVertical, Zap, Wand2 } from "lucide-react";
-import { useState } from "react";
+import { Paperclip, Send, MoreVertical, Zap, Wand2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import GameSelectionDialog from "@/components/game-selection-dialog";
 import CoinToss from "@/components/coin-toss";
 import GameCard from "@/components/game-card";
 import VibeCheckCard from "@/components/vibe-check-card";
 import { VibeCheckResults } from "@/components/vibe-check-results";
-import { chats, Chat } from "@/lib/chat-data";
-import { notFound, useRouter } from 'next/navigation';
+import { notFound, useRouter, useParams } from 'next/navigation';
 import Link from "next/link";
 import { AIPromptPopover } from "@/components/ai-prompt-popover";
 import { ChallengeCard } from "@/components/challenge-card";
+import { useAuth } from "@/hooks/use-auth";
+import { firestore } from "@/lib/firebase";
+import { doc, getDoc, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from "firebase/firestore";
+import type { Chat } from "@/lib/chat-data";
+import { useChatMessages, Message } from "@/hooks/use-chat-messages";
+import { Skeleton } from "@/components/ui/skeleton";
 
-
-type Message = {
-    id: string;
-    sender: 'me' | 'them';
-    type?: 'question' | 'answer' | 'challenge' | 'system';
-    text?: string;
-    challenge?: {
-        truth: string;
-        dare: string;
-        isResponded: boolean;
-        choice?: 'truth' | 'dare';
-    }
-};
 
 export type DeckTheme = 'default' | 'friends' | 'date' | 'spicy';
 export type GameType = 'vibe' | 'truth-or-dare';
 export type GameLevel = 1 | 2 | 3;
 
-export default function ChatPage({ params }: { params: { id: string } }) {
-  const chat: Chat | undefined = chats.find(c => c.id === params.id);
+export default function ChatPage() {
+  const params = useParams();
+  const chatId = params.id as string;
+  const { user: currentUser, loading: authLoading } = useAuth();
   const router = useRouter();
+
+  const [chat, setChat] = useState<Chat | null>(null);
+  const { messages, loading: messagesLoading } = useChatMessages(chatId);
+  const [otherUser, setOtherUser] = useState<{ id: string; name: string; avatar: string } | null>(null);
   
-  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isGameSelectionOpen, setIsGameSelectionOpen] = useState(false);
   const [activeTheme, setActiveTheme] = useState<DeckTheme>(chat?.vibe as DeckTheme || 'default');
@@ -53,23 +50,53 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   const [vibeCheckState, setVibeCheckState] = useState<'needed' | 'in_progress' | 'complete'>('needed');
   const [vibeCheckMatches, setVibeCheckMatches] = useState(0);
 
-  if (!chat) {
-    notFound();
-  }
+  useEffect(() => {
+    if (!chatId || !currentUser) return;
 
+    const fetchChatInfo = async () => {
+        const chatDocRef = doc(firestore, 'chats', chatId);
+        const chatDocSnap = await getDoc(chatDocRef);
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputValue.trim() === '' || !canAnswer) return;
+        if (!chatDocSnap.exists()) {
+            return notFound();
+        }
 
-    const newMessage: Message = {
-        id: (messages.length + 1).toString(),
-        text: inputValue,
-        sender: 'me',
-        type: 'answer',
+        const chatData = chatDocSnap.data() as Chat;
+        setChat(chatData);
+        setActiveTheme(chatData.vibe as DeckTheme || 'default');
+
+        const otherUserId = chatData.userIds.find(id => id !== currentUser.uid);
+        if (otherUserId) {
+            const userDocRef = doc(firestore, 'users', otherUserId);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                setOtherUser({
+                    id: userDocSnap.id,
+                    name: userData.name,
+                    avatar: userData.avatar,
+                });
+            }
+        }
     };
 
-    setMessages([...messages, newMessage]);
+    fetchChatInfo();
+  }, [chatId, currentUser]);
+
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputValue.trim() === '' || !canAnswer || !currentUser || !chatId) return;
+
+    const messagesCollectionRef = collection(firestore, 'chats', chatId, 'messages');
+    
+    await addDoc(messagesCollectionRef, {
+        text: inputValue,
+        senderId: currentUser.uid,
+        timestamp: serverTimestamp(),
+        type: 'answer',
+    });
+
     setInputValue('');
     setIsAwaitingAnswer(false);
     
@@ -86,20 +113,19 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     setGameStage('toss');
   }
 
-  const handleTossFinish = (winner: 'You' | 'Sophia') => {
+  const handleTossFinish = (winner: 'You' | string) => {
     setGameStage('playing');
     setGameTurn(winner === 'You' ? 'me' : 'them');
   }
   
   const handleGameFinish = () => {
     setGameStage('none');
-    setActiveTheme(chat.vibe as DeckTheme || 'default');
+    setActiveTheme(chat?.vibe as DeckTheme || 'default');
     setDeckName('');
     setGameType(null);
     setGameLevel(null);
     setGameTurn(null);
     setIsAwaitingAnswer(false);
-    // Optional: Add a system message that the game has ended.
   }
   
   const handleSendVibeQuestion = (question: string) => {
@@ -110,40 +136,12 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       sender: 'me',
       type: 'question'
     };
-    setMessages(prev => [...prev, newMessage]);
+    // TODO: save to firestore
+    // setMessages(prev => [...prev, newMessage]);
     setGameTurn(null); // No one's turn until they answer.
     setIsAwaitingAnswer(true); // Now we are waiting for THEM to answer.
 
-    // Simulate opponent's turn after a delay
-    setTimeout(() => {
-        // Simulate opponent answering
-        const opponentAnswer: Message = {
-          id: (messages.length + 2).toString(),
-          text: "That's a great question! I think...",
-          sender: 'them',
-          type: 'answer'
-        };
-        
-        setMessages(prev => [...prev, opponentAnswer]);
-        
-        // After they answer, it's their turn to ask a question now.
-        setGameTurn('them'); 
-
-        // Simulate them asking a question
-         setTimeout(() => {
-            const opponentQuestion: Message = {
-                id: (messages.length + 3).toString(),
-                text: "What is your biggest fear?",
-                sender: 'them',
-                type: 'question'
-            };
-            setMessages(prev => [...prev, opponentQuestion]);
-            setGameTurn(null); // Turn is null while waiting for my answer
-            setIsAwaitingAnswer(true); // Now I need to answer.
-         }, 1500)
-
-
-    }, 2000);
+    // Simulate opponent's turn - this will be replaced with real-time listeners
   };
   
   const handleSendChallenge = (truth: string, dare: string) => {
@@ -158,52 +156,22 @@ export default function ChatPage({ params }: { params: { id: string } }) {
             isResponded: false
         }
     };
-    setMessages(prev => [...prev, newChallenge]);
+    // TODO: Save to firestore
+    // setMessages(prev => [...prev, newChallenge]);
     setGameTurn(null); // Turn is null while we wait for them to respond
     setIsAwaitingAnswer(true); // They need to respond to the challenge
   }
 
   const handleChallengeResponse = (messageId: string, choice: 'truth' | 'dare') => {
       // THIS IS THE OPPONENT's simulated response
-      setMessages(prev => prev.map(msg => 
-        msg.id === messageId && msg.challenge
-        ? { ...msg, challenge: {...msg.challenge, isResponded: true, choice: choice} }
-        : msg
-      ));
+      // TODO: Update in firestore
+    //   setMessages(prev => prev.map(msg => 
+    //     msg.id === messageId && msg.challenge
+    //     ? { ...msg, challenge: {...msg.challenge, isResponded: true, choice: choice} }
+    //     : msg
+    //   ));
       
       setIsAwaitingAnswer(false); // I no longer need to wait for them to choose
-      
-      // Simulate them answering...
-      setTimeout(() => {
-        const theirAnswer: Message = {
-            id: (messages.length + 2).toString(),
-            sender: 'them',
-            type: 'answer',
-            text: `Okay, I chose ${choice}. Here's my answer...`
-        }
-        setMessages(prev => [...prev, theirAnswer]);
-        setGameTurn('them'); // Now it's their turn to send a challenge...
-
-        // ...and now they send a challenge back
-        setTimeout(() => {
-             const theirChallenge: Message = {
-                id: (messages.length + 3).toString(),
-                sender: 'them',
-                type: 'challenge',
-                challenge: {
-                    truth: "What's the most childish thing you still do?",
-                    dare: "Show me the last photo you took on your phone.",
-                    isResponded: false
-                }
-            };
-            setMessages(prev => [...prev, theirChallenge]);
-            setGameTurn('me'); // Now it's MY turn to respond
-            setIsAwaitingAnswer(true);
-        }, 2000);
-
-
-      }, 1500);
-
   }
 
   const handleVibeCheckFinish = (matches: number) => {
@@ -217,8 +185,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
   const isMyTurnInGame = gameStage === 'playing' && gameTurn === 'me';
   const isTheirTurnInGame = gameStage === 'playing' && gameTurn === 'them';
-  const canAnswer = gameStage === 'playing' && isAwaitingAnswer && (messages[messages.length-1]?.sender === 'them' && (messages[messages.length-1]?.type === 'question' || messages[messages.length-1]?.type === 'challenge'));
-
+  const canAnswer = !messagesLoading && (gameStage === 'playing' && isAwaitingAnswer && (messages[messages.length-1]?.sender === 'them' && (messages[messages.length-1]?.type === 'question' || messages[messages.length-1]?.type === 'challenge')));
   
   const isChatInputDisabled = vibeCheckState !== 'complete' || (gameStage === 'playing' && !canAnswer);
   
@@ -226,14 +193,36 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     if (vibeCheckState !== 'complete') return "Complete the Vibe Check to start chatting...";
     if (canAnswer && gameType === 'vibe') return "It's your turn to answer...";
     if (isMyTurnInGame && gameType === 'truth-or-dare' && !isAwaitingAnswer) return `It's your turn to send a challenge...`;
-    if (isAwaitingAnswer && gameType === 'truth-or-dare' && messages[messages.length -1].sender === 'me') return `Waiting for ${chat.name} to choose...`;
+    if (isAwaitingAnswer && gameType === 'truth-or-dare' && messages.length > 0 && messages[messages.length -1].sender === 'me') return `Waiting for ${otherUser?.name} to choose...`;
     if (isMyTurnInGame) return `It's your turn...`;
-    if (isTheirTurnInGame) return `Waiting for ${chat.name}...`;
+    if (isTheirTurnInGame) return `Waiting for ${otherUser?.name}...`;
     if (gameStage === 'playing') return "The game is in progress...";
+    if (messagesLoading || authLoading) return "Loading chat...";
     return "Type a message...";
   }
 
   const conversationHistory = messages.map(m => `${m.sender === 'me' ? 'User A' : 'User B'}: ${m.text}`).join('\n');
+
+  if (authLoading || !currentUser || !otherUser) {
+    return (
+        <div className="flex flex-col h-[calc(100vh_-_theme(spacing.24))] rounded-xl border">
+            <div className="flex items-center p-4 border-b">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="ml-4 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-20" />
+                </div>
+            </div>
+            <div className="flex-1 p-4 space-y-4">
+                <Skeleton className="h-16 w-3/4" />
+                <Skeleton className="h-16 w-3/4 ml-auto" />
+            </div>
+             <div className="p-4 border-t">
+                <Skeleton className="h-12 w-full" />
+            </div>
+        </div>
+    )
+  }
 
   // Hide main chat UI if Vibe Check is needed
   if (vibeCheckState === 'needed') {
@@ -241,8 +230,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         <div className="flex flex-col h-[calc(100vh_-_theme(spacing.24))] rounded-xl border items-center justify-center bg-muted/20">
             <VibeCheckCard 
                 onGameFinish={handleVibeCheckFinish} 
-                opponentName={chat.name} 
-                opponentAvatar={chat.avatar} 
+                opponentName={otherUser.name} 
+                opponentAvatar={otherUser.avatar} 
             />
         </div>
       )
@@ -254,21 +243,21 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         `theme-${activeTheme}`
     )}>
         <div className="flex items-center p-4 border-b bg-card/80 rounded-t-xl">
-            <Link href={`/users/${chat.id}`} className="cursor-pointer">
+            <Link href={`/users/${otherUser.id}`} className="cursor-pointer">
               <Avatar>
-                  <AvatarImage src={chat.avatar} alt={chat.name} data-ai-hint="profile avatar" />
-                  <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
+                  <AvatarImage src={otherUser.avatar} alt={otherUser.name} data-ai-hint="profile avatar" />
+                  <AvatarFallback>{otherUser.name.charAt(0)}</AvatarFallback>
               </Avatar>
             </Link>
             <div className="ml-4 flex-1">
-              <Link href={`/users/${chat.id}`} className="cursor-pointer">
-                <p className="text-lg font-semibold font-headline">{chat.name}</p>
+              <Link href={`/users/${otherUser.id}`} className="cursor-pointer">
+                <p className="text-lg font-semibold font-headline">{otherUser.name}</p>
               </Link>
                  <div className="flex items-center gap-2">
-                  {chat.online && (
+                  {/* {chat.online && (
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                   )}
-                  <p className="text-sm text-muted-foreground">{chat.online ? 'Online' : 'Offline'}</p>
+                  <p className="text-sm text-muted-foreground">{chat.online ? 'Online' : 'Offline'}</p> */}
                 </div>
             </div>
             <GameSelectionDialog 
@@ -290,7 +279,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
             
             {vibeCheckState === 'complete' && <VibeCheckResults totalMatches={vibeCheckMatches} />}
 
-            {gameStage === 'toss' && deckName && <CoinToss onTossFinish={handleTossFinish} deckName={deckName} opponentName={chat.name} opponentAvatar={chat.avatar} />}
+            {gameStage === 'toss' && deckName && <CoinToss onTossFinish={handleTossFinish} deckName={deckName} opponentName={otherUser.name} opponentAvatar={otherUser.avatar} />}
             
             {isMyTurnInGame && !isAwaitingAnswer && deckName && gameType && gameLevel && (
                  <GameCard 
@@ -300,59 +289,63 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                     gameLevel={gameLevel}
                     onSendVibeQuestion={handleSendVibeQuestion}
                     onSendChallenge={handleSendChallenge}
-                    opponentName={chat.name}
+                    opponentName={otherUser.name}
                 />
             )}
             
             {isTheirTurnInGame && !isAwaitingAnswer && (
                 <div className="text-center text-muted-foreground p-4 bg-muted/50 rounded-lg">
-                    <p>Waiting for {chat.name} to ask a question...</p>
+                    <p>Waiting for {otherUser.name} to ask a question...</p>
                 </div>
             )}
 
             <div className="space-y-4">
-                  {messages.map((message) => {
-                    if (message.type === 'challenge' && message.challenge) {
-                        return (
-                             <ChallengeCard
-                                key={message.id}
-                                message={message}
-                                onRespond={handleChallengeResponse}
-                                currentUser={chat.id === message.sender ? 'them' : 'me'}
-                                isMyTurnToRespond={message.sender === 'them' && gameTurn === 'me'}
-                            />
-                        )
-                    }
+                  {messagesLoading ? (
+                    <div className="text-center text-muted-foreground">Loading messages...</div>
+                  ) : (
+                    messages.map((message) => {
+                      if (message.type === 'challenge' && message.challenge) {
+                          return (
+                               <ChallengeCard
+                                  key={message.id}
+                                  message={message}
+                                  onRespond={handleChallengeResponse}
+                                  currentUser={otherUser.id === message.senderId ? 'them' : 'me'}
+                                  isMyTurnToRespond={message.sender === 'them' && gameTurn === 'me'}
+                              />
+                          )
+                      }
 
-                    return (
-                        <div 
-                            key={message.id} 
-                            className={cn(
-                                "flex items-end gap-2",
-                                message.sender === 'me' ? 'justify-end' : 'justify-start'
-                            )}
-                        >
-                            {message.sender === 'them' && (
-                                <Link href={`/users/${chat.id}`}>
-                                    <Avatar className="h-8 w-8">
-                                        <AvatarImage src={chat.avatar} alt={chat.name} data-ai-hint="profile avatar"/>
-                                        <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                </Link>
-                            )}
-                            <div className={cn(
-                                "max-w-xs md:max-w-md lg:max-w-lg rounded-xl px-4 py-3 text-sm",
-                                message.type === 'question' 
-                                    ? 'bg-muted border-2 border-primary/50 text-primary' 
-                                    : (message.sender === 'me' 
-                                        ? 'bg-primary text-primary-foreground rounded-br-none' 
-                                        : 'bg-muted rounded-bl-none')
-                            )}>
-                                <p>{message.text}</p>
-                            </div>
-                        </div>
-                    )
-                  })}
+                      return (
+                          <div 
+                              key={message.id} 
+                              className={cn(
+                                  "flex items-end gap-2",
+                                  message.senderId === currentUser.uid ? 'justify-end' : 'justify-start'
+                              )}
+                          >
+                              {message.senderId !== currentUser.uid && (
+                                  <Link href={`/users/${otherUser.id}`}>
+                                      <Avatar className="h-8 w-8">
+                                          <AvatarImage src={otherUser.avatar} alt={otherUser.name} data-ai-hint="profile avatar"/>
+                                          <AvatarFallback>{otherUser.name.charAt(0)}</AvatarFallback>
+                                      </Avatar>
+                                  </Link>
+                              )}
+                              <div className={cn(
+                                  "max-w-xs md:max-w-md lg:max-w-lg rounded-xl px-4 py-3 text-sm",
+                                  message.type === 'question' 
+                                      ? 'bg-muted border-2 border-primary/50 text-primary' 
+                                      : (message.senderId === currentUser.uid
+                                          ? 'bg-primary text-primary-foreground rounded-br-none' 
+                                          : 'bg-muted rounded-bl-none')
+                              )}>
+                                  <p>{message.text}</p>
+                              </div>
+                          </div>
+                      )
+                    })
+                  )}
             </div>
            
         </div>
@@ -378,5 +371,3 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     </div>
   )
 }
-
-    
