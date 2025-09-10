@@ -7,13 +7,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { firestore, storage } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Camera, Edit, MapPin, User, FileImage, PlusCircle, X, Save, Sparkles, Clock, RotateCw } from 'lucide-react';
+import { PlusCircle, X, Save, Sparkles, Clock, RotateCw, FileImage, User } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -91,13 +90,24 @@ export default function EditProfilePage() {
     setIsSaving(true);
     try {
         const userDocRef = doc(firestore, 'users', user.uid);
-        await updateDoc(userDocRef, {
-            ...profile,
-            profileComplete: true,
-        });
+        // This ensures all fields from the form are updated
+        const profileToSave = {
+            name: profile.name,
+            username: profile.username,
+            location: profile.location,
+            bio: profile.bio,
+            availability: profile.availability,
+            vibes: profile.vibes,
+            interests: profile.interests,
+            photos: profile.photos,
+            profileComplete: true, // Mark profile as complete after first save
+        };
+
+        await updateDoc(userDocRef, profileToSave);
         toast({ title: 'Success!', description: 'Your profile has been saved successfully.' });
         router.push('/profile');
-    } catch (error) {
+    } catch (error)
+ {
         console.error("Error saving profile: ", error);
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to save profile.' });
     } finally {
@@ -115,7 +125,7 @@ export default function EditProfilePage() {
     if (e.target.files && e.target.files[0] && profile && user) {
       const file = e.target.files[0];
       const imageId = Date.now();
-      const storageRef = ref(storage, `users/${user.uid}/photos/${imageId}_${file.name}`);
+      const storageRef = ref(storage, `users/${user.uid}/gallery/${imageId}_${file.name}`);
       
       toast({ title: "Uploading...", description: "Your photo is being uploaded." });
 

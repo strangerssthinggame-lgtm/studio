@@ -6,7 +6,7 @@ To get started, take a look at src/app/page.tsx.
 
 ## Fixing Image Uploads (CORS Configuration)
 
-If you are having trouble uploading images and seeing permission errors, you need to configure Cross-Origin Resource Sharing (CORS) on your Firebase Storage bucket.
+If you are having trouble uploading images and seeing permission errors, you need to configure Cross-Origin Resource Sharing (CORS) on your Firebase Storage bucket. This is a one-time setup step.
 
 **1. Install Google Cloud CLI:**
 
@@ -35,4 +35,4 @@ For example:
 gsutil cors set cors.json gs://vibeverse-1a2b3.appspot.com
 ```
 
-This will apply the settings from the `cors.json` file in this project to your bucket, allowing image uploads from the browser to succeed.
+This will apply the settings from the `cors.json` file in this project to your bucket, allowing image uploads from your app to succeed.
