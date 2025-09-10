@@ -10,14 +10,15 @@ import { Camera, Edit, MapPin, User, FileImage, PlusCircle, Sparkles, Clock, Sho
 import Link from 'next/link';
 import OrderHistory from '@/components/order-history';
 import { useAuth } from '@/hooks/use-auth';
-import { useEffect, useState, ChangeEvent } from 'react';
-import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { useEffect, useState, ChangeEvent, useRef } from 'react';
+import { doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import type { UserProfile } from '@/lib/user-profile-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { uploadProfileImage } from '@/app/actions';
+import { cn } from '@/lib/utils';
 
 
 export default function ProfilePage() {
@@ -27,6 +28,9 @@ export default function ProfilePage() {
     const [myUploads, setMyUploads] = useState<string[]>([]);
     const router = useRouter();
     const { toast } = useToast();
+
+    const avatarInputRef = useRef<HTMLInputElement>(null);
+    const bannerInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -41,7 +45,7 @@ export default function ProfilePage() {
             const docSnap = await getDoc(userDocRef);
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                setUserProfile({
+                const profileData = {
                     id: user.uid,
                     name: data.name || 'Ajay',
                     username: data.username || `@ajay`,
@@ -49,7 +53,7 @@ export default function ProfilePage() {
                     gender: data.gender || 'not specified',
                     location: data.location || 'Not specified',
                     bio: data.bio || 'No bio yet. Click "Edit Profile" to add one!',
-                    avatar: data.photoURL || `https://picsum.photos/seed/${user.uid}/400/400`,
+                    avatar: data.avatar || `https://picsum.photos/seed/${user.uid}/400/400`,
                     banner: data.banner || `https://picsum.photos/seed/${user.uid}-banner/800/600`,
                     vibes: data.vibes || ['Date'],
                     interests: data.interests || [],
@@ -60,7 +64,8 @@ export default function ProfilePage() {
                     liked: data.liked || [],
                     passed: data.passed || [],
                     matches: data.matches || [],
-                });
+                };
+                setUserProfile(profileData);
                 setMyUploads(data.photos || []);
             } else {
                  router.replace('/profile/edit');
@@ -71,6 +76,35 @@ export default function ProfilePage() {
         fetchUserProfile();
     }, [user, authLoading, router]);
     
+    const handleProfileImageUpload = async (e: ChangeEvent<HTMLInputElement>, imageType: 'avatar' | 'banner') => {
+        if (!e.target.files || e.target.files.length === 0 || !user) {
+            return;
+        }
+
+        const file = e.target.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const originalToast = toast({ title: "Uploading...", description: `Your ${imageType} is being updated.` });
+        
+        try {
+            const result = await uploadProfileImage(user.uid, imageType, formData);
+
+            if (result.success && result.url) {
+                toast({ title: "Success!", description: `Your ${imageType} has been updated.` });
+                setUserProfile(prev => prev ? { ...prev, [imageType]: result.url } : null);
+            } else {
+                throw new Error(result.error || "Upload failed on the server.");
+            }
+        } catch (error) {
+             const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            toast({ variant: 'destructive', title: "Upload Failed", description: errorMessage });
+        } finally {
+             if (e.target) e.target.value = '';
+        }
+    }
+
+
     const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0 || !user) {
             return;
@@ -164,7 +198,7 @@ export default function ProfilePage() {
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      <div className="relative h-48 md:h-64 w-full rounded-t-xl overflow-hidden">
+      <div className="group relative h-48 md:h-64 w-full rounded-t-xl overflow-hidden">
         <Image
           src={userProfile.banner || 'https://picsum.photos/1600/400'}
           alt="Profile banner"
@@ -174,15 +208,33 @@ export default function ProfilePage() {
           priority
         />
         <div className="absolute inset-0 bg-black/30" />
+        <input type="file" ref={bannerInputRef} className="sr-only" accept="image/*" onChange={(e) => handleProfileImageUpload(e, 'banner')} />
+        <Button 
+            onClick={() => bannerInputRef.current?.click()}
+            variant="secondary"
+            className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+            <Camera className="mr-2 h-4 w-4"/>
+            Change Banner
+        </Button>
       </div>
 
       <div className="relative glassy p-6 rounded-b-xl shadow-lg">
         <div className="flex flex-col md:flex-row items-start">
-          <div className="relative -mt-20 md:-mt-24">
+          <div className="relative -mt-20 md:-mt-24 group">
             <Avatar className="h-32 w-32 md:h-40 md:w-40 border-4 border-background shadow-md">
               <AvatarImage src={userProfile.avatar} alt={userProfile.name} data-ai-hint="profile photo" />
               <AvatarFallback>{userProfile.name.charAt(0)}</AvatarFallback>
             </Avatar>
+             <input type="file" ref={avatarInputRef} className="sr-only" accept="image/*" onChange={(e) => handleProfileImageUpload(e, 'avatar')} />
+            <button 
+                onClick={() => avatarInputRef.current?.click()}
+                className={cn(
+                    "absolute inset-0 bg-black/50 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity",
+                )}
+            >
+                <Camera className="w-8 h-8"/>
+            </button>
           </div>
 
           <div className="mt-4 md:mt-0 md:ml-6 flex-1">
