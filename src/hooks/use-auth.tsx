@@ -48,9 +48,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               location: '',
               interests: [],
               vibes: [],
-              gallery: [],
+              photos: [],
               availability: 'Not specified',
-              profileComplete: false, // Explicitly set to false for new users
+              profileComplete: false,
+              preferences: { minAge: 18, maxAge: 40, maxDistance: 100 },
+              liked: [],
+              passed: [],
+              matches: [],
             });
            } catch (error) {
             console.error("Error creating user document: ", error)
@@ -79,3 +83,5 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useAuth = () => useContext(AuthContext);
+
+    

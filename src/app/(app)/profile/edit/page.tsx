@@ -43,9 +43,7 @@ export default function EditProfilePage() {
         if (docSnap.exists()) {
           setProfile(docSnap.data() as UserProfile);
         } else {
-          // Handle case where profile doesn't exist for some reason
           console.error("No such document!");
-          // Maybe redirect or show an error
         }
       }
       setIsLoading(false);
@@ -93,10 +91,9 @@ export default function EditProfilePage() {
     setIsSaving(true);
     try {
         const userDocRef = doc(firestore, 'users', user.uid);
-        // Using updateDoc to only change fields. Use setDoc with merge if you want to create if not exists.
         await updateDoc(userDocRef, {
             ...profile,
-            profileComplete: true, // Mark profile as complete
+            profileComplete: true,
         });
         toast({ title: 'Success!', description: 'Your profile has been saved successfully.' });
         router.push('/profile');
@@ -118,7 +115,7 @@ export default function EditProfilePage() {
     if (e.target.files && e.target.files[0] && profile && user) {
       const file = e.target.files[0];
       const imageId = Date.now();
-      const storageRef = ref(storage, `users/${user.uid}/gallery/${imageId}_${file.name}`);
+      const storageRef = ref(storage, `users/${user.uid}/photos/${imageId}_${file.name}`);
       
       toast({ title: "Uploading...", description: "Your photo is being uploaded." });
 
@@ -126,16 +123,9 @@ export default function EditProfilePage() {
         const snapshot = await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(snapshot.ref);
 
-        const newImage = {
-          id: imageId,
-          src: downloadURL,
-          hint: 'custom upload',
-          path: snapshot.ref.fullPath // Important for deletion
-        };
-
         setProfile(prevProfile => prevProfile ? {
           ...prevProfile,
-          gallery: [...prevProfile.gallery, newImage],
+          photos: [...prevProfile.photos, downloadURL],
         } : null);
 
         toast({ title: "Photo Added", description: "Your new photo has been added to the gallery. Don't forget to save your changes!" });
@@ -146,11 +136,11 @@ export default function EditProfilePage() {
     }
   };
 
-  const handleImageRemove = (photoId: number) => {
+  const handleImageRemove = (photoUrl: string) => {
     if (profile) {
       setProfile(prevProfile => prevProfile ? {
         ...prevProfile,
-        gallery: prevProfile.gallery.filter((photo) => photo.id !== photoId),
+        photos: prevProfile.photos.filter((url) => url !== photoUrl),
       } : null);
        toast({ title: "Photo Removed", description: "The photo has been removed from your gallery. Save changes to make it permanent." });
     }
@@ -250,16 +240,16 @@ export default function EditProfilePage() {
        <div className="mt-8">
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 font-headline"><FileImage/> My Gallery</CardTitle>
+                    <CardTitle className="flex items-center gap-2 font-headline"><FileImage/> My Photos</CardTitle>
                     <CardDescription>Manage your photo gallery. Click 'Save Changes' at the top to make your edits permanent.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        {profile.gallery.map((photo) => (
-                            <div key={photo.id} className="aspect-square relative rounded-lg overflow-hidden group">
-                                <Image src={photo.src} alt={`Gallery photo ${photo.id}`} fill className="object-cover" data-ai-hint={photo.hint} />
+                        {profile.photos.map((photo, index) => (
+                            <div key={index} className="aspect-square relative rounded-lg overflow-hidden group">
+                                <Image src={photo} alt={`Gallery photo ${index + 1}`} fill className="object-cover" />
                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <Button variant="destructive" size="icon" onClick={() => handleImageRemove(photo.id)}><X className="h-4 w-4"/></Button>
+                                    <Button variant="destructive" size="icon" onClick={() => handleImageRemove(photo)}><X className="h-4 w-4"/></Button>
                                  </div>
                             </div>
                         ))}
@@ -308,3 +298,5 @@ export default function EditProfilePage() {
     </div>
   );
 }
+
+    

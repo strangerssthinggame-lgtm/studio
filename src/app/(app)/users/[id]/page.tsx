@@ -48,11 +48,14 @@ export default function UserProfilePage() {
                 banner: data.banner || `https://picsum.photos/seed/${userId}-banner/800/600`,
                 vibes: data.vibes || [],
                 interests: data.interests || [],
-                gallery: data.gallery || [],
-                availability: data.availability || 'Not specified'
+                photos: data.photos || [],
+                availability: data.availability || 'Not specified',
+                preferences: data.preferences || { minAge: 18, maxAge: 40, maxDistance: 100 },
+                liked: data.liked || [],
+                passed: data.passed || [],
+                matches: data.matches || [],
             });
         } else {
-             // Fallback to mock data if user not found in Firestore
             const mockUser = mockUserProfiles.find(p => p.id === userId);
             if (mockUser) {
                 setUserProfile(mockUser);
@@ -204,9 +207,9 @@ export default function UserProfilePage() {
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        {userProfile.gallery.map((photo) => (
-                            <div key={photo.id} className="aspect-square relative rounded-lg overflow-hidden group">
-                                <Image src={photo.src} alt={`Gallery photo ${photo.id}`} fill className="object-cover" data-ai-hint={photo.hint} />
+                        {userProfile.photos.map((photo, index) => (
+                            <div key={index} className="aspect-square relative rounded-lg overflow-hidden group">
+                                <Image src={photo} alt={`Gallery photo ${index + 1}`} fill className="object-cover" />
                             </div>
                         ))}
                     </div>
@@ -217,3 +220,5 @@ export default function UserProfilePage() {
     </div>
   );
 }
+
+    

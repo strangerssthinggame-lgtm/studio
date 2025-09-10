@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState, ChangeEvent } from 'react';
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
-import type { UserProfile, GalleryImage } from '@/lib/user-profile-data';
+import type { UserProfile } from '@/lib/user-profile-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -52,9 +52,13 @@ export default function ProfilePage() {
                     banner: data.banner || `https://picsum.photos/seed/${user.uid}-banner/800/600`,
                     vibes: data.vibes || ['Date'],
                     interests: data.interests || [],
-                    gallery: data.gallery || [],
+                    photos: data.photos || [],
                     availability: data.availability || 'Not specified',
                     profileComplete: data.profileComplete || false,
+                    preferences: data.preferences || { minAge: 18, maxAge: 40, maxDistance: 100 },
+                    liked: data.liked || [],
+                    passed: data.passed || [],
+                    matches: data.matches || [],
                 });
             } else {
                  router.replace('/profile/edit');
@@ -65,7 +69,7 @@ export default function ProfilePage() {
         fetchUserProfile();
     }, [user, authLoading, router]);
     
-    const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>, imageType: 'gallery' | 'avatar' | 'banner') => {
+    const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>, imageType: 'avatar' | 'banner' | 'gallery') => {
         if (!e.target.files || e.target.files.length === 0 || !user) {
             return;
         }
@@ -81,9 +85,8 @@ export default function ProfilePage() {
 
             if (result.success) {
                 toast({ title: "Success!", description: "Your profile has been updated." });
-                 // Manually update the state to show the new image instantly
-                if(imageType === 'gallery') {
-                    // Re-fetching would be ideal here, but for simplicity we'll just show a success message
+                 if(imageType === 'gallery') {
+                    setUserProfile(prev => prev ? { ...prev, photos: [...prev.photos, result.url] } : null);
                 } else if (imageType === 'avatar') {
                     setUserProfile(prev => prev ? { ...prev, avatar: result.url } : null);
                 } else if (imageType === 'banner') {
@@ -103,29 +106,26 @@ export default function ProfilePage() {
     };
 
 
-    const handleImageRemove = async (photo: GalleryImage) => {
-        if (!userProfile || !user || !photo.path) {
-            toast({ variant: 'destructive', title: "Error", description: "Cannot remove this photo. Path is missing." });
+    const handleImageRemove = async (photoUrl: string) => {
+        if (!userProfile || !user) {
+            toast({ variant: 'destructive', title: "Error", description: "Cannot remove this photo." });
             return;
         };
 
-        const originalGallery = userProfile.gallery;
-        // Optimistically update the UI
-        setUserProfile(prev => prev ? { ...prev, gallery: prev.gallery.filter((p) => p.id !== photo.id) } : null);
+        const originalPhotos = userProfile.photos;
+        setUserProfile(prev => prev ? { ...prev, photos: prev.photos.filter((p) => p !== photoUrl) } : null);
 
         toast({ title: "Removing photo...", description: "Please wait." });
         try {
            
             const userDocRef = doc(firestore, 'users', user.uid);
-            // We use arrayRemove with the specific object to ensure the correct one is removed.
             await updateDoc(userDocRef, {
-                gallery: arrayRemove(photo)
+                photos: arrayRemove(photoUrl)
             });
 
             toast({ title: "Photo Removed", description: "The photo has been successfully removed." });
         } catch (error) {
-            // Revert the UI if the deletion fails
-            setUserProfile(prev => prev ? { ...prev, gallery: originalGallery } : null);
+            setUserProfile(prev => prev ? { ...prev, photos: originalPhotos } : null);
             console.error("Error removing image: ", error);
             toast({ variant: 'destructive', title: "Deletion Failed", description: "Could not remove your photo. Please try again." });
         }
@@ -162,7 +162,7 @@ export default function ProfilePage() {
     }
     
     if (!userProfile) {
-        return null; // Or a message indicating profile is being created
+        return null; 
     }
 
 
@@ -294,14 +294,14 @@ export default function ProfilePage() {
         <div className="mt-8">
             <Card className="glassy">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 font-headline"><FileImage/> My Gallery</CardTitle>
+                    <CardTitle className="flex items-center gap-2 font-headline"><FileImage/> My Photos</CardTitle>
                     <CardDescription>A glimpse into my world. Add or remove photos.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        {userProfile.gallery.map((photo) => (
-                            <div key={photo.id} className="aspect-square relative rounded-lg overflow-hidden group">
-                                <Image src={photo.src} alt={`Gallery photo ${photo.id}`} fill className="object-cover" data-ai-hint={photo.hint} />
+                        {userProfile.photos.map((photo, index) => (
+                            <div key={index} className="aspect-square relative rounded-lg overflow-hidden group">
+                                <Image src={photo} alt={`Gallery photo ${index + 1}`} fill className="object-cover" />
                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                     <Button variant="destructive" size="icon" onClick={() => handleImageRemove(photo)} disabled={isPageLoading}>
                                         <X className="h-4 w-4"/>

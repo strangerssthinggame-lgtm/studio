@@ -1,3 +1,4 @@
+
 // src/app/actions.ts
 "use server";
 
@@ -7,7 +8,7 @@ import { revalidatePath } from 'next/cache';
 import { adminApp } from '@/lib/firebase-admin';
 import { getStorage } from 'firebase-admin/storage';
 import { getFirestore } from 'firebase-admin/firestore';
-import type { GalleryImage } from '@/lib/user-profile-data';
+import * as admin from 'firebase-admin';
 
 
 export async function getSuggestedPrompt(
@@ -56,7 +57,13 @@ export async function uploadProfileImage(userId: string, imageType: 'avatar' | '
     
     const timestamp = Date.now();
     const uniqueFileName = `${timestamp}_${file.name}`;
-    const filePath = `users/${userId}/${imageType}s/${uniqueFileName}`;
+    let filePath;
+
+    if (imageType === 'gallery') {
+        filePath = `users/${userId}/photos/${uniqueFileName}`;
+    } else {
+        filePath = `users/${userId}/${imageType}s/${uniqueFileName}`;
+    }
     
     const buffer = Buffer.from(await file.arrayBuffer());
 
@@ -70,20 +77,14 @@ export async function uploadProfileImage(userId: string, imageType: 'avatar' | '
 
     const downloadURL = await fileUpload.getSignedUrl({
         action: 'read',
-        expires: '03-09-2491', // A very long-lived URL
+        expires: '03-09-2491', 
     }).then(urls => urls[0]);
 
     const userDocRef = firestore.collection('users').doc(userId);
 
     if (imageType === 'gallery') {
-        const newImage: GalleryImage = {
-            id: Date.now(),
-            src: downloadURL,
-            hint: 'custom upload',
-            path: filePath,
-        };
         await userDocRef.update({
-            gallery: admin.firestore.FieldValue.arrayUnion(newImage)
+            photos: admin.firestore.FieldValue.arrayUnion(downloadURL)
         });
     } else {
         const fieldToUpdate = imageType === 'avatar' ? 'photoURL' : 'banner';
@@ -99,3 +100,5 @@ export async function uploadProfileImage(userId: string, imageType: 'avatar' | '
 
     return { success: true, url: downloadURL };
 }
+
+    
