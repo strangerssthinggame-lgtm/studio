@@ -3,7 +3,6 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
 
 export default function RootPage() {
@@ -18,11 +17,11 @@ export default function RootPage() {
     if (user) {
       // User is logged in
       if (isNewUser) {
-        // New user or incomplete profile, redirect to edit profile
-        router.replace('/profile/edit');
+        // New user, redirect to onboarding
+        router.replace('/onboarding');
       } else {
-        // Existing user with complete profile, redirect to their profile page
-        router.replace('/profile');
+        // Existing user, redirect to their dashboard
+        router.replace('/dashboard');
       }
     } else {
       // No user is logged in, redirect to login page

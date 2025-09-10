@@ -2,7 +2,6 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Heart, MessageSquare, Users } from 'lucide-react';
@@ -50,14 +49,16 @@ export default function LoginPage() {
   // This effect will redirect the user if they are already logged in.
   useEffect(() => {
     if (!loading && user) {
-        router.replace('/profile');
+        router.replace('/dashboard');
     }
   }, [user, loading, router])
 
   const handleSocialSignIn = async () => {
     try {
       await signInWithPopup(auth, googleAuthProvider);
-      // The redirection logic is now handled by the RootPage and useAuth hook
+      // The redirection is now handled by the useAuth hook and the root page.
+      // After successful sign-in, the onAuthStateChanged listener will fire,
+      // the useAuth hook will update, and the RootPage component will redirect.
     } catch (error: any) {
       if (error.code === 'auth/popup-blocked') {
          toast({
