@@ -2,7 +2,7 @@ import React from 'react';
 import { WebView } from 'react-native-webview';
 import { StyleSheet, SafeAreaView, Platform, StatusBar } from 'react-native';
 
-const WEB_APP_URL = 'https://YOUR_DEPLOYED_APP_URL'; // <-- ⚠️ CHANGE THIS
+const WEB_APP_URL = 'https://studio--vibeverse-nk9c7.us-central1.hosted.app/profile'; // <-- ⚠️ CHANGE THIS
 
 export default function App() {
   return (
