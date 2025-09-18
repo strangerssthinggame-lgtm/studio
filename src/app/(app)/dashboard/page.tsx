@@ -49,22 +49,27 @@ export default function DashboardPage() {
       setIsLoading(true);
       try {
         const usersCollection = collection(firestore, 'users');
-        // Query all users except the current user and those without a profileComplete flag or where it's false
-        const q = query(usersCollection, where('uid', '!=', user.uid), where('profileComplete', '==', true));
+        // Query users with complete profiles
+        const q = query(usersCollection, where('profileComplete', '==', true));
         const querySnapshot = await getDocs(q);
-        const usersData = querySnapshot.docs.map(doc => ({
-            ...doc.data(),
-            id: doc.id,
-            uid: doc.data().uid,
-            // Provide sensible defaults if fields are missing
-            age: doc.data().age || 25, 
-            gender: doc.data().gender || 'not specified',
-            vibes: doc.data().vibes || [],
-            interests: doc.data().interests || [],
-            photos: doc.data().photos || [],
-            availability: doc.data().availability || 'Not specified',
-            banner: doc.data().banner || 'https://picsum.photos/800/600'
-        })) as UserProfile[];
+        
+        // Filter out the current user on the client side
+        const usersData = querySnapshot.docs
+            .map(doc => ({
+                ...doc.data(),
+                id: doc.id,
+                uid: doc.data().uid,
+                 // Provide sensible defaults if fields are missing
+                age: doc.data().age || 25, 
+                gender: doc.data().gender || 'not specified',
+                vibes: doc.data().vibes || [],
+                interests: doc.data().interests || [],
+                photos: doc.data().photos || [],
+                availability: doc.data().availability || 'Not specified',
+                banner: doc.data().banner || 'https://picsum.photos/800/600'
+            } as UserProfile))
+            .filter(u => u.id !== user.uid);
+
         setAllUsers(usersData);
         setUserQueue(usersData); // Directly set the queue with all users
       } catch (error) {
