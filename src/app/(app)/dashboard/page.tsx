@@ -80,7 +80,7 @@ export default function DashboardPage() {
             gender: doc.data().gender || 'not specified',
             vibes: doc.data().vibes || [],
             interests: doc.data().interests || [],
-            gallery: doc.data().gallery || [],
+            photos: doc.data().photos || [],
             availability: doc.data().availability || 'Not specified',
             banner: doc.data().banner || 'https://picsum.photos/800/600'
         })) as UserProfile[];
@@ -108,9 +108,7 @@ export default function DashboardPage() {
       const genderMatch = filters.gender === 'all' || (u.gender && u.gender.toLowerCase() === filters.gender);
       
       const userVibes = Array.isArray(u.vibes) ? u.vibes.map(v => v.toLowerCase()) : [];
-      // If user has no vibes set, they are considered a match for any vibe filter (new user friendly).
-      // Otherwise, they must have the selected vibe.
-      const vibeMatch = userVibes.length === 0 || userVibes.includes(filters.vibe);
+      const vibeMatch = filters.vibe === 'all' || userVibes.includes(filters.vibe.toLowerCase());
       
       return regionMatch && ageMatch && genderMatch && vibeMatch;
     });
@@ -389,3 +387,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    
