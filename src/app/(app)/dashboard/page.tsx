@@ -45,11 +45,6 @@ export default function DashboardPage() {
       setIsLoading(true);
       try {
         const usersCollection = collection(firestore, 'users');
-        const userDocRef = doc(firestore, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
-        const userData = userDoc.data();
-        
-        const swipedIds = [...(userData?.liked || []), ...(userData?.passed || [])];
         
         const q = query(
           usersCollection,
@@ -57,7 +52,7 @@ export default function DashboardPage() {
         );
         const querySnapshot = await getDocs(q);
         
-        const usersData = querySnapshot.docs
+        const allUsersData = querySnapshot.docs
             .map(doc => ({
                 id: doc.id,
                 ...doc.data(),
@@ -69,10 +64,19 @@ export default function DashboardPage() {
                 availability: doc.data().availability || 'Not specified',
                 banner: doc.data().banner || 'https://picsum.photos/800/600'
             } as UserProfile))
-            .filter(u => u.id !== user.uid && !swipedIds.includes(u.id));
+            .filter(u => u.id !== user.uid);
+        
+        setAllUsers(allUsersData);
+        
+        // Now filter for the initial queue
+        const userDocRef = doc(firestore, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        const userData = userDoc.data();
+        const swipedIds = [...(userData?.liked || []), ...(userData?.passed || [])];
 
-        setAllUsers(usersData);
-        setUserQueue(usersData);
+        const initialQueue = allUsersData.filter(u => !swipedIds.includes(u.id));
+        setUserQueue(initialQueue);
+        
       } catch (error) {
         console.error("Error fetching users:", error);
       } finally {
@@ -147,7 +151,9 @@ export default function DashboardPage() {
   }
 
   const resetDeck = useCallback(() => {
+      // Repopulate the queue from the full list of users
       setUserQueue(allUsers);
+      // Clear the session history
       setHistory([]);
   }, [allUsers]);
   
@@ -262,3 +268,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    
