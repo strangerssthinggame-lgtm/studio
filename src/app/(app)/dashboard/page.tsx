@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { ProfileCard } from '@/components/profile-card';
@@ -111,14 +112,20 @@ export default function DashboardPage() {
   const topCard = userQueue.length > 0 ? userQueue[userQueue.length - 1] : null;
 
   const handleManualSwipe = (direction: 'left' | 'right') => {
-      if (topCard) {
-        setAnimationState(prev => ({
-            ...prev,
-            x: direction === 'right' ? 500 : -500,
-            rotation: direction === 'right' ? 30 : -30,
-        }));
-        setTimeout(() => handleSwipe(topCard, direction), 300);
-      }
+    if (!topCard) return;
+
+    // Trigger the animation on the current top card
+    setAnimationState(prev => ({
+        ...prev,
+        x: direction === 'right' ? 500 : -500,
+        rotation: direction === 'right' ? 30 : -30,
+        isDragging: false // Ensure this is false so transition is applied
+    }));
+
+    // After the animation duration, update the state (remove the card)
+    setTimeout(() => {
+        handleSwipe(topCard, direction);
+    }, 300); // This timeout should match the transition duration in CSS
   }
   
   const onDialogClose = () => {
