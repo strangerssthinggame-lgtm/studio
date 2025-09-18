@@ -41,7 +41,6 @@ export default function DashboardPage() {
   // Animation state lifted to the parent
   const [animationState, setAnimationState] = useState({ x: 0, y: 0, rotation: 0, isDragging: false });
   const [swipingUser, setSwipingUser] = useState<{ profile: UserProfile; direction: 'left' | 'right' } | null>(null);
-  const cardBeingDragged = useRef<string | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -147,7 +146,7 @@ export default function DashboardPage() {
           </p>
         </div>
       </div>
-      <div className="flex flex-col flex-1 items-center justify-center -mx-4">
+      <div className="flex flex-1 flex-col items-center justify-center -mx-4">
         <div className="relative w-full max-w-sm h-[60vh] md:h-[70vh]">
           {isLoading || authLoading ? (
             <Card className="absolute w-full h-full rounded-2xl overflow-hidden glassy">
@@ -175,6 +174,11 @@ export default function DashboardPage() {
               {userQueue.map((user, index) => {
                   const isTopCard = index === userQueue.length - 1;
                   const isSecondCard = index === userQueue.length - 2;
+
+                  // Don't render the card that is currently being animated out
+                  if (swipingUser && swipingUser.profile.id === user.id) {
+                    return null;
+                  }
 
                   const dragDistance = Math.abs(animationState.x);
                   const swipeProgress = Math.min(dragDistance / 200, 1); // 200 is swipe threshold
@@ -266,5 +270,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-    
