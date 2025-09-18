@@ -40,6 +40,7 @@ export default function DashboardPage() {
 
   // Animation state lifted to the parent
   const [animationState, setAnimationState] = useState({ x: 0, y: 0, rotation: 0, isDragging: false });
+  const [swipingUser, setSwipingUser] = useState<{ profile: UserProfile; direction: 'left' | 'right' } | null>(null);
   const cardBeingDragged = useRef<string | null>(null);
 
   useEffect(() => {
@@ -49,8 +50,8 @@ export default function DashboardPage() {
       setIsLoading(true);
       try {
         const usersCollection = collection(firestore, 'users');
-        // Query all users except the current user
-        const q = query(usersCollection, where('uid', '!=', user.uid));
+        // Query all users except the current user and those without a profileComplete flag or where it's false
+        const q = query(usersCollection, where('uid', '!=', user.uid), where('profileComplete', '==', true));
         const querySnapshot = await getDocs(q);
         const usersData = querySnapshot.docs.map(doc => ({
             ...doc.data(),
@@ -81,7 +82,9 @@ export default function DashboardPage() {
 
   
   const handleSwipe = useCallback(async (swipedUser: UserProfile, direction: 'left' | 'right') => {
-    setUserQueue(currentQueue => currentQueue.slice(0, currentQueue.length - 1));
+    // This function now only handles the logic AFTER the card is swiped.
+    // The visual removal is handled by `handleManualSwipe` and `onSwipe` on the card itself.
+    setUserQueue(currentQueue => currentQueue.filter(u => u.id !== swipedUser.id));
     setHistory(prev => [...prev, swipedUser]);
     setAnimationState({ x: 0, y: 0, rotation: 0, isDragging: false });
     
@@ -114,18 +117,16 @@ export default function DashboardPage() {
   const handleManualSwipe = (direction: 'left' | 'right') => {
     if (!topCard) return;
 
-    // Trigger the animation on the current top card
-    setAnimationState(prev => ({
-        ...prev,
-        x: direction === 'right' ? 500 : -500,
-        rotation: direction === 'right' ? 30 : -30,
-        isDragging: false // Ensure this is false so transition is applied
-    }));
+    // 1. Set the user that is being swiped to trigger the animation render
+    setSwipingUser({ profile: topCard, direction });
+    
+    // 2. Call the logic handler immediately
+    handleSwipe(topCard, direction);
 
-    // After the animation duration, update the state (remove the card)
+    // 3. Clean up the swiping user after the animation is done
     setTimeout(() => {
-        handleSwipe(topCard, direction);
-    }, 300); // This timeout should match the transition duration in CSS
+      setSwipingUser(null);
+    }, 300); // Match animation duration
   }
   
   const onDialogClose = () => {
@@ -152,8 +153,25 @@ export default function DashboardPage() {
             <Card className="absolute w-full h-full rounded-2xl overflow-hidden glassy">
                 <Skeleton className="w-full h-full"/>
             </Card>
-          ) : userQueue.length > 0 ? (
+          ) : userQueue.length > 0 || swipingUser ? (
              <div className="relative w-full h-full">
+              
+              {/* Render the card that is currently being swiped out */}
+              {swipingUser && (
+                 <ProfileCard
+                    key={`${swipingUser.profile.id}-swiping`}
+                    user={swipingUser.profile}
+                    onSwipe={() => {}} // No action needed, it's already happening
+                    isTopCard={true} // It behaves like a top card for animation
+                    style={{
+                      zIndex: 100,
+                      transform: `translateX(${swipingUser.direction === 'right' ? 500 : -500}px) rotate(${swipingUser.direction === 'right' ? 30 : -30}deg)`,
+                      transition: 'all 0.3s ease-in-out'
+                    }}
+                  />
+              )}
+
+              {/* Render the rest of the stack */}
               {userQueue.map((user, index) => {
                   const isTopCard = index === userQueue.length - 1;
                   const isSecondCard = index === userQueue.length - 2;
@@ -248,3 +266,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    
