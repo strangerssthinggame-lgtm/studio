@@ -173,7 +173,7 @@ export function ProfileCard({ user, onSwipe, style, isTopCard, animationState, s
                 </div>
             </div>
             </div>
-            {isTopCard && (
+             {isTopCard && (
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center justify-center space-x-4 w-full p-6">
                   <Button onClick={() => handleSwipeAction('left')} variant="destructive" size="icon" className="w-16 h-16 rounded-full shadow-lg bg-white/90 hover:bg-white text-destructive backdrop-blur-sm transition-transform hover:scale-105">
                       <X className="w-8 h-8"/>
