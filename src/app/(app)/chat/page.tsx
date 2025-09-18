@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import type { Chat } from "@/lib/chat-data";
 import { useAuth } from "@/hooks/use-auth";
 import { firestore } from "@/lib/firebase";
-import { collection, query, where, getDocs, onSnapshot, orderBy, limit } from "firebase/firestore";
+import { collection, query, where, getDocs, onSnapshot, orderBy, limit, doc, getDoc } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 
@@ -39,8 +39,8 @@ export default function ChatListPage() {
     );
 
     const unsubscribe = onSnapshot(chatsQuery, async (querySnapshot) => {
-      const chatsDataPromises = querySnapshot.docs.map(async (doc) => {
-        const chatData = doc.data() as Chat;
+      const chatsDataPromises = querySnapshot.docs.map(async (docSnapshot) => {
+        const chatData = docSnapshot.data() as Chat;
         const otherUserId = chatData.userIds.find(id => id !== user.uid);
         
         let otherUserName = "Unknown User";
@@ -49,14 +49,15 @@ export default function ChatListPage() {
         if(otherUserId) {
             const userDoc = await getDoc(doc(firestore, 'users', otherUserId));
             if(userDoc.exists()) {
-                otherUserName = userDoc.data().name;
-                otherUserAvatar = userDoc.data().avatar;
+                const userData = userDoc.data();
+                otherUserName = userData.name;
+                otherUserAvatar = userData.avatar;
             }
         }
         
         return {
             ...chatData,
-            id: doc.id,
+            id: docSnapshot.id,
             otherUserName,
             otherUserAvatar,
         };

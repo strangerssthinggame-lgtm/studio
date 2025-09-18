@@ -2,46 +2,31 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Users collection
+
+    // Users: Allow read for any authenticated user, but only allow a user to write to their own document.
     match /users/{userId} {
-      // Allow any authenticated user to read user profiles and list them.
-      // This is necessary for discovery features.
-      allow list, get: if request.auth != null;
-      
-      // Allow users to create their own profile.
-      allow create: if request.auth != null && request.auth.uid == userId;
-
-      // Allow users to update only their own profile.
-      allow update: if request.auth.uid == userId;
-
-      // Do not allow users to delete their profiles from the client.
-      allow delete: if false;
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Chats collection
-    match /chats/{chatId} {
-      // Allow read/create/update only if the user is a participant in the chat.
-      allow read, create, update: if request.auth.uid in resource.data.userIds;
-
-      // Messages subcollection
-      match /messages/{messageId} {
-        // Allow read/create only if the user is a participant in the parent chat.
-        allow read, create: if request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.userIds;
-      }
-    }
-
-    // Swipes collection
+    // Swipes: Users can create swipes and read their own.
     match /swipes/{swipeId} {
-      // Allow any authenticated user to create a swipe.
-      allow create: if request.auth != null;
+      allow read: if request.auth != null && request.auth.uid == resource.data.swiperId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.swiperId;
     }
 
-    // Matches collection
+    // Matches & Chats: Users can read/write documents where their ID is in the userIds array.
     match /matches/{matchId} {
-      // Only backend functions should be creating matches.
-      allow read: if request.auth.uid in resource.data.userIds;
-      allow create, update, delete: if false;
+      allow read, write: if request.auth != null && request.auth.uid in resource.data.userIds;
+    }
+    
+    match /chats/{chatId} {
+      allow read, write: if request.auth != null && request.auth.uid in resource.data.userIds;
+
+      // Messages: Users can read/write messages in chats they are part of.
+      match /messages/{messageId} {
+        allow read, write: if request.auth != null && get(/databases/$(database)/documents/chats/$(chatId)).data.userIds.hasAny([request.auth.uid]);
+      }
     }
   }
 }
