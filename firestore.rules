@@ -3,32 +3,31 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can read public profiles, but only write to their own.
+    // Users: Public profiles are readable by anyone.
+    // A user can create and update their own document.
     match /users/{userId} {
-      allow read: if true;
+      allow read;
       allow create, update: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Users can create swipes. They can read swipes they initiated or received.
+    // Swipes: Any authenticated user can create a swipe document.
     match /swipes/{swipeId} {
       allow create: if request.auth != null;
-      allow read: if request.auth != null && (resource.data.swiperId == request.auth.uid || resource.data.swipedId == request.auth.uid);
     }
-    
-    // Users can create matches. They can only read matches they are a part of.
+
+    // Matches: Any authenticated user can create a match document.
+    // The security is enforced by the chat rules.
     match /matches/{matchId} {
-        allow create: if request.auth != null;
-        allow read: if request.auth != null && request.auth.uid in resource.data.userIds;
+      allow create: if request.auth != null;
     }
 
-    // Users who are part of a chat can read/write to it.
+    // Chats: Only users involved in the chat can read or write to it.
     match /chats/{chatId} {
-      allow read, create: if request.auth != null && request.auth.uid in resource.data.userIds;
-      allow update: if request.auth != null && request.auth.uid in resource.data.userIds;
+      allow read, write: if request.auth != null && request.auth.uid in resource.data.userIds;
 
-      // Messages can be read and created by users in the chat.
+      // Messages: Only users involved in the parent chat can read/write messages.
       match /messages/{messageId} {
-        allow read, create: if request.auth != null && get(/databases/$(database)/documents/chats/$(chatId)).data.userIds.hasAny([request.auth.uid]);
+        allow read, create: if request.auth != null && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.userIds;
       }
     }
   }
