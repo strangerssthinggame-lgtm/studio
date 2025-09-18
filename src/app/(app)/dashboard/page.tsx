@@ -3,7 +3,7 @@
 'use client';
 
 import { ProfileCard } from '@/components/profile-card';
-import { Filter, Users, Calendar, MapPin, Sparkles, RotateCw } from 'lucide-react';
+import { Filter, Users, Calendar, MapPin, Sparkles, RotateCw, Heart, X, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -27,6 +27,19 @@ import { firestore } from '@/lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
+import { handleSwipe as handleSwipeFlow } from '@/ai/flows/handle-swipe-flow';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Link from 'next/link';
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
@@ -41,6 +54,9 @@ export default function DashboardPage() {
   const [userQueue, setUserQueue] = useState<UserProfile[]>([]);
   const [history, setHistory] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showMatchDialog, setShowMatchDialog] = useState(false);
+  const [matchedUser, setMatchedUser] = useState<UserProfile | null>(null);
+
 
   // Animation state lifted to the parent
   const [animationState, setAnimationState] = useState({ x: 0, y: 0, rotation: 0, isDragging: false });
@@ -101,11 +117,28 @@ export default function DashboardPage() {
     });
   }, [filters, allUsers, isLoading]);
   
-  const handleSwipe = useCallback((swipedUser: UserProfile, direction: 'left' | 'right') => {
+  const handleSwipe = useCallback(async (swipedUser: UserProfile, direction: 'left' | 'right') => {
     setUserQueue(currentQueue => currentQueue.slice(0, currentQueue.length - 1));
     setHistory(prev => [...prev, swipedUser]);
     setAnimationState({ x: 0, y: 0, rotation: 0, isDragging: false });
-  }, []);
+    
+    if (!currentUser) return;
+
+    try {
+        const result = await handleSwipeFlow({
+            swiperId: currentUser.uid,
+            swipedId: swipedUser.id,
+            direction,
+        });
+
+        if (result.isMatch) {
+            setMatchedUser(swipedUser);
+            setShowMatchDialog(true);
+        }
+    } catch (error) {
+        console.error("Error handling swipe:", error);
+    }
+  }, [currentUser]);
 
   const applyFilters = useCallback(() => {
     setUserQueue(filteredUsers);
@@ -128,9 +161,26 @@ export default function DashboardPage() {
     }
   }, [applyFilters, isLoading]);
 
-  const topCard = userQueue[userQueue.length - 1];
+  const topCard = userQueue.length > 0 ? userQueue[userQueue.length - 1] : null;
+
+  const handleManualSwipe = (direction: 'left' | 'right') => {
+      if (topCard) {
+        setAnimationState(prev => ({
+            ...prev,
+            x: direction === 'right' ? 500 : -500,
+            rotation: direction === 'right' ? 30 : -30,
+        }));
+        setTimeout(() => handleSwipe(topCard, direction), 300);
+      }
+  }
+  
+  const onDialogClose = () => {
+    setShowMatchDialog(false);
+    setMatchedUser(null);
+  }
 
   return (
+    <>
     <div className={cn(
         "flex flex-col h-full",
         `theme-${filters.vibe}`
@@ -238,7 +288,7 @@ export default function DashboardPage() {
           </SheetContent>
         </Sheet>
       </div>
-      <div className="flex flex-1 items-center justify-center -mx-4">
+      <div className="flex flex-col flex-1 items-center justify-center -mx-4">
         <div className="relative w-full max-w-sm h-[60vh] md:h-[70vh]">
           {isLoading || authLoading ? (
             <Card className="absolute w-full h-full rounded-2xl overflow-hidden glassy">
@@ -290,9 +340,53 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+         <div className="flex items-center justify-center space-x-4 w-full p-6 mt-4">
+            <Button onClick={() => handleManualSwipe('left')} variant="destructive" size="icon" className="w-16 h-16 rounded-full shadow-lg bg-white/90 hover:bg-white text-destructive backdrop-blur-sm transition-transform hover:scale-105" disabled={!topCard}>
+                <X className="w-8 h-8"/>
+            </Button>
+            <Link href={topCard ? `/chat/${topCard.id}` : '#'}>
+                <Button variant="outline" size="icon" className="w-12 h-12 rounded-full shadow-lg bg-white/80 hover:bg-white text-primary backdrop-blur-sm transition-transform hover:scale-105" disabled={!topCard}>
+                    <Zap className="w-6 h-6"/>
+                </Button>
+            </Link>
+            <Button onClick={() => handleManualSwipe('right')} variant="default" size="icon" className="w-16 h-16 rounded-full shadow-lg bg-primary/90 hover:bg-primary text-primary-foreground backdrop-blur-sm transition-transform hover:scale-105" disabled={!topCard}>
+                <Heart className="w-8 h-8" fill="currentColor"/>
+            </Button>
+        </div>
       </div>
     </div>
+     <AlertDialog open={showMatchDialog} onOpenChange={onDialogClose}>
+        <AlertDialogContent className="max-w-sm glassy">
+            <AlertDialogHeader className="items-center text-center">
+                <div className="relative h-24 w-40 mb-4">
+                    <Avatar className="w-24 h-24 border-4 border-background absolute left-0 top-0">
+                        <AvatarImage src={currentUser?.photoURL || "https://picsum.photos/100"} alt="You" data-ai-hint="profile avatar" />
+                        <AvatarFallback>{currentUser?.displayName?.charAt(0) || 'Y'}</AvatarFallback>
+                    </Avatar>
+                    <Avatar className="w-24 h-24 border-4 border-background absolute right-0 top-0">
+                        <AvatarImage src={matchedUser?.avatar} alt={matchedUser?.name} data-ai-hint="profile avatar" />
+                        <AvatarFallback>{matchedUser?.name?.charAt(0) || '?'}</AvatarFallback>
+                    </Avatar>
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-primary/90 rounded-full flex items-center justify-center backdrop-blur-sm">
+                        <Heart className="w-7 h-7 text-primary-foreground" fill="currentColor" />
+                    </div>
+                </div>
+                <AlertDialogTitle className="font-headline text-3xl">It's a Vibe!</AlertDialogTitle>
+                <AlertDialogDescription>
+                    You and {matchedUser?.name || 'someone'} have liked each other. How about breaking the ice?
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-col gap-2 mt-2">
+                <Link href={matchedUser ? `/chat/${matchedUser.id}` : '#'} className="w-full">
+                    <AlertDialogAction className="w-full h-12 text-lg">
+                        <Sparkles className="mr-2 h-5 w-5" />
+                        Start Vibe Check
+                    </AlertDialogAction>
+                </Link>
+                <AlertDialogCancel className="m-0">Keep Swiping</AlertDialogCancel>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
-
-    
