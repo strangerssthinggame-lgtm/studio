@@ -85,7 +85,8 @@ export default function DashboardPage() {
 
   
   const onSwipe = useCallback((swipedUser: UserProfile, direction: 'left' | 'right') => {
-    setUserQueue(currentQueue => currentQueue.slice(1));
+    // Correctly remove the last user from the queue (who is the top card)
+    setUserQueue(currentQueue => currentQueue.slice(0, currentQueue.length - 1));
     setHistory(prev => [...prev, swipedUser]);
     setAnimationState({ x: 0, y: 0, rotation: 0, isDragging: false });
     
@@ -109,9 +110,9 @@ export default function DashboardPage() {
       setUserQueue(allUsers);
       setHistory([]);
   }, [allUsers]);
-
+  
   const reversedQueue = [...userQueue].reverse();
-  const topCard = reversedQueue.length > 0 ? reversedQueue[0] : null;
+  const topCard = reversedQueue[0];
 
   const handleManualSwipe = (direction: 'left' | 'right') => {
     if (!topCard) return;
@@ -170,9 +171,9 @@ export default function DashboardPage() {
                         setAnimationState={isTopCard ? setAnimationState : undefined}
                         style={{
                           zIndex: reversedQueue.length - index,
-                          transform: isTopCard ? `translate(${animationState.x}px, ${animationState.y}px) rotate(${animationState.rotation}deg)` : `scale(${1 - (index) * 0.05}) translateY(${index * -10}px)`,
+                           transform: isTopCard ? `translate(${animationState.x}px, ${animationState.y}px) rotate(${animationState.rotation}deg)` : `scale(${1 - (index) * 0.05}) translateY(${index * -10}px)`,
                           transition: animationState.isDragging ? 'none' : 'all 0.3s ease-in-out',
-                          opacity: index > 1 ? 0 : 1,
+                          opacity: index > 2 ? 0 : 1, // Only show top 3 cards
                         }}
                       />
                   )
