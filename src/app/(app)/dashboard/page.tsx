@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { ProfileCard } from '@/components/profile-card';
@@ -10,7 +9,7 @@ import type { UserProfile } from '@/lib/user-profile-data';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { firestore } from '@/lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
 import { handleSwipe as handleSwipeFlow } from '@/ai/flows/handle-swipe-flow';
@@ -32,33 +31,33 @@ export default function DashboardPage() {
   
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [userQueue, setUserQueue] = useState<UserProfile[]>([]);
-  const [history, setHistory] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showMatchDialog, setShowMatchDialog] = useState(false);
   const [matchedUser, setMatchedUser] = useState<UserProfile | null>(null);
 
-  // Animation state lifted to the parent
   const [animationState, setAnimationState] = useState({ x: 0, y: 0, rotation: 0, isDragging: false });
   
   useEffect(() => {
     const fetchUsers = async () => {
-      if (!user) return; // Don't fetch if user is not logged in
+      if (!user) return;
 
       setIsLoading(true);
       try {
+        const currentUserDoc = await getDoc(doc(firestore, 'users', user.uid));
+        const currentUserData = currentUserDoc.data();
+        const liked = currentUserData?.liked || [];
+        const passed = currentUserData?.passed || [];
+        const matches = currentUserData?.matches || [];
+        const seenUsers = new Set([...liked, ...passed, ...matches]);
+
         const usersCollection = collection(firestore, 'users');
-        // Query users, excluding the current user
-        const q = query(
-          usersCollection,
-          where('profileComplete', '==', true)
-        );
+        const q = query(usersCollection, where('profileComplete', '==', true));
         const querySnapshot = await getDocs(q);
         
         const usersData = querySnapshot.docs
             .map(doc => ({
                 ...doc.data(),
                 id: doc.id,
-                 // Provide sensible defaults if fields are missing
                 age: doc.data().age || 25, 
                 gender: doc.data().gender || 'not specified',
                 vibes: doc.data().vibes || [],
@@ -67,7 +66,7 @@ export default function DashboardPage() {
                 availability: doc.data().availability || 'Not specified',
                 banner: doc.data().banner || 'https://picsum.photos/800/600'
             } as UserProfile))
-            .filter(u => u.id !== user.uid); // Filter out current user on client
+            .filter(u => u.id !== user.uid && !seenUsers.has(u.id));
 
         setAllUsers(usersData);
         setUserQueue(usersData);
@@ -84,13 +83,22 @@ export default function DashboardPage() {
   }, [user, authLoading]);
 
   
-  const onSwipe = useCallback((swipedUser: UserProfile, direction: 'left' | 'right') => {
-    // Correctly remove the last user from the queue (who is the top card)
-    setUserQueue(currentQueue => currentQueue.slice(0, currentQueue.length - 1));
-    setHistory(prev => [...prev, swipedUser]);
+  const onSwipe = useCallback(async (swipedUser: UserProfile, direction: 'left' | 'right') => {
+    setUserQueue(currentQueue => currentQueue.filter(u => u.id !== swipedUser.id));
     setAnimationState({ x: 0, y: 0, rotation: 0, isDragging: false });
     
     if (!user) return;
+
+    // Update user's liked/passed list
+    const userDocRef = doc(firestore, 'users', user.uid);
+    const fieldToUpdate = direction === 'right' ? 'liked' : 'passed';
+    const currentUserDoc = await getDoc(userDocRef);
+    if(currentUserDoc.exists()){
+        const currentUserData = currentUserDoc.data();
+        const updatedList = [...(currentUserData[fieldToUpdate] || []), swipedUser.id];
+        await updateDoc(userDocRef, { [fieldToUpdate]: updatedList });
+    }
+
 
     handleSwipeFlow({
         swiperId: user.uid,
@@ -108,13 +116,13 @@ export default function DashboardPage() {
 
   const resetDeck = useCallback(() => {
       setUserQueue(allUsers);
-      setHistory([]);
   }, [allUsers]);
   
   const reversedQueue = [...userQueue].reverse();
-  const topCard = reversedQueue[0];
 
   const handleManualSwipe = (direction: 'left' | 'right') => {
+    if (reversedQueue.length === 0) return;
+    const topCard = reversedQueue[reversedQueue.length - 1];
     if (!topCard) return;
 
     const exitX = direction === 'right' ? 500 : -500;
@@ -136,6 +144,8 @@ export default function DashboardPage() {
     setShowMatchDialog(false);
     setMatchedUser(null);
   }
+
+  const topCard = reversedQueue.length > 0 ? reversedQueue[reversedQueue.length - 1] : null;
 
   return (
     <>
@@ -159,7 +169,7 @@ export default function DashboardPage() {
           ) : reversedQueue.length > 0 ? (
              <div className="relative w-full h-full">
               {reversedQueue.map((user, index) => {
-                  const isTopCard = index === 0;
+                  const isTopCard = index === (reversedQueue.length - 1);
                   
                   return (
                       <ProfileCard
@@ -170,10 +180,10 @@ export default function DashboardPage() {
                         animationState={isTopCard ? animationState : undefined}
                         setAnimationState={isTopCard ? setAnimationState : undefined}
                         style={{
-                          zIndex: reversedQueue.length - index,
-                           transform: isTopCard ? `translate(${animationState.x}px, ${animationState.y}px) rotate(${animationState.rotation}deg)` : `scale(${1 - (index) * 0.05}) translateY(${index * -10}px)`,
+                          zIndex: index,
+                           transform: isTopCard ? `translate(${animationState.x}px, ${animationState.y}px) rotate(${animationState.rotation}deg)` : `scale(${1 - (reversedQueue.length - 1 - index) * 0.05}) translateY(${(reversedQueue.length - 1 - index) * -10}px)`,
                           transition: animationState.isDragging ? 'none' : 'all 0.3s ease-in-out',
-                          opacity: index > 2 ? 0 : 1, // Only show top 3 cards
+                          opacity: (reversedQueue.length - 1 - index) > 2 ? 0 : 1, 
                         }}
                       />
                   )

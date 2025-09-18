@@ -70,14 +70,38 @@ const handleSwipeFlow = ai.defineFlow(
             matchedAt: serverTimestamp(),
         });
         
-        // You could also create a chat document here, or send a notification.
+        // 4. Create a chat document for the new match.
+        // The document ID is the same as the match ID for easy reference.
         const chatDocRef = doc(firestore, 'chats', matchDoc.id);
         await setDoc(chatDocRef, {
             id: matchDoc.id,
             userIds: [swiperId, swipedId],
-            lastMessage: "You matched! Say hello.",
+            lastMessage: "You matched! Start with a Vibe Check.",
             lastMessageTimestamp: serverTimestamp(),
+            vibe: 'date', // Default vibe for new matches
         });
+
+        // 5. Update the 'matches' array for both users
+        const swiperUserRef = doc(firestore, 'users', swiperId);
+        const swipedUserRef = doc(firestore, 'users', swipedId);
+        
+        // We get the current user data to append the new match
+        const swiperDoc = await getDoc(swiperUserRef);
+        const swipedDoc = await getDoc(swipedUserRef);
+        
+        if (swiperDoc.exists()) {
+            const swiperData = swiperDoc.data();
+            await updateDoc(swiperUserRef, {
+                matches: [...(swiperData.matches || []), swipedId]
+            });
+        }
+        if (swipedDoc.exists()) {
+            const swipedData = swipedDoc.data();
+             await updateDoc(swipedUserRef, {
+                matches: [...(swipedData.matches || []), swiperId]
+            });
+        }
+
 
         return { isMatch: true, matchId: matchDoc.id };
       }
