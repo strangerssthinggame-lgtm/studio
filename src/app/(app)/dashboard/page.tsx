@@ -112,8 +112,8 @@ export default function DashboardPage() {
 
   const resetDeck = useCallback(() => {
       setUserQueue(allUsers);
-      history.length > 0 && setHistory([]);
-  }, [allUsers, history.length]);
+      setHistory([]);
+  }, [allUsers]);
 
 
   const topCard = userQueue.length > 0 ? userQueue[userQueue.length - 1] : null;
@@ -194,9 +194,12 @@ export default function DashboardPage() {
                   const baseScale = 1 - ((userQueue.length - 1 - index) * 0.05);
                   const baseTranslateY = (userQueue.length - 1 - index) * -10;
                   
+                  const finalScale = isSecondCard ? dynamicScale : (isTopCard ? 1 : baseScale);
+                  const finalTranslateY = isSecondCard ? dynamicTranslateY : (isTopCard ? 0 : baseTranslateY);
+
                   const cardStyle: React.CSSProperties = {
                     zIndex: userQueue.length - index,
-                    transform: `scale(${isSecondCard ? dynamicScale : baseScale}) translateY(${isSecondCard ? dynamicTranslateY : baseTranslateY}px)`,
+                    transform: `scale(${finalScale}) translateY(${finalTranslateY}px)`,
                     opacity: (userQueue.length - 1 - index) > 2 ? 0 : 1,
                     transition: animationState.isDragging ? 'none' : 'all 0.3s ease-in-out'
                   }
