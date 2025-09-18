@@ -59,6 +59,7 @@ export default function DashboardPage() {
         const usersData = querySnapshot.docs.map(doc => ({
             ...doc.data(),
             id: doc.id,
+            uid: doc.data().uid,
             // Provide sensible defaults if fields are missing
             age: doc.data().age || 25, 
             gender: doc.data().gender || 'not specified',
@@ -92,7 +93,9 @@ export default function DashboardPage() {
       const genderMatch = filters.gender === 'all' || (u.gender && u.gender.toLowerCase() === filters.gender);
       
       const userVibes = Array.isArray(u.vibes) ? u.vibes.map(v => v.toLowerCase()) : [];
-      const vibeMatch = userVibes.includes(filters.vibe);
+      // If user has no vibes set, they are considered a match for any vibe filter (new user friendly).
+      // Otherwise, they must have the selected vibe.
+      const vibeMatch = userVibes.length === 0 || userVibes.includes(filters.vibe);
       
       return regionMatch && ageMatch && genderMatch && vibeMatch;
     });
