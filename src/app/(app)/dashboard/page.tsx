@@ -49,7 +49,8 @@ export default function DashboardPage() {
         const usersCollection = collection(firestore, 'users');
         // Query users, excluding the current user
         const q = query(
-          usersCollection
+          usersCollection,
+          where('profileComplete', '==', true)
         );
         const querySnapshot = await getDocs(q);
         
@@ -83,7 +84,7 @@ export default function DashboardPage() {
   }, [user, authLoading]);
 
   
-  const handleSwipe = useCallback((swipedUser: UserProfile, direction: 'left' | 'right') => {
+  const onSwipe = useCallback((swipedUser: UserProfile, direction: 'left' | 'right') => {
     setUserQueue(currentQueue => currentQueue.slice(1));
     setHistory(prev => [...prev, swipedUser]);
     setAnimationState({ x: 0, y: 0, rotation: 0, isDragging: false });
@@ -126,7 +127,7 @@ export default function DashboardPage() {
     });
     
     setTimeout(() => {
-      handleSwipe(topCard, direction);
+      onSwipe(topCard, direction);
     }, 300); // Match animation duration
   }
   
@@ -158,38 +159,21 @@ export default function DashboardPage() {
              <div className="relative w-full h-full">
               {reversedQueue.map((user, index) => {
                   const isTopCard = index === 0;
-                  const isSecondCard = index === 1;
-                  
-                  const dragDistance = Math.abs(animationState.x);
-                  const swipeProgress = isTopCard ? Math.min(dragDistance / 200, 1) : 0; // 200 is swipe threshold
-
-                  let cardStyle: React.CSSProperties = {
-                    zIndex: reversedQueue.length - index,
-                    opacity: index > 1 ? 0 : 1,
-                    transition: animationState.isDragging ? 'none' : 'all 0.3s ease-in-out',
-                  };
-
-                  if (isTopCard) {
-                      cardStyle.transform = `translate(${animationState.x}px, ${animationState.y}px) rotate(${animationState.rotation}deg)`;
-                  } else if (isSecondCard) {
-                      const scale = 0.95 + 0.05 * swipeProgress;
-                      const translateY = -10 + 10 * swipeProgress;
-                      cardStyle.transform = `scale(${scale}) translateY(${translateY}px)`;
-                  } else {
-                       if (index > 1) {
-                        cardStyle.transform = `scale(${1 - (index) * 0.05}) translateY(${index * -10}px)`;
-                       }
-                  }
                   
                   return (
                       <ProfileCard
                         key={user.id}
                         user={user}
-                        onSwipe={handleSwipe}
+                        onSwipe={onSwipe}
                         isTopCard={isTopCard}
                         animationState={isTopCard ? animationState : undefined}
                         setAnimationState={isTopCard ? setAnimationState : undefined}
-                        style={cardStyle}
+                        style={{
+                          zIndex: reversedQueue.length - index,
+                          transform: isTopCard ? `translate(${animationState.x}px, ${animationState.y}px) rotate(${animationState.rotation}deg)` : `scale(${1 - (index) * 0.05}) translateY(${index * -10}px)`,
+                          transition: animationState.isDragging ? 'none' : 'all 0.3s ease-in-out',
+                          opacity: index > 1 ? 0 : 1,
+                        }}
                       />
                   )
               })}
