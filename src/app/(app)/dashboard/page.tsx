@@ -93,8 +93,8 @@ export default function DashboardPage() {
   const onSwipe = useCallback((swipedUser: UserProfile, direction: 'left' | 'right') => {
     // Wait for the animation to finish before updating the queue
     setTimeout(() => {
-        setUserQueue(currentQueue => currentQueue.filter(u => u.id !== swipedUser.id));
         setHistory(prev => [...prev, swipedUser]);
+        setUserQueue(currentQueue => currentQueue.slice(0, currentQueue.length - 1));
     }, 300); // This duration should match the CSS transition duration
     
     if (!user) return;
@@ -129,7 +129,7 @@ export default function DashboardPage() {
   
   const handleManualSwipe = (direction: 'left' | 'right') => {
     if (userQueue.length === 0) return;
-    const topCard = userQueue[0];
+    const topCard = userQueue[userQueue.length - 1];
     if (!topCard) return;
 
     const exitX = direction === 'right' ? 500 : -500;
@@ -157,14 +157,12 @@ export default function DashboardPage() {
       setHistory([]);
   }, [allUsers]);
   
-  const reversedQueue = useMemo(() => [...userQueue].reverse(), [userQueue]);
-
   const onDialogClose = () => {
     setShowMatchDialog(false);
     setMatchedUser(null);
   }
   
-  const topCard = userQueue[0];
+  const topCard = userQueue.length > 0 ? userQueue[userQueue.length - 1] : null;
 
   return (
     <>
@@ -185,10 +183,10 @@ export default function DashboardPage() {
             <Card className="absolute w-full h-full rounded-2xl overflow-hidden glassy">
                 <Skeleton className="w-full h-full"/>
             </Card>
-          ) : reversedQueue.length > 0 ? (
+          ) : userQueue.length > 0 ? (
              <div className="relative w-full h-full">
-              {reversedQueue.map((profile, index) => {
-                  const isTopCard = index === reversedQueue.length - 1;
+              {userQueue.map((profile, index) => {
+                  const isTopCard = index === userQueue.length - 1;
                   
                   return (
                       <ProfileCard
@@ -199,9 +197,9 @@ export default function DashboardPage() {
                         animationState={isTopCard ? animationState : undefined}
                         setAnimationState={isTopCard ? setAnimationState : undefined}
                         style={{
-                          zIndex: reversedQueue.length - index,
-                          transform: !isTopCard ? `scale(${1 - (reversedQueue.length - 1 - index) * 0.05}) translateY(${(reversedQueue.length - 1 - index) * -10}px)` : '',
-                          opacity: (reversedQueue.length - 1 - index) > 2 ? 0 : 1,
+                          zIndex: index,
+                          transform: !isTopCard ? `scale(${1 - (userQueue.length - 1 - index) * 0.05}) translateY(${(userQueue.length - 1 - index) * -10}px)` : '',
+                          opacity: (userQueue.length - 1 - index) > 2 ? 0 : 1,
                         }}
                       />
                   )
