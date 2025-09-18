@@ -37,11 +37,9 @@ export default function DashboardPage() {
   const [showMatchDialog, setShowMatchDialog] = useState(false);
   const [matchedUser, setMatchedUser] = useState<UserProfile | null>(null);
 
-
   // Animation state lifted to the parent
   const [animationState, setAnimationState] = useState({ x: 0, y: 0, rotation: 0, isDragging: false });
-  const [swipingUser, setSwipingUser] = useState<{ profile: UserProfile; direction: 'left' | 'right' } | null>(null);
-
+  
   useEffect(() => {
     const fetchUsers = async () => {
       if (!user) return; // Don't fetch if user is not logged in
@@ -49,16 +47,17 @@ export default function DashboardPage() {
       setIsLoading(true);
       try {
         const usersCollection = collection(firestore, 'users');
-        // Query users with complete profiles
-        const q = query(usersCollection, where('profileComplete', '==', true));
+        // Query users with complete profiles, excluding the current user
+        const q = query(
+          usersCollection,
+          where('profileComplete', '==', true)
+        );
         const querySnapshot = await getDocs(q);
         
-        // Filter out the current user on the client side
         const usersData = querySnapshot.docs
             .map(doc => ({
                 ...doc.data(),
                 id: doc.id,
-                uid: doc.data().uid,
                  // Provide sensible defaults if fields are missing
                 age: doc.data().age || 25, 
                 gender: doc.data().gender || 'not specified',
@@ -68,10 +67,10 @@ export default function DashboardPage() {
                 availability: doc.data().availability || 'Not specified',
                 banner: doc.data().banner || 'https://picsum.photos/800/600'
             } as UserProfile))
-            .filter(u => u.id !== user.uid);
+            .filter(u => u.id !== user.uid); // Filter out current user on client
 
         setAllUsers(usersData);
-        setUserQueue(usersData); // Directly set the queue with all users
+        setUserQueue(usersData);
       } catch (error) {
         console.error("Error fetching users:", error);
       } finally {
@@ -86,8 +85,6 @@ export default function DashboardPage() {
 
   
   const handleSwipe = useCallback(async (swipedUser: UserProfile, direction: 'left' | 'right') => {
-    // This function now only handles the logic AFTER the card is swiped.
-    // The visual removal is handled by `handleManualSwipe` and `onSwipe` on the card itself.
     setUserQueue(currentQueue => currentQueue.filter(u => u.id !== swipedUser.id));
     setHistory(prev => [...prev, swipedUser]);
     setAnimationState({ x: 0, y: 0, rotation: 0, isDragging: false });
@@ -115,21 +112,23 @@ export default function DashboardPage() {
       setHistory([]);
   }, [allUsers]);
 
-
   const topCard = userQueue.length > 0 ? userQueue[userQueue.length - 1] : null;
 
   const handleManualSwipe = (direction: 'left' | 'right') => {
     if (!topCard) return;
 
-    // 1. Set the user that is being swiped to trigger the animation render
-    setSwipingUser({ profile: topCard, direction });
-    
-    // 2. Call the logic handler immediately
-    handleSwipe(topCard, direction);
+    const exitX = direction === 'right' ? 500 : -500;
+    const rotation = direction === 'right' ? 30 : -30;
 
-    // 3. Clean up the swiping user after the animation is done
+    setAnimationState({
+      x: exitX,
+      y: 0,
+      rotation,
+      isDragging: false,
+    });
+    
     setTimeout(() => {
-      setSwipingUser(null);
+      handleSwipe(topCard, direction);
     }, 300); // Match animation duration
   }
   
@@ -157,36 +156,14 @@ export default function DashboardPage() {
             <Card className="absolute w-full h-full rounded-2xl overflow-hidden glassy">
                 <Skeleton className="w-full h-full"/>
             </Card>
-          ) : userQueue.length > 0 || swipingUser ? (
+          ) : userQueue.length > 0 ? (
              <div className="relative w-full h-full">
-              
-              {/* Render the card that is currently being swiped out */}
-              {swipingUser && (
-                 <ProfileCard
-                    key={`${swipingUser.profile.id}-swiping`}
-                    user={swipingUser.profile}
-                    onSwipe={() => {}} // No action needed, it's already happening
-                    isTopCard={true} // It behaves like a top card for animation
-                    style={{
-                      zIndex: 100,
-                      transform: `translateX(${swipingUser.direction === 'right' ? 500 : -500}px) rotate(${swipingUser.direction === 'right' ? 30 : -30}deg)`,
-                      transition: 'all 0.3s ease-in-out'
-                    }}
-                  />
-              )}
-
-              {/* Render the rest of the stack */}
               {userQueue.map((user, index) => {
                   const isTopCard = index === userQueue.length - 1;
                   const isSecondCard = index === userQueue.length - 2;
-
-                  // Don't render the card that is currently being animated out
-                  if (swipingUser && swipingUser.profile.id === user.id) {
-                    return null;
-                  }
-
+                  
                   const dragDistance = Math.abs(animationState.x);
-                  const swipeProgress = Math.min(dragDistance / 200, 1); // 200 is swipe threshold
+                  const swipeProgress = isTopCard ? Math.min(dragDistance / 200, 1) : 0; // 200 is swipe threshold
 
                   const dynamicScale = isSecondCard ? 0.95 + 0.05 * swipeProgress : 1;
                   const dynamicTranslateY = isSecondCard ? -10 + 10 * swipeProgress : 0;
