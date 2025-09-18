@@ -44,8 +44,14 @@ export default function DashboardPage() {
       setIsLoading(true);
       try {
         const usersCollection = collection(firestore, 'users');
-        // Fetch all users except the current one
-        const q = query(usersCollection);
+        const userDoc = await getDoc(doc(firestore, 'users', user.uid));
+        const userData = userDoc.data();
+        const swipedIds = [...(userData?.liked || []), ...(userData?.passed || [])];
+
+        const q = query(
+          usersCollection, 
+          where('profileComplete', '==', true),
+        );
         const querySnapshot = await getDocs(q);
         
         const usersData = querySnapshot.docs
@@ -60,7 +66,7 @@ export default function DashboardPage() {
                 availability: doc.data().availability || 'Not specified',
                 banner: doc.data().banner || 'https://picsum.photos/800/600'
             } as UserProfile))
-            .filter(u => u.id !== user.uid);
+            .filter(u => u.id !== user.uid && !swipedIds.includes(u.id));
 
         setAllUsers(usersData);
         setUserQueue(usersData);
@@ -77,42 +83,37 @@ export default function DashboardPage() {
   }, [user, authLoading]);
 
   
-  const onSwipe = useCallback(async (swipedUser: UserProfile, direction: 'left' | 'right') => {
-    // Optimistically remove the user from the queue
+  const onSwipe = useCallback((swipedUser: UserProfile, direction: 'left' | 'right') => {
     setUserQueue(currentQueue => currentQueue.filter(u => u.id !== swipedUser.id));
     
     if (!user) return;
 
-    // Update user's liked/passed list in Firestore
     const userDocRef = doc(firestore, 'users', user.uid);
     const fieldToUpdate = direction === 'right' ? 'liked' : 'passed';
     
-    try {
-        const currentUserDoc = await getDoc(userDocRef);
+    getDoc(userDocRef).then(currentUserDoc => {
         if(currentUserDoc.exists()){
             const currentUserData = currentUserDoc.data();
             const updatedList = [...(currentUserData[fieldToUpdate] || []), swipedUser.id];
-            await updateDoc(userDocRef, { [fieldToUpdate]: updatedList });
+            updateDoc(userDocRef, { [fieldToUpdate]: updatedList });
         }
-    } catch (error) {
+    }).catch(error => {
         console.error("Error updating user swipe list:", error);
-    }
+    });
 
-    // Call the Genkit flow to handle matching logic
-    try {
-        const result = await handleSwipeFlow({
-            swiperId: user.uid,
-            swipedId: swipedUser.id,
-            direction,
-        });
-
+    handleSwipeFlow({
+        swiperId: user.uid,
+        swipedId: swipedUser.id,
+        direction,
+    }).then(result => {
         if (result.isMatch) {
             setMatchedUser(swipedUser);
             setShowMatchDialog(true);
         }
-    } catch (error) {
+    }).catch(error => {
         console.error("Error handling swipe flow:", error);
-    }
+    });
+
   }, [user]);
   
   const handleManualSwipe = (direction: 'left' | 'right') => {
