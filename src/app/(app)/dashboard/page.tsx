@@ -165,20 +165,22 @@ export default function DashboardPage() {
                   const dragDistance = Math.abs(animationState.x);
                   const swipeProgress = isTopCard ? Math.min(dragDistance / 200, 1) : 0; // 200 is swipe threshold
 
-                  const dynamicScale = isSecondCard ? 0.95 + 0.05 * swipeProgress : 1;
-                  const dynamicTranslateY = isSecondCard ? -10 + 10 * swipeProgress : 0;
-                  
-                  const baseScale = 1 - ((userQueue.length - 1 - index) * 0.05);
-                  const baseTranslateY = (userQueue.length - 1 - index) * -10;
-                  
-                  const finalScale = isSecondCard ? dynamicScale : (isTopCard ? 1 : baseScale);
-                  const finalTranslateY = isSecondCard ? dynamicTranslateY : (isTopCard ? 0 : baseTranslateY);
-
-                  const cardStyle: React.CSSProperties = {
+                  let cardStyle: React.CSSProperties = {
                     zIndex: userQueue.length - index,
-                    transform: `scale(${finalScale}) translateY(${finalTranslateY}px)`,
                     opacity: (userQueue.length - 1 - index) > 2 ? 0 : 1,
-                    transition: animationState.isDragging ? 'none' : 'all 0.3s ease-in-out'
+                    transition: animationState.isDragging ? 'none' : 'all 0.3s ease-in-out',
+                  };
+
+                  if (isTopCard) {
+                      cardStyle.transform = `translate(${animationState.x}px, ${animationState.y}px) rotate(${animationState.rotation}deg)`;
+                  } else if (isSecondCard) {
+                      const scale = 0.95 + 0.05 * swipeProgress;
+                      const translateY = -10 + 10 * swipeProgress;
+                      cardStyle.transform = `scale(${scale}) translateY(${translateY}px)`;
+                  } else {
+                      const scale = 1 - ((userQueue.length - 1 - index) * 0.05);
+                      const translateY = (userQueue.length - 1 - index) * -10;
+                      cardStyle.transform = `scale(${scale}) translateY(${translateY}px)`;
                   }
                   
                   return (
@@ -255,3 +257,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    
