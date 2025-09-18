@@ -4,13 +4,15 @@
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Heart, MessageSquare, Users } from 'lucide-react';
-import { signInWithPopup } from 'firebase/auth';
-import { auth, googleAuthProvider } from '@/lib/firebase';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Heart, MessageSquare, Users, Smartphone, KeyRound } from 'lucide-react';
+import { signInWithPopup, type ConfirmationResult } from 'firebase/auth';
+import { auth, googleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 
 const GoogleIcon = () => (
@@ -34,57 +36,93 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const AppleIcon = () => (
-    <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-        <path fill="currentColor" d="M16.5,5.12c1.23,0,2.36.46,3.16,1.25a4.34,4.34,0,0,1,1.29,3.15c0,2.94-2,4.89-4.2,4.89-1,0-1.89-.47-2.83-.47s-1.7.47-2.83.47-2.18-2-4.14-2c-2.31,0-4,2.24-4,5.44,0,3.32,2.31,5.2,4.5,5.2.95,0,2.06-.5,3.29-.5s2.21.5,3.35.5a4.4,4.4,0,0,0,4.72-4.39c0-.21,0-1.12-1.38-2.17C20.4,15.6,21,14.6,21,12.55a4.83,4.83,0,0,0-3.23-4.63,4.5,4.5,0,0,0-1.27-.25M15,2.18c.64.05,1.27.35,1.88.88,1.15,1,1.75,2.3,1.75,3.79,0,1.13-.35,2.17-.92,3a3.53,3.53,0,0,1-2.68,1.26c-.63,0-1.26-.25-1.88-.75-1.12-1-1.75-2.29-1.75-3.79S13.25,3.08,14.38,2.18Z" />
-    </svg>
-);
-
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { user, loading } = useAuth();
   
-  // This effect will redirect the user if they are already logged in.
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+
   useEffect(() => {
     if (!loading && user) {
         router.replace('/dashboard');
     }
-  }, [user, loading, router])
+  }, [user, loading, router]);
+  
+  const setupRecaptcha = () => {
+    if (!auth) return;
+    if (!(window as any).recaptchaVerifier) {
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+        'callback': (response: any) => {
+          // reCAPTCHA solved, allow signInWithPhoneNumber.
+        }
+      });
+    }
+  }
+  
+  const handlePhoneSignIn = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!phoneNumber) {
+        toast({ title: 'Phone number required', variant: 'destructive'});
+        return;
+      }
+      setIsSendingCode(true);
+      try {
+        setupRecaptcha();
+        const appVerifier = (window as any).recaptchaVerifier;
+        const result = await signInWithPhoneNumber(auth, `+${phoneNumber}`, appVerifier);
+        setConfirmationResult(result);
+        toast({ title: 'Verification code sent!', description: 'Please check your phone for an SMS.'});
+      } catch (error: any) {
+        console.error(error);
+        toast({ title: 'Error sending code', description: error.message, variant: 'destructive'});
+        setConfirmationResult(null); // Reset on error
+      } finally {
+        setIsSendingCode(false);
+      }
+  }
 
-  const handleSocialSignIn = async () => {
+  const handleVerifyCode = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!confirmationResult || !verificationCode) {
+        toast({ title: 'Verification code required', variant: 'destructive' });
+        return;
+      }
+      setIsVerifyingCode(true);
+      try {
+        await confirmationResult.confirm(verificationCode);
+        // Auth state change will handle redirect
+      } catch(error: any) {
+          console.error(error);
+          toast({ title: 'Invalid Code', description: 'The code you entered is incorrect.', variant: 'destructive' });
+      } finally {
+        setIsVerifyingCode(false);
+      }
+  }
+
+
+  const handleGoogleSignIn = async () => {
     try {
       await signInWithPopup(auth, googleAuthProvider);
-      // The redirection is now handled by the useAuth hook and the root page.
-      // After successful sign-in, the onAuthStateChanged listener will fire,
-      // the useAuth hook will update, and the RootPage component will redirect.
+      // Redirection is handled by the useAuth hook.
     } catch (error: any) {
-      if (error.code === 'auth/popup-blocked') {
-         toast({
-          title: 'Popup Blocked',
-          description: 'Your browser blocked the sign-in window. Please allow popups for this site and try again.',
-          variant: 'destructive',
-        });
-      } else if (error.code === 'auth/popup-closed-by-user') {
-        toast({
-          title: 'Login Canceled',
-          description: 'You closed the sign-in window before completing the login process.',
-          variant: 'default',
-        });
-      } else {
-        console.error('Firebase sign-in error:', error);
-        toast({
+       toast({
           title: 'Authentication Error',
-          description: 'An unexpected error occurred. Please try again.',
+          description: error.message || 'An unexpected error occurred.',
           variant: 'destructive',
         });
-      }
     }
   };
 
   return (
     <div className="w-full min-h-screen lg:grid lg:grid-cols-2">
+      <div id="recaptcha-container"></div>
       <div className="flex items-center justify-center p-6 sm:p-12">
         <div className="mx-auto grid w-[350px] gap-6">
           <div className="grid gap-2 text-center">
@@ -97,20 +135,15 @@ export default function LoginPage() {
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-headline">Get Started</CardTitle>
               <CardDescription>
-                Create an account or log in to continue.
+                Sign in with Google or your phone number.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
-              <div className="grid gap-2">
-                <Button variant="outline" onClick={handleSocialSignIn}>
-                  <GoogleIcon />
-                  Continue with Google
-                </Button>
-                <Button variant="outline" disabled>
-                  <AppleIcon />
-                  Continue with Apple
-                </Button>
-              </div>
+              <Button variant="outline" onClick={handleGoogleSignIn}>
+                <GoogleIcon />
+                Continue with Google
+              </Button>
+             
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t" />
@@ -121,12 +154,54 @@ export default function LoginPage() {
                   </span>
                 </div>
               </div>
-              <Button variant="default" className="w-full" disabled>
-                Sign Up with Email
-              </Button>
-               <Button variant="secondary" className="w-full" disabled>
-                Log In with Email
-              </Button>
+
+              {!confirmationResult ? (
+                <form onSubmit={handlePhoneSignIn} className="grid gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <div className="relative">
+                         <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"/>
+                         <Input
+                            id="phone"
+                            type="tel"
+                            placeholder="16505551234"
+                            required
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <Button type="submit" disabled={isSendingCode} className="w-full">
+                        {isSendingCode ? "Sending Code..." : "Continue with Phone"}
+                    </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleVerifyCode} className="grid gap-4">
+                     <div className="grid gap-2">
+                        <Label htmlFor="code">Verification Code</Label>
+                        <div className="relative">
+                            <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"/>
+                            <Input
+                                id="code"
+                                type="text"
+                                placeholder="123456"
+                                required
+                                value={verificationCode}
+                                onChange={(e) => setVerificationCode(e.target.value)}
+                                className="pl-10"
+                            />
+                        </div>
+                    </div>
+                     <Button type="submit" disabled={isVerifyingCode} className="w-full">
+                        {isVerifyingCode ? "Verifying..." : "Sign In"}
+                    </Button>
+                    <Button variant="link" size="sm" onClick={() => setConfirmationResult(null)}>
+                        Use a different phone number
+                    </Button>
+                </form>
+              )}
+
             </CardContent>
           </Card>
         </div>
