@@ -45,20 +45,25 @@ export default function DashboardPage() {
       setIsLoading(true);
       try {
         const usersCollection = collection(firestore, 'users');
-        const userDoc = await getDoc(doc(firestore, 'users', user.uid));
+        const userDocRef = doc(firestore, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
         const userData = userDoc.data();
+        
+        // Combine liked and passed arrays to know who to filter out
         const swipedIds = [...(userData?.liked || []), ...(userData?.passed || [])];
-
+        
+        // Query for all complete profiles
         const q = query(
           usersCollection,
            where('profileComplete', '==', true),
         );
         const querySnapshot = await getDocs(q);
         
+        // Filter out the current user and users they've already swiped on
         const usersData = querySnapshot.docs
             .map(doc => ({
-                ...doc.data(),
                 id: doc.id,
+                ...doc.data(),
                 age: doc.data().age || 25, 
                 gender: doc.data().gender || 'not specified',
                 vibes: doc.data().vibes || [],
@@ -85,6 +90,7 @@ export default function DashboardPage() {
 
   
   const onSwipe = useCallback((swipedUser: UserProfile, direction: 'left' | 'right') => {
+    // Remove the swiped user from the front of the queue
     setUserQueue(currentQueue => currentQueue.slice(1));
     setHistory(prev => [...prev, swipedUser]);
     
@@ -140,18 +146,21 @@ export default function DashboardPage() {
   }
 
   const resetDeck = useCallback(() => {
+      // Repopulate the queue from the master list of users
       setUserQueue(allUsers);
+      // Clear the session's swipe history
       setHistory([]);
   }, [allUsers]);
   
+  // Create a reversed copy of the queue for stacking effect
   const reversedQueue = useMemo(() => [...userQueue].reverse(), [userQueue]);
 
   const onDialogClose = () => {
     setShowMatchDialog(false);
     setMatchedUser(null);
   }
-
-  const topCard = userQueue.length > 0 ? userQueue[0] : null;
+  
+  const topCard = userQueue[0];
 
   return (
     <>
@@ -255,3 +264,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    
