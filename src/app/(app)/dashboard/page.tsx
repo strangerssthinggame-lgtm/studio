@@ -47,10 +47,9 @@ export default function DashboardPage() {
       setIsLoading(true);
       try {
         const usersCollection = collection(firestore, 'users');
-        // Query users with complete profiles, excluding the current user
+        // Query users, excluding the current user
         const q = query(
-          usersCollection,
-          where('profileComplete', '==', true)
+          usersCollection
         );
         const querySnapshot = await getDocs(q);
         
@@ -84,27 +83,25 @@ export default function DashboardPage() {
   }, [user, authLoading]);
 
   
-  const handleSwipe = useCallback(async (swipedUser: UserProfile, direction: 'left' | 'right') => {
-    setUserQueue(currentQueue => currentQueue.filter(u => u.id !== swipedUser.id));
+  const handleSwipe = useCallback((swipedUser: UserProfile, direction: 'left' | 'right') => {
+    setUserQueue(currentQueue => currentQueue.slice(1));
     setHistory(prev => [...prev, swipedUser]);
     setAnimationState({ x: 0, y: 0, rotation: 0, isDragging: false });
     
     if (!user) return;
 
-    try {
-        const result = await handleSwipeFlow({
-            swiperId: user.uid,
-            swipedId: swipedUser.id,
-            direction,
-        });
-
+    handleSwipeFlow({
+        swiperId: user.uid,
+        swipedId: swipedUser.id,
+        direction,
+    }).then(result => {
         if (result.isMatch) {
             setMatchedUser(swipedUser);
             setShowMatchDialog(true);
         }
-    } catch (error) {
+    }).catch(error => {
         console.error("Error handling swipe:", error);
-    }
+    });
   }, [user]);
 
   const resetDeck = useCallback(() => {
@@ -112,7 +109,8 @@ export default function DashboardPage() {
       setHistory([]);
   }, [allUsers]);
 
-  const topCard = userQueue.length > 0 ? userQueue[userQueue.length - 1] : null;
+  const reversedQueue = [...userQueue].reverse();
+  const topCard = reversedQueue.length > 0 ? reversedQueue[0] : null;
 
   const handleManualSwipe = (direction: 'left' | 'right') => {
     if (!topCard) return;
@@ -156,18 +154,18 @@ export default function DashboardPage() {
             <Card className="absolute w-full h-full rounded-2xl overflow-hidden glassy">
                 <Skeleton className="w-full h-full"/>
             </Card>
-          ) : userQueue.length > 0 ? (
+          ) : reversedQueue.length > 0 ? (
              <div className="relative w-full h-full">
-              {userQueue.map((user, index) => {
-                  const isTopCard = index === userQueue.length - 1;
-                  const isSecondCard = index === userQueue.length - 2;
+              {reversedQueue.map((user, index) => {
+                  const isTopCard = index === 0;
+                  const isSecondCard = index === 1;
                   
                   const dragDistance = Math.abs(animationState.x);
                   const swipeProgress = isTopCard ? Math.min(dragDistance / 200, 1) : 0; // 200 is swipe threshold
 
                   let cardStyle: React.CSSProperties = {
-                    zIndex: index,
-                    opacity: index < userQueue.length - 2 ? 0 : 1,
+                    zIndex: reversedQueue.length - index,
+                    opacity: index > 1 ? 0 : 1,
                     transition: animationState.isDragging ? 'none' : 'all 0.3s ease-in-out',
                   };
 
@@ -178,8 +176,8 @@ export default function DashboardPage() {
                       const translateY = -10 + 10 * swipeProgress;
                       cardStyle.transform = `scale(${scale}) translateY(${translateY}px)`;
                   } else {
-                       if (index < userQueue.length - 2) {
-                        cardStyle.transform = `scale(${1 - (userQueue.length - 1 - index) * 0.05}) translateY(${(userQueue.length - 1 - index) * -10}px)`;
+                       if (index > 1) {
+                        cardStyle.transform = `scale(${1 - (index) * 0.05}) translateY(${index * -10}px)`;
                        }
                   }
                   
