@@ -36,26 +36,14 @@ export default function ProfilePage() {
             const docSnap = await getDoc(userDocRef);
             if (docSnap.exists()) {
                 const data = docSnap.data();
+                if (data.profileComplete === false) {
+                    router.replace('/profile/edit');
+                    return;
+                }
                 const profileData = {
                     id: user.uid,
-                    name: data.name || 'Ajay',
-                    username: data.username || `@ajay`,
-                    age: data.age || 18,
-                    gender: data.gender || 'not specified',
-                    location: data.location || 'Not specified',
-                    bio: data.bio || 'No bio yet. Click "Edit Profile" to add one!',
-                    avatar: data.avatar || `https://picsum.photos/seed/${user.uid}/400/400`,
-                    banner: data.banner || `https://picsum.photos/seed/${user.uid}-banner/800/600`,
-                    vibes: data.vibes || ['Date'],
-                    interests: data.interests || [],
-                    photos: data.photos || [],
-                    availability: data.availability || 'Not specified',
-                    profileComplete: data.profileComplete || false,
-                    preferences: data.preferences || { minAge: 18, maxAge: 40, maxDistance: 100 },
-                    liked: data.liked || [],
-                    passed: data.passed || [],
-                    matches: data.matches || [],
-                };
+                    ...data
+                } as UserProfile;
                 setUserProfile(profileData);
             } else {
                  router.replace('/profile/edit');
@@ -243,3 +231,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    

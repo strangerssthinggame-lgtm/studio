@@ -44,6 +44,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               banner: `https://picsum.photos/seed/${user.uid}-banner/800/600`,
               createdAt: serverTimestamp(),
               lastSeen: serverTimestamp(),
+              age: 18,
+              gender: 'not specified',
               bio: '',
               location: '',
               interests: [],
@@ -84,4 +86,5 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAuth = () => useContext(AuthContext);
 
+    
     

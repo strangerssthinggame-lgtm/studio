@@ -17,8 +17,8 @@ export default function RootPage() {
     if (user) {
       // User is logged in
       if (isNewUser) {
-        // New user, redirect to onboarding
-        router.replace('/onboarding');
+        // New user, redirect to complete profile
+        router.replace('/profile/edit');
       } else {
         // Existing user, redirect to their dashboard
         router.replace('/dashboard');
@@ -42,3 +42,5 @@ export default function RootPage() {
     </div>
   );
 }
+
+    

@@ -42,13 +42,35 @@ export default function EditProfilePage() {
         if (docSnap.exists()) {
           setProfile(docSnap.data() as UserProfile);
         } else {
-          console.error("No such document!");
+          // This can happen if the user doc creation in useAuth is delayed
+          // We can initialize a default profile structure here
+          const defaultProfile = {
+            id: user.uid,
+            name: user.displayName || '',
+            username: `@${user.displayName?.toLowerCase().replace(/\s/g, '') || `user${user.uid.substring(0, 5)}`}`,
+            age: 18,
+            gender: 'not specified',
+            location: '',
+            bio: '',
+            avatar: user.photoURL || `https://picsum.photos/seed/${user.uid}/400/400`,
+            banner: `https://picsum.photos/seed/${user.uid}-banner/800/600`,
+            vibes: [],
+            interests: [],
+            photos: [],
+            availability: 'Not specified',
+            profileComplete: false,
+            preferences: { minAge: 18, maxAge: 40, maxDistance: 100 },
+            liked: [],
+            passed: [],
+            matches: [],
+          };
+          setProfile(defaultProfile);
         }
       }
       setIsLoading(false);
     };
 
-    if (!authLoading) {
+    if (!authLoading && user) {
       fetchUserProfile();
     }
   }, [user, authLoading]);
@@ -87,19 +109,19 @@ export default function EditProfilePage() {
         toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to save.' });
         return;
     }
+    
+    // Validation for mandatory fields
+    if (!profile.name || !profile.location || profile.vibes.length === 0 || profile.interests.length === 0) {
+        toast({ variant: 'destructive', title: 'Incomplete Profile', description: 'Please fill out all required fields (Name, Location, Vibes, Interests).' });
+        return;
+    }
+
+
     setIsSaving(true);
     try {
         const userDocRef = doc(firestore, 'users', user.uid);
-        // This ensures all fields from the form are updated
         const profileToSave = {
-            name: profile.name,
-            username: profile.username,
-            location: profile.location,
-            bio: profile.bio,
-            availability: profile.availability,
-            vibes: profile.vibes,
-            interests: profile.interests,
-            photos: profile.photos,
+            ...profile,
             profileComplete: true, // Mark profile as complete after first save
         };
 
@@ -115,7 +137,7 @@ export default function EditProfilePage() {
     }
   }
 
-  const handleInputChange = (field: keyof UserProfile, value: string) => {
+  const handleInputChange = (field: keyof UserProfile, value: string | number) => {
     if (profile) {
         setProfile(prev => prev ? ({ ...prev, [field]: value }) : null)
     }
@@ -177,9 +199,9 @@ export default function EditProfilePage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-headline font-bold">Edit Profile</h1>
         <div className="flex gap-2">
-            <Link href="/profile">
-                <Button variant="outline" disabled={isSaving}>Cancel</Button>
-            </Link>
+            {!profile.profileComplete && (
+                <p className="text-sm text-muted-foreground self-center">Complete your profile to continue</p>
+            )}
             <Button onClick={handleSaveChanges} disabled={isSaving}>
                 {isSaving ? <RotateCw className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4"/>}
                 {isSaving ? 'Saving...' : 'Save Changes'}
@@ -190,22 +212,22 @@ export default function EditProfilePage() {
       <Card>
         <CardHeader>
           <CardTitle className="font-headline">Profile Information</CardTitle>
-          <CardDescription>Update your public profile information.</CardDescription>
+          <CardDescription>Update your public profile information. Fields with an asterisk (*) are required.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
+                    <Label htmlFor="name">Name *</Label>
                     <Input id="name" value={profile.name} onChange={(e) => handleInputChange('name', e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
-                    <Input id="username" value={profile.username} onChange={(e) => handleInputChange('username', e.target.value)} />
+                 <div className="space-y-2">
+                    <Label htmlFor="age">Age *</Label>
+                    <Input id="age" type="number" value={profile.age} onChange={(e) => handleInputChange('age', parseInt(e.target.value, 10))} />
                 </div>
             </div>
             <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input id="location" value={profile.location} onChange={(e) => handleInputChange('location', e.target.value)} />
+                <Label htmlFor="location">Location *</Label>
+                <Input id="location" value={profile.location} onChange={(e) => handleInputChange('location', e.target.value)} placeholder="e.g., New York, USA" />
             </div>
             <div className="space-y-2">
                 <Label htmlFor="bio">About Me</Label>
@@ -221,7 +243,6 @@ export default function EditProfilePage() {
                 <CardDescription>Let others know when you're typically free to chat or play.</CardDescription>
             </CardHeader>
             <CardContent>
-                <Label htmlFor="availability">Availability</Label>
                 <Input id="availability" value={profile.availability} onChange={(e) => handleInputChange('availability', e.target.value)} placeholder="e.g., Evenings & Weekends" />
             </CardContent>
         </Card>
@@ -230,8 +251,8 @@ export default function EditProfilePage() {
        <div className="mt-8">
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 font-headline"><Sparkles/> My Vibes</CardTitle>
-                    <CardDescription>Select tags that best describe the connection you're looking for. Select all that apply.</CardDescription>
+                    <CardTitle className="flex items-center gap-2 font-headline"><Sparkles/> My Vibes *</CardTitle>
+                    <CardDescription>Select tags that best describe the connection you're looking for. Select at least one.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-wrap gap-2">
@@ -276,8 +297,8 @@ export default function EditProfilePage() {
         <div className="mt-8">
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 font-headline"><User/> My Interests</CardTitle>
-                    <CardDescription>Add or remove your interests to help others connect with you.</CardDescription>
+                    <CardTitle className="flex items-center gap-2 font-headline"><User/> My Interests *</CardTitle>
+                    <CardDescription>Add or remove your interests to help others connect with you. Add at least one.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-wrap gap-2">
@@ -308,3 +329,5 @@ export default function EditProfilePage() {
     </div>
   );
 }
+
+    
