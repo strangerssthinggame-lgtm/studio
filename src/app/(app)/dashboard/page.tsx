@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { ProfileCard } from '@/components/profile-card';
@@ -122,11 +121,11 @@ export default function DashboardPage() {
     setHistory(prev => [...prev, swipedUser]);
     setAnimationState({ x: 0, y: 0, rotation: 0, isDragging: false });
     
-    if (!currentUser) return;
+    if (!user) return;
 
     try {
         const result = await handleSwipeFlow({
-            swiperId: currentUser.uid,
+            swiperId: user.uid,
             swipedId: swipedUser.id,
             direction,
         });
@@ -138,7 +137,7 @@ export default function DashboardPage() {
     } catch (error) {
         console.error("Error handling swipe:", error);
     }
-  }, [currentUser]);
+  }, [user]);
 
   const applyFilters = useCallback(() => {
     setUserQueue(filteredUsers);
@@ -360,8 +359,8 @@ export default function DashboardPage() {
             <AlertDialogHeader className="items-center text-center">
                 <div className="relative h-24 w-40 mb-4">
                     <Avatar className="w-24 h-24 border-4 border-background absolute left-0 top-0">
-                        <AvatarImage src={currentUser?.photoURL || "https://picsum.photos/100"} alt="You" data-ai-hint="profile avatar" />
-                        <AvatarFallback>{currentUser?.displayName?.charAt(0) || 'Y'}</AvatarFallback>
+                        <AvatarImage src={user?.photoURL || "https://picsum.photos/100"} alt="You" data-ai-hint="profile avatar" />
+                        <AvatarFallback>{user?.displayName?.charAt(0) || 'Y'}</AvatarFallback>
                     </Avatar>
                     <Avatar className="w-24 h-24 border-4 border-background absolute right-0 top-0">
                         <AvatarImage src={matchedUser?.avatar} alt={matchedUser?.name} data-ai-hint="profile avatar" />
@@ -389,4 +388,5 @@ export default function DashboardPage() {
     </AlertDialog>
     </>
   );
-}
+
+    
