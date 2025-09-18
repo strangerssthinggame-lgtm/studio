@@ -49,17 +49,14 @@ export default function DashboardPage() {
         const userDoc = await getDoc(userDocRef);
         const userData = userDoc.data();
         
-        // Combine liked and passed arrays to know who to filter out
         const swipedIds = [...(userData?.liked || []), ...(userData?.passed || [])];
         
-        // Query for all complete profiles
         const q = query(
           usersCollection,
            where('profileComplete', '==', true),
         );
         const querySnapshot = await getDocs(q);
         
-        // Filter out the current user and users they've already swiped on
         const usersData = querySnapshot.docs
             .map(doc => ({
                 id: doc.id,
@@ -90,9 +87,11 @@ export default function DashboardPage() {
 
   
   const onSwipe = useCallback((swipedUser: UserProfile, direction: 'left' | 'right') => {
-    // Remove the swiped user from the front of the queue
-    setUserQueue(currentQueue => currentQueue.slice(1));
-    setHistory(prev => [...prev, swipedUser]);
+    // Wait for the animation to finish before updating the queue
+    setTimeout(() => {
+        setUserQueue(currentQueue => currentQueue.filter(u => u.id !== swipedUser.id));
+        setHistory(prev => [...prev, swipedUser]);
+    }, 300); // This duration should match the CSS transition duration
     
     if (!user) return;
 
@@ -139,20 +138,19 @@ export default function DashboardPage() {
       isDragging: false,
     });
     
+    onSwipe(topCard, direction);
+
+    // Reset animation state for the next card, delayed to allow the animation out
     setTimeout(() => {
-      onSwipe(topCard, direction);
-      setAnimationState({ x: 0, y: 0, rotation: 0, isDragging: false });
-    }, 300); // Match animation duration
+        setAnimationState({ x: 0, y: 0, rotation: 0, isDragging: false });
+    }, 300);
   }
 
   const resetDeck = useCallback(() => {
-      // Repopulate the queue from the master list of users
       setUserQueue(allUsers);
-      // Clear the session's swipe history
       setHistory([]);
   }, [allUsers]);
   
-  // Create a reversed copy of the queue for stacking effect
   const reversedQueue = useMemo(() => [...userQueue].reverse(), [userQueue]);
 
   const onDialogClose = () => {
@@ -196,7 +194,7 @@ export default function DashboardPage() {
                         setAnimationState={isTopCard ? setAnimationState : undefined}
                         style={{
                           zIndex: reversedQueue.length - index,
-                          transform: isTopCard ? `` : `scale(${1 - (reversedQueue.length - 1 - index) * 0.05}) translateY(${(reversedQueue.length - 1 - index) * -10}px)`,
+                          transform: !isTopCard ? `scale(${1 - (reversedQueue.length - 1 - index) * 0.05}) translateY(${(reversedQueue.length - 1 - index) * -10}px)` : '',
                           opacity: (reversedQueue.length - 1 - index) > 2 ? 0 : 1,
                         }}
                       />
@@ -264,5 +262,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-    
