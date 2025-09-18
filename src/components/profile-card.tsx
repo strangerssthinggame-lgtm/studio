@@ -199,7 +199,7 @@ export function ProfileCard({ user, onSwipe, style, isTopCard, animationState, s
                         </Avatar>
                         <Avatar className="w-24 h-24 border-4 border-background absolute right-0 top-0">
                             <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="profile avatar" />
-                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                            <AvatarFallback>{user && user.name ? user.name.charAt(0) : '?'}</AvatarFallback>
                         </Avatar>
                         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-primary/90 rounded-full flex items-center justify-center backdrop-blur-sm">
                             <Heart className="w-7 h-7 text-primary-foreground" fill="currentColor" />
