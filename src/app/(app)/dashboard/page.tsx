@@ -166,8 +166,8 @@ export default function DashboardPage() {
                   const swipeProgress = isTopCard ? Math.min(dragDistance / 200, 1) : 0; // 200 is swipe threshold
 
                   let cardStyle: React.CSSProperties = {
-                    zIndex: userQueue.length - index,
-                    opacity: (userQueue.length - 1 - index) > 2 ? 0 : 1,
+                    zIndex: index,
+                    opacity: index < userQueue.length - 2 ? 0 : 1,
                     transition: animationState.isDragging ? 'none' : 'all 0.3s ease-in-out',
                   };
 
@@ -178,9 +178,9 @@ export default function DashboardPage() {
                       const translateY = -10 + 10 * swipeProgress;
                       cardStyle.transform = `scale(${scale}) translateY(${translateY}px)`;
                   } else {
-                      const scale = 1 - ((userQueue.length - 1 - index) * 0.05);
-                      const translateY = (userQueue.length - 1 - index) * -10;
-                      cardStyle.transform = `scale(${scale}) translateY(${translateY}px)`;
+                       if (index < userQueue.length - 2) {
+                        cardStyle.transform = `scale(${1 - (userQueue.length - 1 - index) * 0.05}) translateY(${(userQueue.length - 1 - index) * -10}px)`;
+                       }
                   }
                   
                   return (
@@ -257,5 +257,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-    
