@@ -31,6 +31,7 @@ export default function DashboardPage() {
   
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [userQueue, setUserQueue] = useState<UserProfile[]>([]);
+  const [history, setHistory] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showMatchDialog, setShowMatchDialog] = useState(false);
   const [matchedUser, setMatchedUser] = useState<UserProfile | null>(null);
@@ -49,8 +50,8 @@ export default function DashboardPage() {
         const swipedIds = [...(userData?.liked || []), ...(userData?.passed || [])];
 
         const q = query(
-          usersCollection, 
-          where('profileComplete', '==', true),
+          usersCollection,
+           where('profileComplete', '==', true),
         );
         const querySnapshot = await getDocs(q);
         
@@ -84,7 +85,8 @@ export default function DashboardPage() {
 
   
   const onSwipe = useCallback((swipedUser: UserProfile, direction: 'left' | 'right') => {
-    setUserQueue(currentQueue => currentQueue.filter(u => u.id !== swipedUser.id));
+    setUserQueue(currentQueue => currentQueue.slice(1));
+    setHistory(prev => [...prev, swipedUser]);
     
     if (!user) return;
 
@@ -118,7 +120,7 @@ export default function DashboardPage() {
   
   const handleManualSwipe = (direction: 'left' | 'right') => {
     if (userQueue.length === 0) return;
-    const topCard = userQueue[userQueue.length - 1];
+    const topCard = userQueue[0];
     if (!topCard) return;
 
     const exitX = direction === 'right' ? 500 : -500;
@@ -139,6 +141,7 @@ export default function DashboardPage() {
 
   const resetDeck = useCallback(() => {
       setUserQueue(allUsers);
+      setHistory([]);
   }, [allUsers]);
   
   const reversedQueue = useMemo(() => [...userQueue].reverse(), [userQueue]);
@@ -148,7 +151,7 @@ export default function DashboardPage() {
     setMatchedUser(null);
   }
 
-  const topCard = userQueue.length > 0 ? userQueue[userQueue.length - 1] : null;
+  const topCard = userQueue.length > 0 ? userQueue[0] : null;
 
   return (
     <>
@@ -178,12 +181,12 @@ export default function DashboardPage() {
                       <ProfileCard
                         key={profile.id}
                         user={profile}
-                        onSwipe={onSwipe}
+                        onSwipe={(swipedUser, direction) => onSwipe(swipedUser, direction)}
                         isTopCard={isTopCard}
                         animationState={isTopCard ? animationState : undefined}
                         setAnimationState={isTopCard ? setAnimationState : undefined}
                         style={{
-                          zIndex: index,
+                          zIndex: reversedQueue.length - index,
                           transform: isTopCard ? `` : `scale(${1 - (reversedQueue.length - 1 - index) * 0.05}) translateY(${(reversedQueue.length - 1 - index) * -10}px)`,
                           opacity: (reversedQueue.length - 1 - index) > 2 ? 0 : 1,
                         }}
